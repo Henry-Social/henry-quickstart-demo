@@ -122,7 +122,7 @@ export default function Home() {
   // Collect card for authenticated user
   const collectCard = async () => {
     setLoadingCheckout(true);
-    setLoadingMessage("Opening card collection...");
+    setLoadingMessage("Getting card collection link...");
     setErrorMessage(null);
     setCheckoutResponse(null);
 
@@ -137,8 +137,12 @@ export default function Home() {
       const result = await response.json();
 
       if (result.success && result.data?.modal_url) {
-        window.open(result.data.modal_url, "_blank");
-        setHasCollectedCard(true);
+        // Set the response to show the link
+        setCheckoutResponse({
+          ...result,
+          instruction: "Click the link below to save your card:",
+          modal_url: result.data.modal_url
+        });
       } else {
         setErrorMessage(result.message || "Failed to initiate card collection");
       }
@@ -149,11 +153,21 @@ export default function Home() {
       setLoadingCheckout(false);
     }
   };
+  
+  // Handle card collection link click
+  const handleCardCollectionClick = (url: string) => {
+    window.open(url, "_blank");
+    // After 3 seconds, mark as collected
+    setTimeout(() => {
+      setHasCollectedCard(true);
+      setCheckoutResponse(null);
+    }, 3000);
+  };
 
   // Collect card for guest user
   const collectGuestCard = async () => {
     setLoadingCheckout(true);
-    setLoadingMessage("Opening guest card collection...");
+    setLoadingMessage("Getting guest card collection link...");
     setErrorMessage(null);
     setCheckoutResponse(null);
 
@@ -168,8 +182,12 @@ export default function Home() {
       const result = await response.json();
 
       if (result.success && result.data?.modal_url) {
-        window.open(result.data.modal_url, "_blank");
-        setHasCollectedCard(true);
+        // Set the response to show the link
+        setCheckoutResponse({
+          ...result,
+          instruction: "Click the link below to save your card as guest:",
+          modal_url: result.data.modal_url
+        });
       } else {
         setErrorMessage(result.message || "Failed to initiate guest card collection");
       }
@@ -594,10 +612,25 @@ export default function Home() {
                     )}
                     {checkoutResponse && (
                       <div className="mt-3 md:mt-4 p-3 md:p-4 bg-gray-100 rounded-lg">
-                        <p className="text-xs md:text-sm font-semibold mb-2">API Response:</p>
-                        <pre className="text-xs bg-white p-2 rounded overflow-x-auto max-h-64">
-                          {JSON.stringify(checkoutResponse, null, 2)}
-                        </pre>
+                        {checkoutResponse.instruction ? (
+                          <>
+                            <p className="text-xs md:text-sm font-semibold mb-2">{checkoutResponse.instruction}</p>
+                            <button 
+                              onClick={() => handleCardCollectionClick(checkoutResponse.modal_url)}
+                              className="inline-block px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
+                            >
+                              Open Card Collection
+                            </button>
+                            <p className="text-xs text-gray-600 mt-2">After clicking, wait 3 seconds to proceed to checkout</p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-xs md:text-sm font-semibold mb-2">API Response:</p>
+                            <pre className="text-xs bg-white p-2 rounded overflow-x-auto max-h-64">
+                              {JSON.stringify(checkoutResponse, null, 2)}
+                            </pre>
+                          </>
+                        )}
                       </div>
                     )}
                   </div>
@@ -622,9 +655,6 @@ export default function Home() {
                         {loadingCheckout ? loadingMessage : "Step 2: Complete Guest Checkout"}
                       </button>
                     )}
-                    {hasCollectedCard && (
-                      <p className="text-sm text-green-600 text-center">✓ Guest card collected successfully</p>
-                    )}
                     {errorMessage && (
                       <div className="mt-3 p-3 bg-red-100 rounded-lg">
                         <p className="text-xs md:text-sm text-red-700">{errorMessage}</p>
@@ -632,10 +662,25 @@ export default function Home() {
                     )}
                     {checkoutResponse && (
                       <div className="mt-3 md:mt-4 p-3 md:p-4 bg-gray-100 rounded-lg">
-                        <p className="text-xs md:text-sm font-semibold mb-2">API Response:</p>
-                        <pre className="text-xs bg-white p-2 rounded overflow-x-auto max-h-64">
-                          {JSON.stringify(checkoutResponse, null, 2)}
-                        </pre>
+                        {checkoutResponse.instruction ? (
+                          <>
+                            <p className="text-xs md:text-sm font-semibold mb-2">{checkoutResponse.instruction}</p>
+                            <button 
+                              onClick={() => handleCardCollectionClick(checkoutResponse.modal_url)}
+                              className="inline-block px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
+                            >
+                              Open Card Collection
+                            </button>
+                            <p className="text-xs text-gray-600 mt-2">After clicking, wait 3 seconds to proceed to checkout</p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-xs md:text-sm font-semibold mb-2">API Response:</p>
+                            <pre className="text-xs bg-white p-2 rounded overflow-x-auto max-h-64">
+                              {JSON.stringify(checkoutResponse, null, 2)}
+                            </pre>
+                          </>
+                        )}
                       </div>
                     )}
                   </div>
