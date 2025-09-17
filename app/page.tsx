@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 
 interface Product {
   id: string;
@@ -42,28 +42,42 @@ interface ProductDetails {
   }>;
 }
 
-type CheckoutMethod = 'cart' | 'saved-card' | 'guest';
+type CheckoutMethod = "cart" | "saved-card" | "guest";
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [productDetails, setProductDetails] = useState<ProductDetails | null>(
-    null,
-  );
+  const [productDetails, setProductDetails] = useState<ProductDetails | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingCheckout, setLoadingCheckout] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("Processing...");
   const [userId, setUserId] = useState("demo_user");
-  const [checkoutMethod, setCheckoutMethod] = useState<CheckoutMethod>('cart');
+  const [checkoutMethod, setCheckoutMethod] = useState<CheckoutMethod>("cart");
   const [hasCollectedCard, setHasCollectedCard] = useState(false);
   const [checkoutResponse, setCheckoutResponse] = useState<any>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showCheckoutIframe, setShowCheckoutIframe] = useState(false);
+  const [checkoutIframeUrl, setCheckoutIframeUrl] = useState<string | null>(null);
+  const [iframeLoading, setIframeLoading] = useState(true);
+  const [isCardCollection, setIsCardCollection] = useState(false);
 
   // Generate user ID only on client side
   useEffect(() => {
     setUserId(`user_${Math.random().toString(36).substring(7)}`);
   }, []);
+
+  // Handle closing the iframe
+  const handleCloseIframe = () => {
+    // If this was a card collection flow, mark card as collected
+    if (isCardCollection) {
+      setHasCollectedCard(true);
+      setIsCardCollection(false);
+    }
+    setShowCheckoutIframe(false);
+    setCheckoutIframeUrl(null);
+    setIframeLoading(true);
+  };
 
   // Search for products
   const searchProducts = async () => {
@@ -104,9 +118,7 @@ export default function Home() {
     setSelectedProduct(product);
 
     try {
-      const response = await fetch(
-        `/api/henry/products/details?productId=${product.id}`,
-      );
+      const response = await fetch(`/api/henry/products/details?productId=${product.id}`);
       const result = await response.json();
 
       if (result.success && result.data) {
@@ -137,12 +149,14 @@ export default function Home() {
       const result = await response.json();
 
       if (result.success && result.data?.modal_url) {
-        // Set the response to show the link
-        setCheckoutResponse({
-          ...result,
-          instruction: "Click the link below to save your card:",
-          modal_url: result.data.modal_url
-        });
+        // Open card collection in iframe popup
+        // Add embed=true parameter for iframe context
+        const url = new URL(result.data.modal_url);
+        url.searchParams.set("embed", "true");
+        setCheckoutIframeUrl(url.toString());
+        setShowCheckoutIframe(true);
+        setIframeLoading(true);
+        setIsCardCollection(true);
       } else {
         setErrorMessage(result.message || "Failed to initiate card collection");
       }
@@ -152,16 +166,6 @@ export default function Home() {
     } finally {
       setLoadingCheckout(false);
     }
-  };
-  
-  // Handle card collection link click
-  const handleCardCollectionClick = (url: string) => {
-    window.open(url, "_blank");
-    // After 3 seconds, mark as collected
-    setTimeout(() => {
-      setHasCollectedCard(true);
-      setCheckoutResponse(null);
-    }, 3000);
   };
 
   // Collect card for guest user
@@ -182,12 +186,14 @@ export default function Home() {
       const result = await response.json();
 
       if (result.success && result.data?.modal_url) {
-        // Set the response to show the link
-        setCheckoutResponse({
-          ...result,
-          instruction: "Click the link below to save your card as guest:",
-          modal_url: result.data.modal_url
-        });
+        // Open guest card collection in iframe popup
+        // Add embed=true parameter for iframe context
+        const url = new URL(result.data.modal_url);
+        url.searchParams.set("embed", "true");
+        setCheckoutIframeUrl(url.toString());
+        setShowCheckoutIframe(true);
+        setIframeLoading(true);
+        setIsCardCollection(true);
       } else {
         setErrorMessage(result.message || "Failed to initiate guest card collection");
       }
@@ -240,8 +246,7 @@ export default function Home() {
             price: selectedProduct.price.toString(),
             quantity: 1,
             productLink:
-              productDetails.productResults.stores[0]?.link ||
-              selectedProduct.productLink,
+              productDetails.productResults.stores[0]?.link || selectedProduct.productLink,
             productImageLink: selectedProduct.imageUrl,
             metadata: {
               Size: selectedSize || "",
@@ -299,8 +304,7 @@ export default function Home() {
               price: selectedProduct.price.toString(),
               quantity: 1,
               productLink:
-                productDetails.productResults.stores[0]?.link ||
-                selectedProduct.productLink,
+                productDetails.productResults.stores[0]?.link || selectedProduct.productLink,
               productImageLink: selectedProduct.imageUrl,
               metadata: {
                 Size: selectedSize,
@@ -330,8 +334,12 @@ export default function Home() {
       const checkoutResult = await checkoutResponse.json();
 
       if (checkoutResult.success && checkoutResult.data?.checkout_url) {
-        // Open checkout in new tab
-        window.open(checkoutResult.data.checkout_url, "_blank");
+        // Open checkout in iframe popup
+        // Add embed=true parameter for iframe context
+        const url = new URL(checkoutResult.data.checkout_url);
+        url.searchParams.set("embed", "true");
+        setCheckoutIframeUrl(url.toString());
+        setShowCheckoutIframe(true);
       } else {
         throw new Error("Failed to create checkout");
       }
@@ -348,7 +356,9 @@ export default function Home() {
         {/* Header */}
         <div className="mb-6 md:mb-8 text-center">
           <h1 className="text-2xl md:text-4xl font-bold mb-2">Henry Checkout Flows Demo</h1>
-          <p className="text-sm md:text-base text-gray-600">Showcase of different checkout methods with Henry API</p>
+          <p className="text-sm md:text-base text-gray-600">
+            Showcase of different checkout methods with Henry API
+          </p>
           <p className="text-xs md:text-sm text-gray-500 mt-2">User ID: {userId}</p>
         </div>
 
@@ -358,45 +368,45 @@ export default function Home() {
             <div className="inline-flex flex-col sm:flex-row w-full sm:w-auto rounded-lg border border-gray-200 p-1">
               <button
                 onClick={() => {
-                  setCheckoutMethod('cart');
+                  setCheckoutMethod("cart");
                   setHasCollectedCard(false);
                   setCheckoutResponse(null);
                   setErrorMessage(null);
                 }}
                 className={`px-3 py-2 text-sm md:text-base md:px-4 rounded-md transition ${
-                  checkoutMethod === 'cart'
-                    ? 'bg-blue-500 text-white'
-                    : 'text-gray-700 hover:bg-gray-100'
+                  checkoutMethod === "cart"
+                    ? "bg-blue-500 text-white"
+                    : "text-gray-700 hover:bg-gray-100"
                 }`}
               >
                 Cart Checkout
               </button>
               <button
                 onClick={() => {
-                  setCheckoutMethod('saved-card');
+                  setCheckoutMethod("saved-card");
                   setHasCollectedCard(false);
                   setCheckoutResponse(null);
                   setErrorMessage(null);
                 }}
                 className={`px-3 py-2 text-sm md:text-base md:px-4 rounded-md transition ${
-                  checkoutMethod === 'saved-card'
-                    ? 'bg-blue-500 text-white'
-                    : 'text-gray-700 hover:bg-gray-100'
+                  checkoutMethod === "saved-card"
+                    ? "bg-blue-500 text-white"
+                    : "text-gray-700 hover:bg-gray-100"
                 }`}
               >
                 Saved Card
               </button>
               <button
                 onClick={() => {
-                  setCheckoutMethod('guest');
+                  setCheckoutMethod("guest");
                   setHasCollectedCard(false);
                   setCheckoutResponse(null);
                   setErrorMessage(null);
                 }}
                 className={`px-3 py-2 text-sm md:text-base md:px-4 rounded-md transition ${
-                  checkoutMethod === 'guest'
-                    ? 'bg-blue-500 text-white'
-                    : 'text-gray-700 hover:bg-gray-100'
+                  checkoutMethod === "guest"
+                    ? "bg-blue-500 text-white"
+                    : "text-gray-700 hover:bg-gray-100"
                 }`}
               >
                 Guest Checkout
@@ -404,14 +414,23 @@ export default function Home() {
             </div>
           </div>
           <div className="text-center mt-4 text-xs md:text-sm text-gray-600 px-4">
-            {checkoutMethod === 'cart' && (
-              <p>Add products to cart, then checkout all at once<br className="sm:hidden"/> (uses /cart/checkout)</p>
+            {checkoutMethod === "cart" && (
+              <p>
+                Add products to cart, then checkout all at once
+                <br className="sm:hidden" /> (uses /cart/checkout)
+              </p>
             )}
-            {checkoutMethod === 'saved-card' && (
-              <p>Save your card first, then checkout single products<br className="sm:hidden"/> (uses /wallet/card-collect + /checkout/single)</p>
+            {checkoutMethod === "saved-card" && (
+              <p>
+                Save your card first, then checkout single products
+                <br className="sm:hidden" /> (uses /wallet/card-collect + /checkout/single)
+              </p>
             )}
-            {checkoutMethod === 'guest' && (
-              <p>Guest card collection, then checkout single products<br className="sm:hidden"/> (uses /wallet/card-collect-guest + /checkout/single)</p>
+            {checkoutMethod === "guest" && (
+              <p>
+                Guest card collection, then checkout single products
+                <br className="sm:hidden" /> (uses /wallet/card-collect-guest + /checkout/single)
+              </p>
             )}
           </div>
         </div>
@@ -452,9 +471,7 @@ export default function Home() {
                     key={product.id}
                     onClick={() => getProductDetails(product)}
                     className={`p-3 md:p-4 border rounded-lg cursor-pointer hover:shadow-lg transition ${
-                      selectedProduct?.id === product.id
-                        ? "border-blue-500 bg-blue-50"
-                        : ""
+                      selectedProduct?.id === product.id ? "border-blue-500 bg-blue-50" : ""
                     }`}
                   >
                     <div className="flex gap-3 md:gap-4">
@@ -470,13 +487,13 @@ export default function Home() {
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-sm md:text-base line-clamp-2">{product.name}</h3>
+                        <h3 className="font-medium text-sm md:text-base line-clamp-2">
+                          {product.name}
+                        </h3>
                         <p className="text-xl md:text-2xl font-bold text-green-600">
                           ${product.price}
                         </p>
-                        <p className="text-xs md:text-sm text-gray-500">
-                          from {product.source}
-                        </p>
+                        <p className="text-xs md:text-sm text-gray-500">from {product.source}</p>
                       </div>
                     </div>
                   </div>
@@ -513,8 +530,7 @@ export default function Home() {
 
                 {/* Product Image */}
                 {(productDetails.productResults.image ||
-                  (productDetails.relatedSearches &&
-                    productDetails.relatedSearches[0]?.image)) && (
+                  (productDetails.relatedSearches && productDetails.relatedSearches[0]?.image)) && (
                   <div className="relative w-full aspect-square mb-3 md:mb-4">
                     <Image
                       src={
@@ -560,9 +576,7 @@ export default function Home() {
                         <span
                           key={item.name}
                           className={`px-2 py-1 md:px-3 text-xs md:text-sm border rounded ${
-                            item.selected
-                              ? "bg-blue-500 text-white"
-                              : "bg-gray-100"
+                            item.selected ? "bg-blue-500 text-white" : "bg-gray-100"
                           } ${!item.available ? "opacity-50 line-through" : ""}`}
                         >
                           {item.name}
@@ -573,7 +587,7 @@ export default function Home() {
                 ))}
 
                 {/* Checkout Buttons based on selected method */}
-                {checkoutMethod === 'cart' && (
+                {checkoutMethod === "cart" && (
                   <button
                     onClick={buyNow}
                     disabled={loadingCheckout}
@@ -583,7 +597,7 @@ export default function Home() {
                   </button>
                 )}
 
-                {checkoutMethod === 'saved-card' && (
+                {checkoutMethod === "saved-card" && (
                   <div className="space-y-2">
                     {!hasCollectedCard ? (
                       <button
@@ -603,40 +617,27 @@ export default function Home() {
                       </button>
                     )}
                     {hasCollectedCard && (
-                      <p className="text-sm text-green-600 text-center">✓ Card collected successfully</p>
+                      <p className="text-sm text-green-600 text-center">
+                        ✓ Card collected successfully
+                      </p>
                     )}
                     {errorMessage && (
                       <div className="mt-3 p-3 bg-red-100 rounded-lg">
                         <p className="text-xs md:text-sm text-red-700">{errorMessage}</p>
                       </div>
                     )}
-                    {checkoutResponse && (
+                    {checkoutResponse && !checkoutResponse.instruction && (
                       <div className="mt-3 md:mt-4 p-3 md:p-4 bg-gray-100 rounded-lg">
-                        {checkoutResponse.instruction ? (
-                          <>
-                            <p className="text-xs md:text-sm font-semibold mb-2">{checkoutResponse.instruction}</p>
-                            <button 
-                              onClick={() => handleCardCollectionClick(checkoutResponse.modal_url)}
-                              className="inline-block px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
-                            >
-                              Open Card Collection
-                            </button>
-                            <p className="text-xs text-gray-600 mt-2">After clicking, wait 3 seconds to proceed to checkout</p>
-                          </>
-                        ) : (
-                          <>
-                            <p className="text-xs md:text-sm font-semibold mb-2">API Response:</p>
-                            <pre className="text-xs bg-white p-2 rounded overflow-x-auto max-h-64">
-                              {JSON.stringify(checkoutResponse, null, 2)}
-                            </pre>
-                          </>
-                        )}
+                        <p className="text-xs md:text-sm font-semibold mb-2">API Response:</p>
+                        <pre className="text-xs bg-white p-2 rounded overflow-x-auto max-h-64">
+                          {JSON.stringify(checkoutResponse, null, 2)}
+                        </pre>
                       </div>
                     )}
                   </div>
                 )}
 
-                {checkoutMethod === 'guest' && (
+                {checkoutMethod === "guest" && (
                   <div className="space-y-2">
                     {!hasCollectedCard ? (
                       <button
@@ -655,32 +656,22 @@ export default function Home() {
                         {loadingCheckout ? loadingMessage : "Step 2: Complete Guest Checkout"}
                       </button>
                     )}
+                    {hasCollectedCard && (
+                      <p className="text-sm text-green-600 text-center">
+                        ✓ Card collected successfully
+                      </p>
+                    )}
                     {errorMessage && (
                       <div className="mt-3 p-3 bg-red-100 rounded-lg">
                         <p className="text-xs md:text-sm text-red-700">{errorMessage}</p>
                       </div>
                     )}
-                    {checkoutResponse && (
+                    {checkoutResponse && !checkoutResponse.instruction && (
                       <div className="mt-3 md:mt-4 p-3 md:p-4 bg-gray-100 rounded-lg">
-                        {checkoutResponse.instruction ? (
-                          <>
-                            <p className="text-xs md:text-sm font-semibold mb-2">{checkoutResponse.instruction}</p>
-                            <button 
-                              onClick={() => handleCardCollectionClick(checkoutResponse.modal_url)}
-                              className="inline-block px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
-                            >
-                              Open Card Collection
-                            </button>
-                            <p className="text-xs text-gray-600 mt-2">After clicking, wait 3 seconds to proceed to checkout</p>
-                          </>
-                        ) : (
-                          <>
-                            <p className="text-xs md:text-sm font-semibold mb-2">API Response:</p>
-                            <pre className="text-xs bg-white p-2 rounded overflow-x-auto max-h-64">
-                              {JSON.stringify(checkoutResponse, null, 2)}
-                            </pre>
-                          </>
-                        )}
+                        <p className="text-xs md:text-sm font-semibold mb-2">API Response:</p>
+                        <pre className="text-xs bg-white p-2 rounded overflow-x-auto max-h-64">
+                          {JSON.stringify(checkoutResponse, null, 2)}
+                        </pre>
                       </div>
                     )}
                   </div>
@@ -690,6 +681,62 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Checkout Iframe Popup */}
+      {showCheckoutIframe && checkoutIframeUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Overlay */}
+          <div className="absolute inset-0 bg-black bg-opacity-50" onClick={handleCloseIframe} />
+
+          {/* Modal Container */}
+          <div className="relative w-full h-full md:w-[90%] md:h-[90%] max-w-6xl bg-white rounded-lg shadow-2xl flex flex-col">
+            {/* Header with Close Button */}
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="text-lg font-semibold">
+                {isCardCollection ? "Save Your Card" : "Complete Your Checkout"}
+              </h3>
+              <button
+                onClick={handleCloseIframe}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                aria-label="Close"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            {/* Iframe Container */}
+            <div className="flex-1 p-4 relative">
+              {/* Loading Spinner */}
+              {iframeLoading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-white z-10">
+                  <div className="flex flex-col items-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                    <p className="mt-4 text-gray-600">Loading checkout...</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Iframe */}
+              <iframe
+                src={checkoutIframeUrl}
+                className="w-full h-full rounded border"
+                title="Checkout"
+                allow="payment; camera; microphone; clipboard-read; clipboard-write"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-storage-access-by-user-activation allow-top-navigation-by-user-activation"
+                referrerPolicy="no-referrer-when-downgrade"
+                onLoad={() => setIframeLoading(false)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
