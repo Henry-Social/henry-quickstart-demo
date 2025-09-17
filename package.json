@@ -6,7 +6,11 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev --port 3000",
-    "lint": "eslint",
+    "lint": "biome lint .",
+    "lint:eslint": "eslint",
+    "format": "biome format --write .",
+    "check": "biome check --write .",
+    "ci": "biome ci .",
     "start": "next start --port 3000",
     "typecheck": "tsc --noEmit"
   },
@@ -16,6 +20,7 @@
     "react-dom": "18.3.1"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.2.4",
     "@types/node": "^20.12.9",
     "@types/react": "^18.3.2",
     "@types/react-dom": "^18.3.0",
