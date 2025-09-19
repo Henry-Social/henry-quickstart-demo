@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 
 interface Product {
   id: string;
@@ -43,6 +43,7 @@ interface ProductDetails {
 }
 
 type CheckoutMethod = "cart" | "saved-card" | "guest";
+type ViewMode = "desktop" | "mobile";
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -65,10 +66,32 @@ export default function Home() {
   );
   const [iframeLoading, setIframeLoading] = useState(true);
   const [isCardCollection, setIsCardCollection] = useState(false);
+  const [showProductModal, setShowProductModal] = useState(false);
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  const [viewMode, setViewMode] = useState<ViewMode>("desktop");
+  const [expandedVariants, setExpandedVariants] = useState<Record<string, boolean>>({});
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const placeholders = [
+    "Yoga mats with good grip",
+    "Nike shoes",
+    "Summer dresses",
+    "Wireless headphones",
+    "Organic skincare",
+    "Running gear"
+  ];
 
   // Generate user ID only on client side
   useEffect(() => {
     setUserId(`user_${Math.random().toString(36).substring(7)}`);
+  }, []);
+
+  // Rotate search placeholders
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPlaceholderIndex((prev) => (prev + 1) % placeholders.length);
+    }, 3000);
+    return () => clearInterval(interval);
   }, []);
 
   // Handle closing the iframe
@@ -82,6 +105,16 @@ export default function Home() {
     setCheckoutIframeUrl(null);
     setIframeLoading(true);
   }, [isCardCollection]);
+
+  // Close product modal
+  const handleCloseProductModal = () => {
+    setShowProductModal(false);
+    setSelectedProduct(null);
+    setProductDetails(null);
+    setShowCheckoutIframe(false);
+    setCheckoutIframeUrl(null);
+    setExpandedVariants({});
+  };
 
   // Listen for iframe completion messages
   useEffect(() => {
@@ -144,6 +177,7 @@ export default function Home() {
   const getProductDetails = async (product: Product) => {
     setLoading(true);
     setSelectedProduct(product);
+    setShowProductModal(true);
 
     try {
       const response = await fetch(
@@ -387,439 +421,477 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen p-4 md:p-8">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="mb-6 md:mb-8 text-center">
-          <h1 className="text-2xl md:text-4xl font-bold mb-2">
-            Henry Checkout Flows Demo
-          </h1>
-          <p className="text-sm md:text-base text-gray-600">
-            Showcase of different checkout methods with Henry API
-          </p>
-          <p className="text-xs md:text-sm text-gray-500 mt-2">
-            User ID: {userId}
-          </p>
-        </div>
+    <main className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            {/* Logo */}
+            <div className="flex items-center">
+              <h1 className="text-3xl font-bold text-blue-600">shop</h1>
+            </div>
 
-        {/* Checkout Method Tabs */}
-        <div className="mb-6 md:mb-8">
-          <div className="flex justify-center">
-            <div className="inline-flex flex-col sm:flex-row w-full sm:w-auto rounded-lg border border-gray-200 p-1">
-              <button
-                onClick={() => {
-                  setCheckoutMethod("cart");
-                  setHasCollectedCard(false);
-                  setCheckoutResponse(null);
-                  setErrorMessage(null);
-                }}
-                className={`px-3 py-2 text-sm md:text-base md:px-4 rounded-md transition ${
-                  checkoutMethod === "cart"
-                    ? "bg-blue-500 text-white"
-                    : "text-gray-700 hover:bg-gray-100"
-                }`}
-              >
-                Cart Checkout
-              </button>
-              <button
-                onClick={() => {
-                  setCheckoutMethod("saved-card");
-                  setHasCollectedCard(false);
-                  setCheckoutResponse(null);
-                  setErrorMessage(null);
-                }}
-                className={`px-3 py-2 text-sm md:text-base md:px-4 rounded-md transition ${
-                  checkoutMethod === "saved-card"
-                    ? "bg-blue-500 text-white"
-                    : "text-gray-700 hover:bg-gray-100"
-                }`}
-              >
-                Saved Card
-              </button>
-              <button
-                onClick={() => {
-                  setCheckoutMethod("guest");
-                  setHasCollectedCard(false);
-                  setCheckoutResponse(null);
-                  setErrorMessage(null);
-                }}
-                className={`px-3 py-2 text-sm md:text-base md:px-4 rounded-md transition ${
-                  checkoutMethod === "guest"
-                    ? "bg-blue-500 text-white"
-                    : "text-gray-700 hover:bg-gray-100"
-                }`}
-              >
-                Guest Checkout
-              </button>
+            {/* Checkout Options */}
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                <select
+                  value={checkoutMethod}
+                  onChange={(e) => {
+                    setCheckoutMethod(e.target.value as CheckoutMethod);
+                    setHasCollectedCard(false);
+                    setCheckoutResponse(null);
+                    setErrorMessage(null);
+                  }}
+                  className="appearance-none bg-gray-100 px-4 py-2 pr-8 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="cart">Cart Checkout</option>
+                  <option value="saved-card">Saved Card</option>
+                  <option value="guest">Guest Checkout</option>
+                </select>
+                <svg className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+              <div className="text-xs text-gray-500">
+                {userId}
+              </div>
             </div>
           </div>
-          <div className="text-center mt-4 text-xs md:text-sm text-gray-600 px-4">
-            {checkoutMethod === "cart" && (
-              <p>
-                Add products to cart, then checkout all at once
-                <br className="sm:hidden" /> (uses /cart/checkout)
-              </p>
-            )}
-            {checkoutMethod === "saved-card" && (
-              <p>
-                Save your card first, then checkout single products
-                <br className="sm:hidden" /> (uses /wallet/card-collect +
-                /checkout/single)
-              </p>
-            )}
-            {checkoutMethod === "guest" && (
-              <p>
-                Guest card collection, then checkout single products
-                <br className="sm:hidden" /> (uses /wallet/card-collect-guest +
-                /checkout/single)
-              </p>
-            )}
-          </div>
         </div>
+      </header>
 
-        {/* Search Bar */}
-        <div className="mb-6 md:mb-8">
-          <div className="flex flex-col sm:flex-row gap-2">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Circular Search Bar */}
+        <div className="mb-12 flex justify-center">
+          <div className="relative w-full max-w-2xl">
+            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
             <input
+              ref={searchInputRef}
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && searchProducts()}
-              placeholder="Search for products (e.g., nike shoes)"
-              className="flex-1 px-3 py-2 text-sm md:text-base md:px-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder={placeholders[placeholderIndex]}
+              className="w-full pl-12 pr-20 py-4 text-lg bg-white border-2 border-gray-200 rounded-full focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 shadow-lg"
             />
             <button
               onClick={searchProducts}
               disabled={loading}
-              className="px-4 py-2 text-sm md:text-base md:px-6 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 transition-colors duration-200"
             >
-              {loading ? "Searching..." : "Search"}
+              {loading ? (
+                <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              ) : (
+                "Search"
+              )}
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
-          {/* Products List */}
-          <div>
-            <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-4">
-              Search Results
-            </h2>
-            {products.length === 0 ? (
-              <div className="text-sm md:text-base text-gray-500 text-center py-6 md:py-8 border rounded-lg">
-                No products found. Try searching for something!
-              </div>
-            ) : (
-              <div className="space-y-3 md:space-y-4">
-                {products.map((product) => (
-                  <div
-                    key={product.id}
-                    onClick={() => getProductDetails(product)}
-                    className={`p-3 md:p-4 border rounded-lg cursor-pointer hover:shadow-lg transition ${
-                      selectedProduct?.id === product.id
-                        ? "border-blue-500 bg-blue-50"
-                        : ""
-                    }`}
-                  >
-                    <div className="flex gap-3 md:gap-4">
-                      {product.imageUrl && (
-                        <div className="relative w-16 h-16 md:w-20 md:h-20 flex-shrink-0">
-                          <Image
-                            src={product.imageUrl}
-                            alt={product.name}
-                            fill
-                            className="object-cover rounded"
-                            unoptimized
-                          />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-sm md:text-base line-clamp-2">
-                          {product.name}
-                        </h3>
-                        <p className="text-xl md:text-2xl font-bold text-green-600">
-                          ${product.price}
-                        </p>
-                        <p className="text-xs md:text-sm text-gray-500">
-                          from {product.source}
-                        </p>
-                      </div>
-                    </div>
+        {/* Products Grid */}
+        {loading ? (
+          <div className="product-grid">
+            {[...Array(15)].map((_, index) => (
+              <div
+                key={`skeleton-${index}`}
+                className="bg-white rounded-xl shadow-sm overflow-hidden"
+              >
+                <div className="skeleton aspect-square" />
+                <div className="p-4 space-y-3">
+                  <div className="skeleton h-3 w-16 rounded" />
+                  <div className="space-y-2">
+                    <div className="skeleton h-3 w-full rounded" />
+                    <div className="skeleton h-3 w-3/4 rounded" />
                   </div>
-                ))}
+                  <div className="pt-2">
+                    <div className="skeleton h-5 w-20 rounded" />
+                  </div>
+                </div>
               </div>
-            )}
+            ))}
           </div>
-
-          {/* Product Details */}
-          <div className="order-first lg:order-last">
-            <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-4">
-              Product Details
-            </h2>
-            {!selectedProduct ? (
-              <div className="text-sm md:text-base text-gray-500 text-center py-6 md:py-8 border rounded-lg">
-                Select a product to view details
-              </div>
-            ) : loading ? (
-              <div className="text-center py-6 md:py-8 border rounded-lg">
-                <div className="inline-block animate-spin rounded-full h-6 w-6 md:h-8 md:w-8 border-b-2 border-gray-900"></div>
-                <p className="mt-2 text-sm md:text-base text-gray-600">
-                  Loading details...
-                </p>
-              </div>
-            ) : loadingCheckout ? (
-              <div className="text-center py-6 md:py-8 border rounded-lg">
-                <div className="inline-block animate-spin rounded-full h-6 w-6 md:h-8 md:w-8 border-b-2 border-gray-900"></div>
-                <p className="mt-2 text-sm md:text-base text-gray-600">
-                  Fetching checkout link...
-                </p>
-              </div>
-            ) : productDetails ? (
-              <div className="border rounded-lg p-4 md:p-6">
-                <h3 className="text-xl md:text-2xl font-bold mb-2">
-                  {productDetails.productResults.title}
-                </h3>
-                <p className="text-sm md:text-base text-gray-600 mb-3 md:mb-4">
-                  by {productDetails.productResults.brand}
-                </p>
-
-                {/* Product Image */}
-                {(productDetails.productResults.image ||
-                  (productDetails.relatedSearches &&
-                    productDetails.relatedSearches[0]?.image)) && (
-                  <div className="relative w-full aspect-square mb-3 md:mb-4">
+        ) : products.length === 0 ? (
+          <div className="text-gray-500 text-center py-16">
+            <svg className="mx-auto h-24 w-24 text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+            <p className="text-lg font-medium">No products found</p>
+            <p className="text-sm mt-2">Try searching for something!</p>
+          </div>
+        ) : (
+          <div className="product-grid">
+            {products.map((product) => (
+              <div
+                key={product.id}
+                onClick={() => getProductDetails(product)}
+                className="bg-white rounded-lg shadow-sm hover:shadow-xl transition-all duration-200 cursor-pointer overflow-hidden group"
+              >
+                {product.imageUrl && (
+                  <div className="relative aspect-square overflow-hidden bg-gray-100">
                     <Image
-                      src={
-                        productDetails.productResults.image ||
-                        productDetails.relatedSearches[0].image
-                      }
-                      alt={productDetails.productResults.title}
+                      src={product.imageUrl}
+                      alt={product.name}
                       fill
-                      className="object-cover rounded"
+                      className="object-cover group-hover:scale-110 transition-transform duration-300"
                       unoptimized
                     />
                   </div>
                 )}
-
-                {/* Rating */}
-                <div className="flex items-center gap-2 mb-3 md:mb-4">
-                  <div className="flex text-sm md:text-base">
-                    {[...Array(5)].map((_, i) => (
-                      <span
-                        key={i}
-                        className={
-                          i < Math.floor(productDetails.productResults.rating)
-                            ? "text-yellow-500"
-                            : "text-gray-300"
-                        }
-                      >
-                        ★
-                      </span>
-                    ))}
+                <div className="p-4 flex flex-col h-32">
+                  <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide">
+                    {product.source}
+                  </p>
+                  <h3 className="text-sm text-gray-900 line-clamp-2 mb-auto">
+                    {product.name}
+                  </h3>
+                  <div className="pt-2">
+                    <p className="text-base font-bold text-black">
+                      ${product.price.toFixed(2)}
+                    </p>
                   </div>
-                  <span className="text-xs md:text-sm text-gray-600">
-                    {productDetails.productResults.rating}/5 (
-                    {productDetails.productResults.reviews} reviews)
-                  </span>
                 </div>
-
-                {/* Variants */}
-                {productDetails.productResults.variants.map((variant) => (
-                  <div key={variant.title} className="mb-3 md:mb-4">
-                    <h4 className="font-medium text-sm md:text-base mb-2">
-                      {variant.title}:
-                    </h4>
-                    <div className="flex flex-wrap gap-1.5 md:gap-2">
-                      {variant.items.map((item) => (
-                        <span
-                          key={item.name}
-                          className={`px-2 py-1 md:px-3 text-xs md:text-sm border rounded ${
-                            item.selected
-                              ? "bg-blue-500 text-white"
-                              : "bg-gray-100"
-                          } ${!item.available ? "opacity-50 line-through" : ""}`}
-                        >
-                          {item.name}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-
-                {/* Checkout Buttons based on selected method */}
-                {checkoutMethod === "cart" && (
-                  <button
-                    onClick={buyNow}
-                    disabled={loadingCheckout}
-                    className="w-full py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 disabled:opacity-50"
-                  >
-                    {loadingCheckout
-                      ? loadingMessage
-                      : "Add to Cart & Checkout"}
-                  </button>
-                )}
-
-                {checkoutMethod === "saved-card" && (
-                  <div className="space-y-2">
-                    {!hasCollectedCard ? (
-                      <button
-                        onClick={collectCard}
-                        disabled={loadingCheckout}
-                        className="w-full py-3 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 disabled:opacity-50"
-                      >
-                        {loadingCheckout
-                          ? loadingMessage
-                          : "Step 1: Save Your Card"}
-                      </button>
-                    ) : (
-                      <button
-                        onClick={singleCheckout}
-                        disabled={loadingCheckout}
-                        className="w-full py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 disabled:opacity-50"
-                      >
-                        {loadingCheckout
-                          ? loadingMessage
-                          : "Step 2: Checkout with Saved Card"}
-                      </button>
-                    )}
-                    {hasCollectedCard && (
-                      <p className="text-sm text-green-600 text-center">
-                        ✓ Card collected successfully
-                      </p>
-                    )}
-                    {errorMessage && (
-                      <div className="mt-3 p-3 bg-red-100 rounded-lg">
-                        <p className="text-xs md:text-sm text-red-700">
-                          {errorMessage}
-                        </p>
-                      </div>
-                    )}
-                    {checkoutResponse && !checkoutResponse.instruction && (
-                      <div className="mt-3 md:mt-4 p-3 md:p-4 bg-gray-100 rounded-lg">
-                        <p className="text-xs md:text-sm font-semibold mb-2">
-                          API Response:
-                        </p>
-                        <pre className="text-xs bg-white p-2 rounded overflow-x-auto max-h-64">
-                          {JSON.stringify(checkoutResponse, null, 2)}
-                        </pre>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {checkoutMethod === "guest" && (
-                  <div className="space-y-2">
-                    {!hasCollectedCard ? (
-                      <button
-                        onClick={collectGuestCard}
-                        disabled={loadingCheckout}
-                        className="w-full py-3 bg-purple-500 text-white rounded-lg font-semibold hover:bg-purple-600 disabled:opacity-50"
-                      >
-                        {loadingCheckout
-                          ? loadingMessage
-                          : "Step 1: Guest Card Collection"}
-                      </button>
-                    ) : (
-                      <button
-                        onClick={singleCheckout}
-                        disabled={loadingCheckout}
-                        className="w-full py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 disabled:opacity-50"
-                      >
-                        {loadingCheckout
-                          ? loadingMessage
-                          : "Step 2: Complete Guest Checkout"}
-                      </button>
-                    )}
-                    {hasCollectedCard && (
-                      <p className="text-sm text-green-600 text-center">
-                        ✓ Card collected successfully
-                      </p>
-                    )}
-                    {errorMessage && (
-                      <div className="mt-3 p-3 bg-red-100 rounded-lg">
-                        <p className="text-xs md:text-sm text-red-700">
-                          {errorMessage}
-                        </p>
-                      </div>
-                    )}
-                    {checkoutResponse && !checkoutResponse.instruction && (
-                      <div className="mt-3 md:mt-4 p-3 md:p-4 bg-gray-100 rounded-lg">
-                        <p className="text-xs md:text-sm font-semibold mb-2">
-                          API Response:
-                        </p>
-                        <pre className="text-xs bg-white p-2 rounded overflow-x-auto max-h-64">
-                          {JSON.stringify(checkoutResponse, null, 2)}
-                        </pre>
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
-            ) : null}
+            ))}
           </div>
-        </div>
+        )}
       </div>
 
-      {/* Checkout Iframe Popup */}
-      {showCheckoutIframe && checkoutIframeUrl && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Product Details Modal */}
+      {showProductModal && selectedProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           {/* Overlay */}
           <div
-            className="absolute inset-0 bg-black bg-opacity-50"
-            onClick={handleCloseIframe}
+            className="absolute inset-0 bg-black bg-opacity-50 modal-overlay"
+            onClick={() => !showCheckoutIframe && handleCloseProductModal()}
           />
 
-          {/* Modal Container */}
-          <div className="relative w-full h-full md:w-[90%] md:h-[90%] max-w-6xl bg-white rounded-lg shadow-2xl flex flex-col">
-            {/* Header with Close Button */}
-            <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="text-lg font-semibold">
-                {isCardCollection ? "Save Your Card" : "Complete Your Checkout"}
-              </h3>
-              <button
-                onClick={handleCloseIframe}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                aria-label="Close"
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-
-            {/* Iframe Container */}
-            <div className="flex-1 p-4 relative">
-              {/* Loading Spinner */}
-              {iframeLoading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-white z-10">
-                  <div className="flex flex-col items-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-                    <p className="mt-4 text-gray-600">Loading checkout...</p>
+          {/* Modal Content */}
+          <div className={`relative bg-white rounded-2xl shadow-2xl modal-content overflow-hidden transition-all duration-300 ${
+            viewMode === "desktop"
+              ? "w-[min(1512px,90vw)] h-[min(982px,90vh)]"
+              : "w-[430px] h-[932px]"
+          }`}>
+            {!showCheckoutIframe ? (
+              <>
+                {/* Modal Header */}
+                <div className="flex items-center justify-between p-4 border-b">
+                  <h2 className="text-xl font-bold">Product Details</h2>
+                  <div className="flex items-center gap-2">
+                    {/* View Mode Toggle */}
+                    <div className="flex bg-gray-100 rounded-lg p-1">
+                      <button
+                        onClick={() => setViewMode("desktop")}
+                        className={`p-2 rounded transition-colors ${
+                          viewMode === "desktop"
+                            ? "bg-white shadow-sm"
+                            : "hover:bg-gray-200"
+                        }`}
+                        aria-label="Desktop view"
+                        title="Desktop view"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => setViewMode("mobile")}
+                        className={`p-2 rounded transition-colors ${
+                          viewMode === "mobile"
+                            ? "bg-white shadow-sm"
+                            : "hover:bg-gray-200"
+                        }`}
+                        aria-label="Mobile view"
+                        title="Mobile view"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                      </button>
+                    </div>
+                    <button
+                      onClick={handleCloseProductModal}
+                      className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                      aria-label="Close"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
-              )}
 
-              {/* Iframe */}
-              <iframe
-                src={checkoutIframeUrl}
-                className="w-full h-full rounded border"
-                title="Checkout"
-                allow="payment"
-                onLoad={() => setIframeLoading(false)}
-              />
-            </div>
+                {/* Modal Body */}
+                <div className="p-6 overflow-y-auto flex flex-col" style={{ maxHeight: 'calc(85vh - 80px)' }}>
+                  {loading ? (
+                    <div className="flex-1 flex justify-center items-center min-h-[400px]">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                    </div>
+                  ) : productDetails ? (
+                    <div className="grid md:grid-cols-2 gap-6">
+                      {/* Product Image */}
+                      <div className="space-y-4">
+                        {(productDetails.productResults.image || selectedProduct.imageUrl) && (
+                          <div className="relative aspect-square rounded-lg overflow-hidden bg-gray-100">
+                            <Image
+                              src={productDetails.productResults.image || selectedProduct.imageUrl}
+                              alt={productDetails.productResults.title}
+                              fill
+                              className="object-cover"
+                              unoptimized
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Product Info */}
+                      <div className="space-y-4">
+                        <div>
+                          <h3 className="text-2xl font-bold mb-2">
+                            {productDetails.productResults.title}
+                          </h3>
+                          <p className="text-gray-600">
+                            by {productDetails.productResults.brand}
+                          </p>
+                        </div>
+
+                        {/* Price */}
+                        <div className="text-3xl font-bold text-blue-600">
+                          ${selectedProduct.price}
+                        </div>
+
+                        {/* Rating */}
+                        <div className="flex items-center gap-2">
+                          <div className="flex">
+                            {[...Array(5)].map((_, i) => (
+                              <span
+                                key={i}
+                                className={i < Math.floor(productDetails.productResults.rating)
+                                  ? "text-yellow-500"
+                                  : "text-gray-300"}
+                              >
+                                ★
+                              </span>
+                            ))}
+                          </div>
+                          <span className="text-sm text-gray-600">
+                            {productDetails.productResults.rating}/5 ({productDetails.productResults.reviews} reviews)
+                          </span>
+                        </div>
+
+                        {/* Variants */}
+                        {productDetails.productResults.variants.map((variant) => {
+                          const isExpanded = expandedVariants[variant.title];
+                          const itemsToShow = isExpanded ? variant.items : variant.items.slice(0, 8);
+                          const hasMore = variant.items.length > 8;
+
+                          return (
+                            <div key={variant.title}>
+                              <h4 className="font-medium mb-2">{variant.title}:</h4>
+                              <div className="relative">
+                                <div className={`flex flex-wrap gap-2 ${
+                                  !isExpanded && hasMore ? 'max-h-24 overflow-hidden' : ''
+                                }`}>
+                                  {itemsToShow.map((item) => (
+                                    <button
+                                      key={item.name}
+                                      disabled={!item.available}
+                                      className={`px-4 py-2 border rounded-lg transition-colors ${
+                                        item.selected
+                                          ? "bg-blue-600 text-white border-blue-600"
+                                          : item.available
+                                          ? "bg-white hover:bg-gray-50 border-gray-300"
+                                          : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                                      }`}
+                                    >
+                                      {item.name}
+                                    </button>
+                                  ))}
+                                </div>
+                                {hasMore && (
+                                  <button
+                                    onClick={() => setExpandedVariants(prev => ({
+                                      ...prev,
+                                      [variant.title]: !prev[variant.title]
+                                    }))}
+                                    className="mt-2 text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                                  >
+                                    <span>{isExpanded ? 'Show less' : `Show ${variant.items.length - 8} more`}</span>
+                                    <svg
+                                      className={`w-4 h-4 transition-transform ${
+                                        isExpanded ? 'rotate-180' : ''
+                                      }`}
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+
+                        {/* Checkout Buttons */}
+                        <div className="pt-4 space-y-3">
+                          {checkoutMethod === "cart" && (
+                            <button
+                              onClick={buyNow}
+                              disabled={loadingCheckout}
+                              className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                            >
+                              {loadingCheckout ? loadingMessage : "Add to Cart & Buy"}
+                            </button>
+                          )}
+
+                          {checkoutMethod === "saved-card" && (
+                            <>
+                              {!hasCollectedCard ? (
+                                <button
+                                  onClick={collectCard}
+                                  disabled={loadingCheckout}
+                                  className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                                >
+                                  {loadingCheckout ? loadingMessage : "Save Card First"}
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={singleCheckout}
+                                  disabled={loadingCheckout}
+                                  className="w-full py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 transition-colors"
+                                >
+                                  {loadingCheckout ? loadingMessage : "Buy with Saved Card"}
+                                </button>
+                              )}
+                              {hasCollectedCard && (
+                                <p className="text-sm text-green-600 text-center">✓ Card saved successfully</p>
+                              )}
+                            </>
+                          )}
+
+                          {checkoutMethod === "guest" && (
+                            <>
+                              {!hasCollectedCard ? (
+                                <button
+                                  onClick={collectGuestCard}
+                                  disabled={loadingCheckout}
+                                  className="w-full py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 disabled:opacity-50 transition-colors"
+                                >
+                                  {loadingCheckout ? loadingMessage : "Guest Card Collection"}
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={singleCheckout}
+                                  disabled={loadingCheckout}
+                                  className="w-full py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 transition-colors"
+                                >
+                                  {loadingCheckout ? loadingMessage : "Complete Guest Checkout"}
+                                </button>
+                              )}
+                              {hasCollectedCard && (
+                                <p className="text-sm text-green-600 text-center">✓ Card collected successfully</p>
+                              )}
+                            </>
+                          )}
+
+                          {errorMessage && (
+                            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                              <p className="text-sm text-red-700">{errorMessage}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 text-gray-500">
+                      Unable to load product details
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              /* Checkout Iframe within Modal */
+              <div className="relative h-full flex flex-col">
+                <div className="flex items-center justify-between p-4 border-b bg-gray-50 flex-shrink-0">
+                  <h3 className="text-lg font-semibold">
+                    {isCardCollection ? "Save Your Card" : "Complete Your Purchase"}
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    {/* View Mode Toggle */}
+                    <div className="flex bg-gray-100 rounded-lg p-1">
+                      <button
+                        onClick={() => setViewMode("desktop")}
+                        className={`p-2 rounded transition-colors ${
+                          viewMode === "desktop"
+                            ? "bg-white shadow-sm"
+                            : "hover:bg-gray-200"
+                        }`}
+                        aria-label="Desktop view"
+                        title="Desktop view"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => setViewMode("mobile")}
+                        className={`p-2 rounded transition-colors ${
+                          viewMode === "mobile"
+                            ? "bg-white shadow-sm"
+                            : "hover:bg-gray-200"
+                        }`}
+                        aria-label="Mobile view"
+                        title="Mobile view"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                      </button>
+                    </div>
+                    <button
+                      onClick={handleCloseIframe}
+                      className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+                      aria-label="Close"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex-1 relative">
+                  {iframeLoading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-white z-10">
+                      <div className="flex flex-col items-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                        <p className="mt-4 text-gray-600">Loading checkout...</p>
+                      </div>
+                    </div>
+                  )}
+
+                  <iframe
+                    src={checkoutIframeUrl}
+                    className="w-full h-full"
+                    title="Checkout"
+                    allow="payment"
+                    onLoad={() => setIframeLoading(false)}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
+
     </main>
   );
 }

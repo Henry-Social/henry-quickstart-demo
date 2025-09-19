@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
 
     const searchBody = {
       ...body,
-      limit: 10,
+      limit: 100,
     };
 
     const response = await fetch(`${HENRY_API_URL}/products/search`, {
