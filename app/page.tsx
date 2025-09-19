@@ -49,9 +49,7 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [productDetails, setProductDetails] = useState<ProductDetails | null>(
-    null,
-  );
+  const [productDetails, setProductDetails] = useState<ProductDetails | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingCheckout, setLoadingCheckout] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("Processing...");
@@ -61,9 +59,7 @@ export default function Home() {
   const [checkoutResponse, setCheckoutResponse] = useState<any>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showCheckoutIframe, setShowCheckoutIframe] = useState(false);
-  const [checkoutIframeUrl, setCheckoutIframeUrl] = useState<string | null>(
-    null,
-  );
+  const [checkoutIframeUrl, setCheckoutIframeUrl] = useState<string | null>(null);
   const [iframeLoading, setIframeLoading] = useState(true);
   const [isCardCollection, setIsCardCollection] = useState(false);
   const [showProductModal, setShowProductModal] = useState(false);
@@ -78,7 +74,7 @@ export default function Home() {
     "Summer dresses",
     "Wireless headphones",
     "Organic skincare",
-    "Running gear"
+    "Running gear",
   ];
 
   // Generate user ID only on client side
@@ -180,9 +176,7 @@ export default function Home() {
     setShowProductModal(true);
 
     try {
-      const response = await fetch(
-        `/api/henry/products/details?productId=${product.id}`,
-      );
+      const response = await fetch(`/api/henry/products/details?productId=${product.id}`);
       const result = await response.json();
 
       if (result.success && result.data) {
@@ -259,9 +253,7 @@ export default function Home() {
         setIframeLoading(true);
         setIsCardCollection(true);
       } else {
-        setErrorMessage(
-          result.message || "Failed to initiate guest card collection",
-        );
+        setErrorMessage(result.message || "Failed to initiate guest card collection");
       }
     } catch (error) {
       console.error("Guest card collection error:", error);
@@ -312,8 +304,7 @@ export default function Home() {
             price: selectedProduct.price.toString(),
             quantity: 1,
             productLink:
-              productDetails.productResults.stores[0]?.link ||
-              selectedProduct.productLink,
+              productDetails.productResults.stores[0]?.link || selectedProduct.productLink,
             productImageLink: selectedProduct.imageUrl,
             metadata: {
               Size: selectedSize || "",
@@ -328,9 +319,7 @@ export default function Home() {
       if (checkoutResult.success) {
         setCheckoutResponse(checkoutResult);
       } else {
-        setErrorMessage(
-          checkoutResult.message || "Failed to complete checkout",
-        );
+        setErrorMessage(checkoutResult.message || "Failed to complete checkout");
         setCheckoutResponse(checkoutResult);
       }
     } catch (error) {
@@ -373,8 +362,7 @@ export default function Home() {
               price: selectedProduct.price.toString(),
               quantity: 1,
               productLink:
-                productDetails.productResults.stores[0]?.link ||
-                selectedProduct.productLink,
+                productDetails.productResults.stores[0]?.link || selectedProduct.productLink,
               productImageLink: selectedProduct.imageUrl,
               metadata: {
                 Size: selectedSize,
@@ -428,7 +416,7 @@ export default function Home() {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <div className="flex items-center">
-              <h1 className="text-3xl font-bold text-blue-600">shop</h1>
+              <h1 className="text-3xl font-bold text-blue-600">Henry Labs</h1>
             </div>
 
             {/* Checkout Options */}
@@ -448,13 +436,21 @@ export default function Home() {
                   <option value="saved-card">Saved Card</option>
                   <option value="guest">Guest Checkout</option>
                 </select>
-                <svg className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                <svg
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
                 </svg>
               </div>
-              <div className="text-xs text-gray-500">
-                {userId}
-              </div>
+              <div className="text-xs text-gray-500">{userId}</div>
             </div>
           </div>
         </div>
@@ -465,8 +461,18 @@ export default function Home() {
         <div className="mb-12 flex justify-center">
           <div className="relative w-full max-w-2xl">
             <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              <svg
+                className="w-5 h-5 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
               </svg>
             </div>
             <input
@@ -485,8 +491,19 @@ export default function Home() {
             >
               {loading ? (
                 <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
                 </svg>
               ) : (
                 "Search"
@@ -519,8 +536,18 @@ export default function Home() {
           </div>
         ) : products.length === 0 ? (
           <div className="text-gray-500 text-center py-16">
-            <svg className="mx-auto h-24 w-24 text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            <svg
+              className="mx-auto h-24 w-24 text-gray-300 mb-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1}
+                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+              />
             </svg>
             <p className="text-lg font-medium">No products found</p>
             <p className="text-sm mt-2">Try searching for something!</p>
@@ -548,13 +575,9 @@ export default function Home() {
                   <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide">
                     {product.source}
                   </p>
-                  <h3 className="text-sm text-gray-900 line-clamp-2 mb-auto">
-                    {product.name}
-                  </h3>
+                  <h3 className="text-sm text-gray-900 line-clamp-2 mb-auto">{product.name}</h3>
                   <div className="pt-2">
-                    <p className="text-base font-bold text-black">
-                      ${product.price.toFixed(2)}
-                    </p>
+                    <p className="text-base font-bold text-black">${product.price.toFixed(2)}</p>
                   </div>
                 </div>
               </div>
@@ -573,11 +596,13 @@ export default function Home() {
           />
 
           {/* Modal Content */}
-          <div className={`relative bg-white rounded-2xl shadow-2xl modal-content overflow-hidden transition-all duration-300 ${
-            viewMode === "desktop"
-              ? "w-[min(1512px,90vw)] h-[min(982px,90vh)]"
-              : "w-[430px] h-[932px]"
-          }`}>
+          <div
+            className={`relative bg-white rounded-2xl shadow-2xl modal-content overflow-hidden transition-all duration-300 ${
+              viewMode === "desktop"
+                ? "w-[min(1512px,90vw)] h-[min(982px,90vh)]"
+                : "w-[430px] h-[932px]"
+            }`}
+          >
             {!showCheckoutIframe ? (
               <>
                 {/* Modal Header */}
@@ -589,29 +614,45 @@ export default function Home() {
                       <button
                         onClick={() => setViewMode("desktop")}
                         className={`p-2 rounded transition-colors ${
-                          viewMode === "desktop"
-                            ? "bg-white shadow-sm"
-                            : "hover:bg-gray-200"
+                          viewMode === "desktop" ? "bg-white shadow-sm" : "hover:bg-gray-200"
                         }`}
                         aria-label="Desktop view"
                         title="Desktop view"
                       >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                          />
                         </svg>
                       </button>
                       <button
                         onClick={() => setViewMode("mobile")}
                         className={`p-2 rounded transition-colors ${
-                          viewMode === "mobile"
-                            ? "bg-white shadow-sm"
-                            : "hover:bg-gray-200"
+                          viewMode === "mobile" ? "bg-white shadow-sm" : "hover:bg-gray-200"
                         }`}
                         aria-label="Mobile view"
                         title="Mobile view"
                       >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"
+                          />
                         </svg>
                       </button>
                     </div>
@@ -620,15 +661,28 @@ export default function Home() {
                       className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                       aria-label="Close"
                     >
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      <svg
+                        className="w-6 h-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
                       </svg>
                     </button>
                   </div>
                 </div>
 
                 {/* Modal Body */}
-                <div className="p-6 overflow-y-auto flex flex-col" style={{ maxHeight: 'calc(85vh - 80px)' }}>
+                <div
+                  className="p-6 overflow-y-auto flex flex-col"
+                  style={{ maxHeight: "calc(85vh - 80px)" }}
+                >
                   {loading ? (
                     <div className="flex-1 flex justify-center items-center min-h-[400px]">
                       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -656,9 +710,7 @@ export default function Home() {
                           <h3 className="text-2xl font-bold mb-2">
                             {productDetails.productResults.title}
                           </h3>
-                          <p className="text-gray-600">
-                            by {productDetails.productResults.brand}
-                          </p>
+                          <p className="text-gray-600">by {productDetails.productResults.brand}</p>
                         </div>
 
                         {/* Price */}
@@ -672,32 +724,39 @@ export default function Home() {
                             {[...Array(5)].map((_, i) => (
                               <span
                                 key={i}
-                                className={i < Math.floor(productDetails.productResults.rating)
-                                  ? "text-yellow-500"
-                                  : "text-gray-300"}
+                                className={
+                                  i < Math.floor(productDetails.productResults.rating)
+                                    ? "text-yellow-500"
+                                    : "text-gray-300"
+                                }
                               >
                                 ★
                               </span>
                             ))}
                           </div>
                           <span className="text-sm text-gray-600">
-                            {productDetails.productResults.rating}/5 ({productDetails.productResults.reviews} reviews)
+                            {productDetails.productResults.rating}/5 (
+                            {productDetails.productResults.reviews} reviews)
                           </span>
                         </div>
 
                         {/* Variants */}
                         {productDetails.productResults.variants.map((variant) => {
                           const isExpanded = expandedVariants[variant.title];
-                          const itemsToShow = isExpanded ? variant.items : variant.items.slice(0, 8);
+                          const itemsToShow = isExpanded
+                            ? variant.items
+                            : variant.items.slice(0, 8);
                           const hasMore = variant.items.length > 8;
 
                           return (
                             <div key={variant.title}>
                               <h4 className="font-medium mb-2">{variant.title}:</h4>
                               <div className="relative">
-                                <div className={`flex flex-wrap gap-2 ${
-                                  !isExpanded && hasMore ? 'max-h-24 overflow-hidden' : ''
-                                }`}>
+                                <div
+                                  className={`flex flex-wrap gap-2 ${
+                                    !isExpanded && hasMore ? "max-h-24 overflow-hidden" : ""
+                                  }`}
+                                >
                                   {itemsToShow.map((item) => (
                                     <button
                                       key={item.name}
@@ -706,8 +765,8 @@ export default function Home() {
                                         item.selected
                                           ? "bg-blue-600 text-white border-blue-600"
                                           : item.available
-                                          ? "bg-white hover:bg-gray-50 border-gray-300"
-                                          : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                                            ? "bg-white hover:bg-gray-50 border-gray-300"
+                                            : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
                                       }`}
                                     >
                                       {item.name}
@@ -716,22 +775,33 @@ export default function Home() {
                                 </div>
                                 {hasMore && (
                                   <button
-                                    onClick={() => setExpandedVariants(prev => ({
-                                      ...prev,
-                                      [variant.title]: !prev[variant.title]
-                                    }))}
+                                    onClick={() =>
+                                      setExpandedVariants((prev) => ({
+                                        ...prev,
+                                        [variant.title]: !prev[variant.title],
+                                      }))
+                                    }
                                     className="mt-2 text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
                                   >
-                                    <span>{isExpanded ? 'Show less' : `Show ${variant.items.length - 8} more`}</span>
+                                    <span>
+                                      {isExpanded
+                                        ? "Show less"
+                                        : `Show ${variant.items.length - 8} more`}
+                                    </span>
                                     <svg
                                       className={`w-4 h-4 transition-transform ${
-                                        isExpanded ? 'rotate-180' : ''
+                                        isExpanded ? "rotate-180" : ""
                                       }`}
                                       fill="none"
                                       stroke="currentColor"
                                       viewBox="0 0 24 24"
                                     >
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M19 9l-7 7-7-7"
+                                      />
                                     </svg>
                                   </button>
                                 )}
@@ -772,7 +842,9 @@ export default function Home() {
                                 </button>
                               )}
                               {hasCollectedCard && (
-                                <p className="text-sm text-green-600 text-center">✓ Card saved successfully</p>
+                                <p className="text-sm text-green-600 text-center">
+                                  ✓ Card saved successfully
+                                </p>
                               )}
                             </>
                           )}
@@ -797,7 +869,9 @@ export default function Home() {
                                 </button>
                               )}
                               {hasCollectedCard && (
-                                <p className="text-sm text-green-600 text-center">✓ Card collected successfully</p>
+                                <p className="text-sm text-green-600 text-center">
+                                  ✓ Card collected successfully
+                                </p>
                               )}
                             </>
                           )}
@@ -830,29 +904,45 @@ export default function Home() {
                       <button
                         onClick={() => setViewMode("desktop")}
                         className={`p-2 rounded transition-colors ${
-                          viewMode === "desktop"
-                            ? "bg-white shadow-sm"
-                            : "hover:bg-gray-200"
+                          viewMode === "desktop" ? "bg-white shadow-sm" : "hover:bg-gray-200"
                         }`}
                         aria-label="Desktop view"
                         title="Desktop view"
                       >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                          />
                         </svg>
                       </button>
                       <button
                         onClick={() => setViewMode("mobile")}
                         className={`p-2 rounded transition-colors ${
-                          viewMode === "mobile"
-                            ? "bg-white shadow-sm"
-                            : "hover:bg-gray-200"
+                          viewMode === "mobile" ? "bg-white shadow-sm" : "hover:bg-gray-200"
                         }`}
                         aria-label="Mobile view"
                         title="Mobile view"
                       >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"
+                          />
                         </svg>
                       </button>
                     </div>
@@ -861,8 +951,18 @@ export default function Home() {
                       className="p-2 hover:bg-gray-200 rounded-full transition-colors"
                       aria-label="Close"
                     >
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      <svg
+                        className="w-6 h-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
                       </svg>
                     </button>
                   </div>
@@ -879,7 +979,7 @@ export default function Home() {
                   )}
 
                   <iframe
-                    src={checkoutIframeUrl}
+                    src={checkoutIframeUrl ?? undefined}
                     className="w-full h-full"
                     title="Checkout"
                     allow="payment"
@@ -891,7 +991,6 @@ export default function Home() {
           </div>
         </div>
       )}
-
     </main>
   );
 }

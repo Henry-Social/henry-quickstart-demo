@@ -3,11 +3,25 @@
 @tailwind utilities;
 
 @keyframes rotate-text {
-  0%, 20% { content: "Yoga mats with good grip"; }
-  25%, 45% { content: "Nike shoes"; }
-  50%, 70% { content: "Summer dresses"; }
-  75%, 95% { content: "Wireless headphones"; }
-  100% { content: "Yoga mats with good grip"; }
+  0%,
+  20% {
+    content: "Yoga mats with good grip";
+  }
+  25%,
+  45% {
+    content: "Nike shoes";
+  }
+  50%,
+  70% {
+    content: "Summer dresses";
+  }
+  75%,
+  95% {
+    content: "Wireless headphones";
+  }
+  100% {
+    content: "Yoga mats with good grip";
+  }
 }
 
 .search-placeholder::before {
@@ -51,8 +65,12 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
@@ -77,11 +95,6 @@
 
 .skeleton {
   animation: shimmer 2s infinite linear;
-  background: linear-gradient(
-    90deg,
-    #f0f0f0 0px,
-    #f8f8f8 40px,
-    #f0f0f0 80px
-  );
+  background: linear-gradient(90deg, #f0f0f0 0px, #f8f8f8 40px, #f0f0f0 80px);
   background-size: 1000px 100%;
 }
