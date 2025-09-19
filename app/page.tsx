@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 interface Product {
   id: string;
@@ -48,7 +48,9 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [productDetails, setProductDetails] = useState<ProductDetails | null>(null);
+  const [productDetails, setProductDetails] = useState<ProductDetails | null>(
+    null,
+  );
   const [loading, setLoading] = useState(false);
   const [loadingCheckout, setLoadingCheckout] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("Processing...");
@@ -58,7 +60,9 @@ export default function Home() {
   const [checkoutResponse, setCheckoutResponse] = useState<any>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showCheckoutIframe, setShowCheckoutIframe] = useState(false);
-  const [checkoutIframeUrl, setCheckoutIframeUrl] = useState<string | null>(null);
+  const [checkoutIframeUrl, setCheckoutIframeUrl] = useState<string | null>(
+    null,
+  );
   const [iframeLoading, setIframeLoading] = useState(true);
   const [isCardCollection, setIsCardCollection] = useState(false);
 
@@ -68,7 +72,7 @@ export default function Home() {
   }, []);
 
   // Handle closing the iframe
-  const handleCloseIframe = () => {
+  const handleCloseIframe = useCallback(() => {
     // If this was a card collection flow, mark card as collected
     if (isCardCollection) {
       setHasCollectedCard(true);
@@ -77,7 +81,31 @@ export default function Home() {
     setShowCheckoutIframe(false);
     setCheckoutIframeUrl(null);
     setIframeLoading(true);
-  };
+  }, [isCardCollection]);
+
+  // Listen for iframe completion messages
+  useEffect(() => {
+    if (!showCheckoutIframe) return;
+
+    const handleMessage = (event: MessageEvent) => {
+      // Check if message is from iframe with completion status
+      if (event.data) {
+        const { status, action } = event.data;
+
+        // Check for completion status
+        if (status === "complete" || action === "orderCompleted") {
+          handleCloseIframe();
+        }
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+
+    // Cleanup listener
+    return () => {
+      window.removeEventListener("message", handleMessage);
+    };
+  }, [showCheckoutIframe, handleCloseIframe]);
 
   // Search for products
   const searchProducts = async () => {
@@ -118,7 +146,9 @@ export default function Home() {
     setSelectedProduct(product);
 
     try {
-      const response = await fetch(`/api/henry/products/details?productId=${product.id}`);
+      const response = await fetch(
+        `/api/henry/products/details?productId=${product.id}`,
+      );
       const result = await response.json();
 
       if (result.success && result.data) {
@@ -195,7 +225,9 @@ export default function Home() {
         setIframeLoading(true);
         setIsCardCollection(true);
       } else {
-        setErrorMessage(result.message || "Failed to initiate guest card collection");
+        setErrorMessage(
+          result.message || "Failed to initiate guest card collection",
+        );
       }
     } catch (error) {
       console.error("Guest card collection error:", error);
@@ -246,7 +278,8 @@ export default function Home() {
             price: selectedProduct.price.toString(),
             quantity: 1,
             productLink:
-              productDetails.productResults.stores[0]?.link || selectedProduct.productLink,
+              productDetails.productResults.stores[0]?.link ||
+              selectedProduct.productLink,
             productImageLink: selectedProduct.imageUrl,
             metadata: {
               Size: selectedSize || "",
@@ -261,7 +294,9 @@ export default function Home() {
       if (checkoutResult.success) {
         setCheckoutResponse(checkoutResult);
       } else {
-        setErrorMessage(checkoutResult.message || "Failed to complete checkout");
+        setErrorMessage(
+          checkoutResult.message || "Failed to complete checkout",
+        );
         setCheckoutResponse(checkoutResult);
       }
     } catch (error) {
@@ -304,7 +339,8 @@ export default function Home() {
               price: selectedProduct.price.toString(),
               quantity: 1,
               productLink:
-                productDetails.productResults.stores[0]?.link || selectedProduct.productLink,
+                productDetails.productResults.stores[0]?.link ||
+                selectedProduct.productLink,
               productImageLink: selectedProduct.imageUrl,
               metadata: {
                 Size: selectedSize,
@@ -355,11 +391,15 @@ export default function Home() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-6 md:mb-8 text-center">
-          <h1 className="text-2xl md:text-4xl font-bold mb-2">Henry Checkout Flows Demo</h1>
+          <h1 className="text-2xl md:text-4xl font-bold mb-2">
+            Henry Checkout Flows Demo
+          </h1>
           <p className="text-sm md:text-base text-gray-600">
             Showcase of different checkout methods with Henry API
           </p>
-          <p className="text-xs md:text-sm text-gray-500 mt-2">User ID: {userId}</p>
+          <p className="text-xs md:text-sm text-gray-500 mt-2">
+            User ID: {userId}
+          </p>
         </div>
 
         {/* Checkout Method Tabs */}
@@ -423,13 +463,15 @@ export default function Home() {
             {checkoutMethod === "saved-card" && (
               <p>
                 Save your card first, then checkout single products
-                <br className="sm:hidden" /> (uses /wallet/card-collect + /checkout/single)
+                <br className="sm:hidden" /> (uses /wallet/card-collect +
+                /checkout/single)
               </p>
             )}
             {checkoutMethod === "guest" && (
               <p>
                 Guest card collection, then checkout single products
-                <br className="sm:hidden" /> (uses /wallet/card-collect-guest + /checkout/single)
+                <br className="sm:hidden" /> (uses /wallet/card-collect-guest +
+                /checkout/single)
               </p>
             )}
           </div>
@@ -459,7 +501,9 @@ export default function Home() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
           {/* Products List */}
           <div>
-            <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-4">Search Results</h2>
+            <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-4">
+              Search Results
+            </h2>
             {products.length === 0 ? (
               <div className="text-sm md:text-base text-gray-500 text-center py-6 md:py-8 border rounded-lg">
                 No products found. Try searching for something!
@@ -471,7 +515,9 @@ export default function Home() {
                     key={product.id}
                     onClick={() => getProductDetails(product)}
                     className={`p-3 md:p-4 border rounded-lg cursor-pointer hover:shadow-lg transition ${
-                      selectedProduct?.id === product.id ? "border-blue-500 bg-blue-50" : ""
+                      selectedProduct?.id === product.id
+                        ? "border-blue-500 bg-blue-50"
+                        : ""
                     }`}
                   >
                     <div className="flex gap-3 md:gap-4">
@@ -493,7 +539,9 @@ export default function Home() {
                         <p className="text-xl md:text-2xl font-bold text-green-600">
                           ${product.price}
                         </p>
-                        <p className="text-xs md:text-sm text-gray-500">from {product.source}</p>
+                        <p className="text-xs md:text-sm text-gray-500">
+                          from {product.source}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -504,7 +552,9 @@ export default function Home() {
 
           {/* Product Details */}
           <div className="order-first lg:order-last">
-            <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-4">Product Details</h2>
+            <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-4">
+              Product Details
+            </h2>
             {!selectedProduct ? (
               <div className="text-sm md:text-base text-gray-500 text-center py-6 md:py-8 border rounded-lg">
                 Select a product to view details
@@ -512,12 +562,16 @@ export default function Home() {
             ) : loading ? (
               <div className="text-center py-6 md:py-8 border rounded-lg">
                 <div className="inline-block animate-spin rounded-full h-6 w-6 md:h-8 md:w-8 border-b-2 border-gray-900"></div>
-                <p className="mt-2 text-sm md:text-base text-gray-600">Loading details...</p>
+                <p className="mt-2 text-sm md:text-base text-gray-600">
+                  Loading details...
+                </p>
               </div>
             ) : loadingCheckout ? (
               <div className="text-center py-6 md:py-8 border rounded-lg">
                 <div className="inline-block animate-spin rounded-full h-6 w-6 md:h-8 md:w-8 border-b-2 border-gray-900"></div>
-                <p className="mt-2 text-sm md:text-base text-gray-600">Fetching checkout link...</p>
+                <p className="mt-2 text-sm md:text-base text-gray-600">
+                  Fetching checkout link...
+                </p>
               </div>
             ) : productDetails ? (
               <div className="border rounded-lg p-4 md:p-6">
@@ -530,7 +584,8 @@ export default function Home() {
 
                 {/* Product Image */}
                 {(productDetails.productResults.image ||
-                  (productDetails.relatedSearches && productDetails.relatedSearches[0]?.image)) && (
+                  (productDetails.relatedSearches &&
+                    productDetails.relatedSearches[0]?.image)) && (
                   <div className="relative w-full aspect-square mb-3 md:mb-4">
                     <Image
                       src={
@@ -570,13 +625,17 @@ export default function Home() {
                 {/* Variants */}
                 {productDetails.productResults.variants.map((variant) => (
                   <div key={variant.title} className="mb-3 md:mb-4">
-                    <h4 className="font-medium text-sm md:text-base mb-2">{variant.title}:</h4>
+                    <h4 className="font-medium text-sm md:text-base mb-2">
+                      {variant.title}:
+                    </h4>
                     <div className="flex flex-wrap gap-1.5 md:gap-2">
                       {variant.items.map((item) => (
                         <span
                           key={item.name}
                           className={`px-2 py-1 md:px-3 text-xs md:text-sm border rounded ${
-                            item.selected ? "bg-blue-500 text-white" : "bg-gray-100"
+                            item.selected
+                              ? "bg-blue-500 text-white"
+                              : "bg-gray-100"
                           } ${!item.available ? "opacity-50 line-through" : ""}`}
                         >
                           {item.name}
@@ -593,7 +652,9 @@ export default function Home() {
                     disabled={loadingCheckout}
                     className="w-full py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 disabled:opacity-50"
                   >
-                    {loadingCheckout ? loadingMessage : "Add to Cart & Checkout"}
+                    {loadingCheckout
+                      ? loadingMessage
+                      : "Add to Cart & Checkout"}
                   </button>
                 )}
 
@@ -605,7 +666,9 @@ export default function Home() {
                         disabled={loadingCheckout}
                         className="w-full py-3 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 disabled:opacity-50"
                       >
-                        {loadingCheckout ? loadingMessage : "Step 1: Save Your Card"}
+                        {loadingCheckout
+                          ? loadingMessage
+                          : "Step 1: Save Your Card"}
                       </button>
                     ) : (
                       <button
@@ -613,7 +676,9 @@ export default function Home() {
                         disabled={loadingCheckout}
                         className="w-full py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 disabled:opacity-50"
                       >
-                        {loadingCheckout ? loadingMessage : "Step 2: Checkout with Saved Card"}
+                        {loadingCheckout
+                          ? loadingMessage
+                          : "Step 2: Checkout with Saved Card"}
                       </button>
                     )}
                     {hasCollectedCard && (
@@ -623,12 +688,16 @@ export default function Home() {
                     )}
                     {errorMessage && (
                       <div className="mt-3 p-3 bg-red-100 rounded-lg">
-                        <p className="text-xs md:text-sm text-red-700">{errorMessage}</p>
+                        <p className="text-xs md:text-sm text-red-700">
+                          {errorMessage}
+                        </p>
                       </div>
                     )}
                     {checkoutResponse && !checkoutResponse.instruction && (
                       <div className="mt-3 md:mt-4 p-3 md:p-4 bg-gray-100 rounded-lg">
-                        <p className="text-xs md:text-sm font-semibold mb-2">API Response:</p>
+                        <p className="text-xs md:text-sm font-semibold mb-2">
+                          API Response:
+                        </p>
                         <pre className="text-xs bg-white p-2 rounded overflow-x-auto max-h-64">
                           {JSON.stringify(checkoutResponse, null, 2)}
                         </pre>
@@ -645,7 +714,9 @@ export default function Home() {
                         disabled={loadingCheckout}
                         className="w-full py-3 bg-purple-500 text-white rounded-lg font-semibold hover:bg-purple-600 disabled:opacity-50"
                       >
-                        {loadingCheckout ? loadingMessage : "Step 1: Guest Card Collection"}
+                        {loadingCheckout
+                          ? loadingMessage
+                          : "Step 1: Guest Card Collection"}
                       </button>
                     ) : (
                       <button
@@ -653,7 +724,9 @@ export default function Home() {
                         disabled={loadingCheckout}
                         className="w-full py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 disabled:opacity-50"
                       >
-                        {loadingCheckout ? loadingMessage : "Step 2: Complete Guest Checkout"}
+                        {loadingCheckout
+                          ? loadingMessage
+                          : "Step 2: Complete Guest Checkout"}
                       </button>
                     )}
                     {hasCollectedCard && (
@@ -663,12 +736,16 @@ export default function Home() {
                     )}
                     {errorMessage && (
                       <div className="mt-3 p-3 bg-red-100 rounded-lg">
-                        <p className="text-xs md:text-sm text-red-700">{errorMessage}</p>
+                        <p className="text-xs md:text-sm text-red-700">
+                          {errorMessage}
+                        </p>
                       </div>
                     )}
                     {checkoutResponse && !checkoutResponse.instruction && (
                       <div className="mt-3 md:mt-4 p-3 md:p-4 bg-gray-100 rounded-lg">
-                        <p className="text-xs md:text-sm font-semibold mb-2">API Response:</p>
+                        <p className="text-xs md:text-sm font-semibold mb-2">
+                          API Response:
+                        </p>
                         <pre className="text-xs bg-white p-2 rounded overflow-x-auto max-h-64">
                           {JSON.stringify(checkoutResponse, null, 2)}
                         </pre>
@@ -686,7 +763,10 @@ export default function Home() {
       {showCheckoutIframe && checkoutIframeUrl && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           {/* Overlay */}
-          <div className="absolute inset-0 bg-black bg-opacity-50" onClick={handleCloseIframe} />
+          <div
+            className="absolute inset-0 bg-black bg-opacity-50"
+            onClick={handleCloseIframe}
+          />
 
           {/* Modal Container */}
           <div className="relative w-full h-full md:w-[90%] md:h-[90%] max-w-6xl bg-white rounded-lg shadow-2xl flex flex-col">
@@ -700,7 +780,12 @@ export default function Home() {
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                 aria-label="Close"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -728,9 +813,7 @@ export default function Home() {
                 src={checkoutIframeUrl}
                 className="w-full h-full rounded border"
                 title="Checkout"
-                allow="payment; camera; microphone; clipboard-read; clipboard-write"
-                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-storage-access-by-user-activation allow-top-navigation-by-user-activation"
-                referrerPolicy="no-referrer-when-downgrade"
+                allow="payment"
                 onLoad={() => setIframeLoading(false)}
               />
             </div>
