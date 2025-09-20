@@ -910,8 +910,8 @@ export default function Home() {
                               {/* Thumbnails Carousel */}
                               {productDetails.productResults.thumbnails &&
                                 productDetails.productResults.thumbnails.length > 1 && (
-                                  <div className="overflow-x-auto pb-1">
-                                    <div className="flex gap-2 py-1 px-0.5">
+                                  <div className="overflow-x-auto pb-2 max-w-full [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-gray-100">
+                                    <div className="flex gap-2 py-1 px-0.5 min-w-min">
                                       {productDetails.productResults.thumbnails!.map(
                                         (thumbnail, index) => (
                                           <button
