@@ -1,5 +1,8 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
+import { getValidImageUrl } from "@/lib/utils";
+
 import { useParams } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
@@ -39,7 +42,14 @@ type CheckoutMethod = "cart" | "saved-card" | "guest";
 
 export default function ProductPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const productId = params.id as string;
+
+  // Get product data from URL parameters (passed from mobile redirect)
+  const urlImageUrl = searchParams.get("imageUrl") || "";
+  const urlPrice = searchParams.get("price");
+  const urlName = searchParams.get("name") || "";
+  const urlProductLink = searchParams.get("productLink") || "";
 
   const [productDetails, setProductDetails] = useState<ProductDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -54,10 +64,10 @@ export default function ProductPage() {
   const [isCardCollection, setIsCardCollection] = useState(false);
   const [expandedVariants, setExpandedVariants] = useState<Record<string, boolean>>({});
   const [userId] = useState(`user_${Math.random().toString(36).substring(7)}`);
-  const [productPrice, setProductPrice] = useState<number>(0);
-  const [productName, setProductName] = useState<string>("");
-  const [productImage, setProductImage] = useState<string>("");
-  const [productLink, setProductLink] = useState<string>("");
+  const [productPrice, setProductPrice] = useState<number>(urlPrice ? parseFloat(urlPrice) : 0);
+  const [productName, setProductName] = useState<string>(urlName);
+  const [productImage, setProductImage] = useState<string>(urlImageUrl);
+  const [productLink, setProductLink] = useState<string>(urlProductLink);
   const [selectedThumbnailIndex, setSelectedThumbnailIndex] = useState(0);
 
   // Handle closing the iframe
@@ -111,7 +121,8 @@ export default function ProductPage() {
               const price = parseFloat(firstStore.price.replace(/[^0-9.]/g, ""));
               setProductPrice(price || 0);
             }
-            setProductImage(result.data.productResults.image || "");
+            // Use URL image if available, otherwise use from product details
+            setProductImage(urlImageUrl || result.data.productResults.image || "");
             setProductLink(firstStore?.link || "");
           }
         }
@@ -233,7 +244,7 @@ export default function ProductPage() {
             price: productPrice.toString(),
             quantity: 1,
             productLink: productDetails.productResults.stores[0]?.link || productLink,
-            productImageLink: productImage,
+            productImageLink: getValidImageUrl(productImage),
             metadata: {
               Size: selectedSize || "",
               Color: selectedColor || "",
@@ -286,7 +297,7 @@ export default function ProductPage() {
               price: productPrice.toString(),
               quantity: 1,
               productLink: productDetails.productResults.stores[0]?.link || productLink,
-              productImageLink: productImage,
+              productImageLink: getValidImageUrl(productImage),
               metadata: {
                 Size: selectedSize,
                 Color: selectedColor,

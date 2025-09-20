@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useState, useRef } from "react";
 import HenryWordmark from "@/assets/henry-wordmark";
+import { getValidImageUrl } from "@/lib/utils";
 
 interface Product {
   id: string;
@@ -192,7 +193,13 @@ export default function Home() {
   const getProductDetails = async (product: Product) => {
     // On mobile, open custom product page in new tab
     if (isMobile) {
-      window.open(`/product/${product.id}`, "_blank");
+      const params = new URLSearchParams({
+        imageUrl: product.imageUrl || "",
+        price: product.price.toString(),
+        name: product.name || "",
+        productLink: product.productLink || "",
+      });
+      window.open(`/product/${product.id}?${params.toString()}`, "_blank");
       return;
     }
 
@@ -343,7 +350,7 @@ export default function Home() {
             quantity: 1,
             productLink:
               productDetails.productResults.stores[0]?.link || selectedProduct.productLink,
-            productImageLink: selectedProduct.imageUrl,
+            productImageLink: getValidImageUrl(selectedProduct.imageUrl),
             metadata: {
               Size: selectedSize || "",
               Color: selectedColor || "",
@@ -401,7 +408,7 @@ export default function Home() {
               quantity: 1,
               productLink:
                 productDetails.productResults.stores[0]?.link || selectedProduct.productLink,
-              productImageLink: selectedProduct.imageUrl,
+              productImageLink: getValidImageUrl(selectedProduct.imageUrl),
               metadata: {
                 Size: selectedSize,
                 Color: selectedColor,
