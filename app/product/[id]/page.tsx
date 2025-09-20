@@ -330,8 +330,8 @@ export default function ProductPage() {
       const checkoutResult = await checkoutResponse.json();
 
       if (checkoutResult.success && checkoutResult.data?.checkout_url) {
-        // Open in new tab for mobile checkout
-        window.open(checkoutResult.data.checkout_url, "_blank");
+        // Open in same tab for mobile checkout
+        window.location.href = checkoutResult.data.checkout_url;
       } else {
         throw new Error(checkoutResult.message || "Failed to create checkout");
       }
