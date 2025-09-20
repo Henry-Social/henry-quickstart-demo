@@ -370,11 +370,12 @@ export default function ProductPage() {
                 <div className="space-y-4">
                   {/* Main Image */}
                   <div className="relative h-80 rounded-lg overflow-hidden bg-white shadow-inner">
-                    {productDetails.productResults.thumbnails?.length > 0 ? (
+                    {productDetails.productResults.thumbnails &&
+                    productDetails.productResults.thumbnails.length > 0 ? (
                       <>
                         <div className="absolute inset-0 image-gradient-overlay z-10 pointer-events-none" />
                         <Image
-                          src={productDetails.productResults.thumbnails[selectedThumbnailIndex]}
+                          src={productDetails.productResults.thumbnails![selectedThumbnailIndex]}
                           alt={productDetails.productResults.title || productName}
                           fill
                           className="object-contain p-4"
@@ -412,31 +413,32 @@ export default function ProductPage() {
                   </div>
 
                   {/* Thumbnails Carousel */}
-                  {productDetails.productResults.thumbnails?.length > 1 && (
-                    <div className="overflow-x-auto pb-1">
-                      <div className="flex gap-2 py-1 px-0.5">
-                        {productDetails.productResults.thumbnails.map((thumbnail, index) => (
-                          <button
-                            key={index}
-                            onClick={() => setSelectedThumbnailIndex(index)}
-                            className={`relative flex-shrink-0 w-16 h-16 rounded-md border-2 transition-all bg-white ${
-                              selectedThumbnailIndex === index
-                                ? "border-blue-500 opacity-100 shadow-md"
-                                : "border-gray-300 opacity-80 hover:opacity-100 hover:border-gray-400"
-                            }`}
-                          >
-                            <Image
-                              src={thumbnail}
-                              alt={`${productDetails.productResults.title || productName} - View ${index + 1}`}
-                              fill
-                              className="object-contain p-1.5 rounded-sm"
-                              unoptimized
-                            />
-                          </button>
-                        ))}
+                  {productDetails.productResults.thumbnails &&
+                    productDetails.productResults.thumbnails.length > 1 && (
+                      <div className="overflow-x-auto pb-1">
+                        <div className="flex gap-2 py-1 px-0.5">
+                          {productDetails.productResults.thumbnails!.map((thumbnail, index) => (
+                            <button
+                              key={index}
+                              onClick={() => setSelectedThumbnailIndex(index)}
+                              className={`relative flex-shrink-0 w-16 h-16 rounded-md border-2 transition-all bg-white ${
+                                selectedThumbnailIndex === index
+                                  ? "border-blue-500 opacity-100 shadow-md"
+                                  : "border-gray-300 opacity-80 hover:opacity-100 hover:border-gray-400"
+                              }`}
+                            >
+                              <Image
+                                src={thumbnail}
+                                alt={`${productDetails.productResults.title || productName} - View ${index + 1}`}
+                                fill
+                                className="object-contain p-1.5 rounded-sm"
+                                unoptimized
+                              />
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
                 </div>
 
                 {/* Product Info */}

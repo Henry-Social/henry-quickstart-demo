@@ -51,9 +51,7 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [productDetails, setProductDetails] = useState<ProductDetails | null>(
-    null,
-  );
+  const [productDetails, setProductDetails] = useState<ProductDetails | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingCheckout, setLoadingCheckout] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("Processing...");
@@ -63,17 +61,13 @@ export default function Home() {
   const [checkoutResponse, setCheckoutResponse] = useState<any>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showCheckoutIframe, setShowCheckoutIframe] = useState(false);
-  const [checkoutIframeUrl, setCheckoutIframeUrl] = useState<string | null>(
-    null,
-  );
+  const [checkoutIframeUrl, setCheckoutIframeUrl] = useState<string | null>(null);
   const [iframeLoading, setIframeLoading] = useState(true);
   const [isCardCollection, setIsCardCollection] = useState(false);
   const [showProductModal, setShowProductModal] = useState(false);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [viewMode, setViewMode] = useState<ViewMode>("desktop");
-  const [expandedVariants, setExpandedVariants] = useState<
-    Record<string, boolean>
-  >({});
+  const [expandedVariants, setExpandedVariants] = useState<Record<string, boolean>>({});
   const [isMobile, setIsMobile] = useState(false);
   const [selectedThumbnailIndex, setSelectedThumbnailIndex] = useState(0);
   const [heroView, setHeroView] = useState(true);
@@ -208,9 +202,7 @@ export default function Home() {
     setShowProductModal(true);
 
     try {
-      const response = await fetch(
-        `/api/henry/products/details?productId=${product.id}`,
-      );
+      const response = await fetch(`/api/henry/products/details?productId=${product.id}`);
       const result = await response.json();
 
       if (result.success && result.data) {
@@ -299,9 +291,7 @@ export default function Home() {
         setIframeLoading(true);
         setIsCardCollection(true);
       } else {
-        setErrorMessage(
-          result.message || "Failed to initiate guest card collection",
-        );
+        setErrorMessage(result.message || "Failed to initiate guest card collection");
       }
     } catch (error) {
       console.error("Guest card collection error:", error);
@@ -352,8 +342,7 @@ export default function Home() {
             price: selectedProduct.price.toString(),
             quantity: 1,
             productLink:
-              productDetails.productResults.stores[0]?.link ||
-              selectedProduct.productLink,
+              productDetails.productResults.stores[0]?.link || selectedProduct.productLink,
             productImageLink: selectedProduct.imageUrl,
             metadata: {
               Size: selectedSize || "",
@@ -368,9 +357,7 @@ export default function Home() {
       if (checkoutResult.success) {
         setCheckoutResponse(checkoutResult);
       } else {
-        setErrorMessage(
-          checkoutResult.message || "Failed to complete checkout",
-        );
+        setErrorMessage(checkoutResult.message || "Failed to complete checkout");
         setCheckoutResponse(checkoutResult);
       }
     } catch (error) {
@@ -413,8 +400,7 @@ export default function Home() {
               price: selectedProduct.price.toString(),
               quantity: 1,
               productLink:
-                productDetails.productResults.stores[0]?.link ||
-                selectedProduct.productLink,
+                productDetails.productResults.stores[0]?.link || selectedProduct.productLink,
               productImageLink: selectedProduct.imageUrl,
               metadata: {
                 Size: selectedSize,
@@ -460,10 +446,7 @@ export default function Home() {
       }
     } catch (error) {
       console.error("Buy now error:", error);
-      const errorMsg =
-        error instanceof Error
-          ? error.message
-          : "An error occurred during checkout";
+      const errorMsg = error instanceof Error ? error.message : "An error occurred during checkout";
       setErrorMessage(errorMsg);
     } finally {
       setLoadingCheckout(false);
@@ -550,11 +533,7 @@ export default function Home() {
                   className="absolute right-2 top-1/2 transform -translate-y-1/2 px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 transition-colors duration-200"
                 >
                   {loading ? (
-                    <svg
-                      className="animate-spin h-5 w-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
+                    <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
                       <circle
                         className="opacity-25"
                         cx="12"
@@ -659,11 +638,7 @@ export default function Home() {
                   className="absolute right-2 top-1/2 transform -translate-y-1/2 px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 transition-colors duration-200"
                 >
                   {loading ? (
-                    <svg
-                      className="animate-spin h-5 w-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
+                    <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
                       <circle
                         className="opacity-25"
                         cx="12"
@@ -748,9 +723,7 @@ export default function Home() {
                       <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide">
                         {product.source}
                       </p>
-                      <h3 className="text-sm text-gray-900 line-clamp-2 mb-auto">
-                        {product.name}
-                      </h3>
+                      <h3 className="text-sm text-gray-900 line-clamp-2 mb-auto">{product.name}</h3>
                       <div className="pt-2">
                         <p className="text-base font-bold text-black">
                           ${product.price.toFixed(2)}
@@ -791,9 +764,7 @@ export default function Home() {
                           <button
                             onClick={() => setViewMode("desktop")}
                             className={`p-2 rounded transition-colors ${
-                              viewMode === "desktop"
-                                ? "bg-white shadow-sm"
-                                : "hover:bg-gray-200"
+                              viewMode === "desktop" ? "bg-white shadow-sm" : "hover:bg-gray-200"
                             }`}
                             aria-label="Desktop view"
                             title="Desktop view"
@@ -815,9 +786,7 @@ export default function Home() {
                           <button
                             onClick={() => setViewMode("mobile")}
                             className={`p-2 rounded transition-colors ${
-                              viewMode === "mobile"
-                                ? "bg-white shadow-sm"
-                                : "hover:bg-gray-200"
+                              viewMode === "mobile" ? "bg-white shadow-sm" : "hover:bg-gray-200"
                             }`}
                             aria-label="Mobile view"
                             title="Mobile view"
@@ -868,9 +837,7 @@ export default function Home() {
                         <div className="absolute inset-0 flex items-center justify-center bg-white z-10">
                           <div className="flex flex-col items-center">
                             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                            <p className="mt-4 text-gray-600">
-                              Loading product details...
-                            </p>
+                            <p className="mt-4 text-gray-600">Loading product details...</p>
                           </div>
                         </div>
                       )}
@@ -881,14 +848,15 @@ export default function Home() {
                             <div className="space-y-4">
                               {/* Main Image */}
                               <div className="relative h-80 rounded-lg overflow-hidden bg-white shadow-inner">
-                                {productDetails.productResults.thumbnails
-                                  ?.length > 0 ? (
+                                {productDetails.productResults.thumbnails &&
+                                productDetails.productResults.thumbnails.length > 0 ? (
                                   <>
                                     <div className="absolute inset-0 image-gradient-overlay z-10 pointer-events-none" />
                                     <Image
                                       src={
-                                        productDetails.productResults
-                                          .thumbnails[selectedThumbnailIndex]
+                                        productDetails.productResults.thumbnails![
+                                          selectedThumbnailIndex
+                                        ]
                                       }
                                       alt={productDetails.productResults.title}
                                       fill
@@ -933,36 +901,34 @@ export default function Home() {
                               </div>
 
                               {/* Thumbnails Carousel */}
-                              {productDetails.productResults.thumbnails
-                                ?.length > 1 && (
-                                <div className="overflow-x-auto pb-1">
-                                  <div className="flex gap-2 py-1 px-0.5">
-                                    {productDetails.productResults.thumbnails.map(
-                                      (thumbnail, index) => (
-                                        <button
-                                          key={index}
-                                          onClick={() =>
-                                            setSelectedThumbnailIndex(index)
-                                          }
-                                          className={`relative flex-shrink-0 w-14 h-14 rounded-md border-2 transition-all bg-white ${
-                                            selectedThumbnailIndex === index
-                                              ? "border-blue-500 opacity-100 shadow-md"
-                                              : "border-gray-300 opacity-80 hover:opacity-100 hover:border-gray-400"
-                                          }`}
-                                        >
-                                          <Image
-                                            src={thumbnail}
-                                            alt={`${productDetails.productResults.title} - View ${index + 1}`}
-                                            fill
-                                            className="object-contain p-1.5 rounded-sm"
-                                            unoptimized
-                                          />
-                                        </button>
-                                      ),
-                                    )}
+                              {productDetails.productResults.thumbnails &&
+                                productDetails.productResults.thumbnails.length > 1 && (
+                                  <div className="overflow-x-auto pb-1">
+                                    <div className="flex gap-2 py-1 px-0.5">
+                                      {productDetails.productResults.thumbnails!.map(
+                                        (thumbnail, index) => (
+                                          <button
+                                            key={index}
+                                            onClick={() => setSelectedThumbnailIndex(index)}
+                                            className={`relative flex-shrink-0 w-14 h-14 rounded-md border-2 transition-all bg-white ${
+                                              selectedThumbnailIndex === index
+                                                ? "border-blue-500 opacity-100 shadow-md"
+                                                : "border-gray-300 opacity-80 hover:opacity-100 hover:border-gray-400"
+                                            }`}
+                                          >
+                                            <Image
+                                              src={thumbnail}
+                                              alt={`${productDetails.productResults.title} - View ${index + 1}`}
+                                              fill
+                                              className="object-contain p-1.5 rounded-sm"
+                                              unoptimized
+                                            />
+                                          </button>
+                                        ),
+                                      )}
+                                    </div>
                                   </div>
-                                </div>
-                              )}
+                                )}
                             </div>
 
                             {/* Product Info */}
@@ -988,10 +954,7 @@ export default function Home() {
                                     <span
                                       key={i}
                                       className={
-                                        i <
-                                        Math.floor(
-                                          productDetails.productResults.rating,
-                                        )
+                                        i < Math.floor(productDetails.productResults.rating)
                                           ? "text-yellow-500"
                                           : "text-gray-300"
                                       }
@@ -1002,88 +965,79 @@ export default function Home() {
                                 </div>
                                 <span className="text-sm text-gray-600">
                                   {productDetails.productResults.rating}/5 (
-                                  {productDetails.productResults.reviews}{" "}
-                                  reviews)
+                                  {productDetails.productResults.reviews} reviews)
                                 </span>
                               </div>
 
                               {/* Variants */}
-                              {productDetails.productResults.variants.map(
-                                (variant) => {
-                                  const isExpanded =
-                                    expandedVariants[variant.title];
-                                  const itemsToShow = isExpanded
-                                    ? variant.items
-                                    : variant.items.slice(0, 8);
-                                  const hasMore = variant.items.length > 8;
+                              {productDetails.productResults.variants.map((variant) => {
+                                const isExpanded = expandedVariants[variant.title];
+                                const itemsToShow = isExpanded
+                                  ? variant.items
+                                  : variant.items.slice(0, 8);
+                                const hasMore = variant.items.length > 8;
 
-                                  return (
-                                    <div key={variant.title}>
-                                      <h4 className="font-medium mb-2">
-                                        {variant.title}:
-                                      </h4>
-                                      <div className="relative">
-                                        <div
-                                          className={`flex flex-wrap gap-2 ${
-                                            !isExpanded && hasMore
-                                              ? "max-h-24 overflow-hidden"
-                                              : ""
-                                          }`}
-                                        >
-                                          {itemsToShow.map((item) => (
-                                            <button
-                                              key={item.name}
-                                              disabled={!item.available}
-                                              className={`px-4 py-2 border rounded-lg transition-colors ${
-                                                item.selected
-                                                  ? "bg-blue-600 text-white border-blue-600"
-                                                  : item.available
-                                                    ? "bg-white hover:bg-gray-50 border-gray-300"
-                                                    : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
-                                              }`}
-                                            >
-                                              {item.name}
-                                            </button>
-                                          ))}
-                                        </div>
-                                        {hasMore && (
+                                return (
+                                  <div key={variant.title}>
+                                    <h4 className="font-medium mb-2">{variant.title}:</h4>
+                                    <div className="relative">
+                                      <div
+                                        className={`flex flex-wrap gap-2 ${
+                                          !isExpanded && hasMore ? "max-h-24 overflow-hidden" : ""
+                                        }`}
+                                      >
+                                        {itemsToShow.map((item) => (
                                           <button
-                                            onClick={() =>
-                                              setExpandedVariants((prev) => ({
-                                                ...prev,
-                                                [variant.title]:
-                                                  !prev[variant.title],
-                                              }))
-                                            }
-                                            className="mt-2 text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                                            key={item.name}
+                                            disabled={!item.available}
+                                            className={`px-4 py-2 border rounded-lg transition-colors ${
+                                              item.selected
+                                                ? "bg-blue-600 text-white border-blue-600"
+                                                : item.available
+                                                  ? "bg-white hover:bg-gray-50 border-gray-300"
+                                                  : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                                            }`}
                                           >
-                                            <span>
-                                              {isExpanded
-                                                ? "Show less"
-                                                : `Show ${variant.items.length - 8} more`}
-                                            </span>
-                                            <svg
-                                              className={`w-4 h-4 transition-transform ${
-                                                isExpanded ? "rotate-180" : ""
-                                              }`}
-                                              fill="none"
-                                              stroke="currentColor"
-                                              viewBox="0 0 24 24"
-                                            >
-                                              <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M19 9l-7 7-7-7"
-                                              />
-                                            </svg>
+                                            {item.name}
                                           </button>
-                                        )}
+                                        ))}
                                       </div>
+                                      {hasMore && (
+                                        <button
+                                          onClick={() =>
+                                            setExpandedVariants((prev) => ({
+                                              ...prev,
+                                              [variant.title]: !prev[variant.title],
+                                            }))
+                                          }
+                                          className="mt-2 text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                                        >
+                                          <span>
+                                            {isExpanded
+                                              ? "Show less"
+                                              : `Show ${variant.items.length - 8} more`}
+                                          </span>
+                                          <svg
+                                            className={`w-4 h-4 transition-transform ${
+                                              isExpanded ? "rotate-180" : ""
+                                            }`}
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                          >
+                                            <path
+                                              strokeLinecap="round"
+                                              strokeLinejoin="round"
+                                              strokeWidth={2}
+                                              d="M19 9l-7 7-7-7"
+                                            />
+                                          </svg>
+                                        </button>
+                                      )}
                                     </div>
-                                  );
-                                },
-                              )}
+                                  </div>
+                                );
+                              })}
 
                               {/* Checkout Buttons */}
                               <div className="pt-4 space-y-3">
@@ -1093,9 +1047,7 @@ export default function Home() {
                                     disabled={loadingCheckout}
                                     className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
                                   >
-                                    {loadingCheckout
-                                      ? loadingMessage
-                                      : "Add to Cart & Buy"}
+                                    {loadingCheckout ? loadingMessage : "Add to Cart & Buy"}
                                   </button>
                                 )}
 
@@ -1107,9 +1059,7 @@ export default function Home() {
                                         disabled={loadingCheckout}
                                         className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
                                       >
-                                        {loadingCheckout
-                                          ? loadingMessage
-                                          : "Save Card First"}
+                                        {loadingCheckout ? loadingMessage : "Save Card First"}
                                       </button>
                                     ) : (
                                       <button
@@ -1117,9 +1067,7 @@ export default function Home() {
                                         disabled={loadingCheckout}
                                         className="w-full py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 transition-colors"
                                       >
-                                        {loadingCheckout
-                                          ? loadingMessage
-                                          : "Buy with Saved Card"}
+                                        {loadingCheckout ? loadingMessage : "Buy with Saved Card"}
                                       </button>
                                     )}
                                     {hasCollectedCard && (
@@ -1138,9 +1086,7 @@ export default function Home() {
                                         disabled={loadingCheckout}
                                         className="w-full py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 disabled:opacity-50 transition-colors"
                                       >
-                                        {loadingCheckout
-                                          ? loadingMessage
-                                          : "Guest Card Collection"}
+                                        {loadingCheckout ? loadingMessage : "Guest Card Collection"}
                                       </button>
                                     ) : (
                                       <button
@@ -1163,9 +1109,7 @@ export default function Home() {
 
                                 {errorMessage && (
                                   <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                                    <p className="text-sm text-red-700">
-                                      {errorMessage}
-                                    </p>
+                                    <p className="text-sm text-red-700">{errorMessage}</p>
                                   </div>
                                 )}
                               </div>
@@ -1184,9 +1128,7 @@ export default function Home() {
                   <div className="relative h-full flex flex-col">
                     <div className="flex items-center justify-between p-4 border-b bg-gray-50 flex-shrink-0">
                       <h3 className="text-lg font-semibold">
-                        {isCardCollection
-                          ? "Save Your Card"
-                          : "Complete Your Purchase"}
+                        {isCardCollection ? "Save Your Card" : "Complete Your Purchase"}
                       </h3>
                       <div className="flex items-center gap-2">
                         {/* View Mode Toggle */}
@@ -1194,9 +1136,7 @@ export default function Home() {
                           <button
                             onClick={() => setViewMode("desktop")}
                             className={`p-2 rounded transition-colors ${
-                              viewMode === "desktop"
-                                ? "bg-white shadow-sm"
-                                : "hover:bg-gray-200"
+                              viewMode === "desktop" ? "bg-white shadow-sm" : "hover:bg-gray-200"
                             }`}
                             aria-label="Desktop view"
                             title="Desktop view"
@@ -1218,9 +1158,7 @@ export default function Home() {
                           <button
                             onClick={() => setViewMode("mobile")}
                             className={`p-2 rounded transition-colors ${
-                              viewMode === "mobile"
-                                ? "bg-white shadow-sm"
-                                : "hover:bg-gray-200"
+                              viewMode === "mobile" ? "bg-white shadow-sm" : "hover:bg-gray-200"
                             }`}
                             aria-label="Mobile view"
                             title="Mobile view"
@@ -1267,9 +1205,7 @@ export default function Home() {
                         <div className="absolute inset-0 flex items-center justify-center bg-white z-10">
                           <div className="flex flex-col items-center">
                             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                            <p className="mt-4 text-gray-600">
-                              Loading checkout...
-                            </p>
+                            <p className="mt-4 text-gray-600">Loading checkout...</p>
                           </div>
                         </div>
                       )}
