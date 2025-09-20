@@ -98,3 +98,15 @@
   background: linear-gradient(90deg, #f0f0f0 0px, #f8f8f8 40px, #f0f0f0 80px);
   background-size: 1000px 100%;
 }
+
+.image-gradient-overlay {
+  background: radial-gradient(
+    ellipse at center,
+    transparent 0%,
+    transparent 30%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.4) 70%,
+    rgba(255, 255, 255, 0.7) 85%,
+    rgba(255, 255, 255, 0.95) 100%
+  );
+}
