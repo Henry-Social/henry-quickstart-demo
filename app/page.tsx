@@ -191,7 +191,7 @@ export default function Home() {
 
   // Get product details
   const getProductDetails = async (product: Product) => {
-    // On mobile, open custom product page in new tab
+    // On mobile, open custom product page in same tab
     if (isMobile) {
       const params = new URLSearchParams({
         imageUrl: product.imageUrl || "",
@@ -199,7 +199,7 @@ export default function Home() {
         name: product.name || "",
         productLink: product.productLink || "",
       });
-      window.open(`/product/${product.id}?${params.toString()}`, "_blank");
+      window.location.href = `/product/${product.id}?${params.toString()}`;
       return;
     }
 
@@ -477,7 +477,7 @@ export default function Home() {
                       setCheckoutResponse(null);
                       setErrorMessage(null);
                     }}
-                    className="appearance-none bg-gray-100 px-4 py-2 pr-8 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="appearance-none bg-gray-100 px-4 py-2 pr-8 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#44c57e]"
                   >
                     <option value="cart">Cart Checkout</option>
                     <option value="saved-card">Saved Card</option>
@@ -505,7 +505,7 @@ export default function Home() {
           {/* Centered content */}
           <div className="flex-1 flex flex-col items-center justify-center px-4 -mt-32">
             {/* Henry Labs Logo */}
-            <HenryWordmark className="h-16 text-blue-600 mb-4" />
+            <HenryWordmark className="h-16 text-[#44c57e] mb-4" />
 
             {/* Circular Search Bar */}
             <div className="w-full max-w-2xl">
@@ -532,12 +532,12 @@ export default function Home() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && searchProducts()}
                   placeholder={placeholders[placeholderIndex]}
-                  className="w-full pl-12 pr-20 py-4 text-lg bg-white border-2 border-gray-200 rounded-full focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 shadow-lg"
+                  className="w-full pl-12 pr-20 py-4 text-lg bg-white border-2 border-gray-200 rounded-full focus:outline-none focus:border-[#44c57e] focus:ring-4 focus:ring-[#44c57e]/20 transition-all duration-200 shadow-lg"
                 />
                 <button
                   onClick={searchProducts}
                   disabled={loading}
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 transition-colors duration-200"
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 px-4 py-2 bg-[#44c57e] text-white rounded-full hover:bg-[#3aaa6a] disabled:opacity-50 transition-colors duration-200"
                 >
                   {loading ? (
                     <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
@@ -571,7 +571,7 @@ export default function Home() {
               <div className="flex items-center justify-between h-16">
                 {/* Logo */}
                 <div className="flex items-center">
-                  <HenryWordmark className="h-8 text-blue-600" />
+                  <HenryWordmark className="h-8 text-[#44c57e]" />
                 </div>
 
                 {/* Checkout Options */}
@@ -585,7 +585,7 @@ export default function Home() {
                         setCheckoutResponse(null);
                         setErrorMessage(null);
                       }}
-                      className="appearance-none bg-gray-100 px-4 py-2 pr-8 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="appearance-none bg-gray-100 px-4 py-2 pr-8 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#44c57e]"
                     >
                       <option value="cart">Cart Checkout</option>
                       <option value="saved-card">Saved Card</option>
@@ -637,12 +637,12 @@ export default function Home() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && searchProducts()}
                   placeholder={placeholders[placeholderIndex]}
-                  className="w-full pl-12 pr-20 py-4 text-lg bg-white border-2 border-gray-200 rounded-full focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 shadow-lg"
+                  className="w-full pl-12 pr-20 py-4 text-lg bg-white border-2 border-gray-200 rounded-full focus:outline-none focus:border-[#44c57e] focus:ring-4 focus:ring-[#44c57e]/20 transition-all duration-200 shadow-lg"
                 />
                 <button
                   onClick={searchProducts}
                   disabled={loading}
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 transition-colors duration-200"
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 px-4 py-2 bg-[#44c57e] text-white rounded-full hover:bg-[#3aaa6a] disabled:opacity-50 transition-colors duration-200"
                 >
                   {loading ? (
                     <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
@@ -843,7 +843,7 @@ export default function Home() {
                       {loading && (
                         <div className="absolute inset-0 flex items-center justify-center bg-white z-10">
                           <div className="flex flex-col items-center">
-                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#44c57e]"></div>
                             <p className="mt-4 text-gray-600">Loading product details...</p>
                           </div>
                         </div>
@@ -919,7 +919,7 @@ export default function Home() {
                                             onClick={() => setSelectedThumbnailIndex(index)}
                                             className={`relative flex-shrink-0 w-14 h-14 rounded-md border-2 transition-all bg-white ${
                                               selectedThumbnailIndex === index
-                                                ? "border-blue-500 opacity-100 shadow-md"
+                                                ? "border-[#44c57e] opacity-100 shadow-md"
                                                 : "border-gray-300 opacity-80 hover:opacity-100 hover:border-gray-400"
                                             }`}
                                           >
@@ -950,7 +950,7 @@ export default function Home() {
                               </div>
 
                               {/* Price */}
-                              <div className="text-2xl font-bold text-blue-600">
+                              <div className="text-2xl font-bold text-[#44c57e]">
                                 ${selectedProduct.price}
                               </div>
 
@@ -999,7 +999,7 @@ export default function Home() {
                                             disabled={!item.available}
                                             className={`px-4 py-2 border rounded-lg transition-colors ${
                                               item.selected
-                                                ? "bg-blue-600 text-white border-blue-600"
+                                                ? "bg-[#44c57e] text-white border-[#44c57e]"
                                                 : item.available
                                                   ? "bg-white hover:bg-gray-50 border-gray-300"
                                                   : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
@@ -1017,7 +1017,7 @@ export default function Home() {
                                               [variant.title]: !prev[variant.title],
                                             }))
                                           }
-                                          className="mt-2 text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                                          className="mt-2 text-sm text-[#44c57e] hover:text-[#3aaa6a] font-medium flex items-center gap-1"
                                         >
                                           <span>
                                             {isExpanded
@@ -1052,7 +1052,7 @@ export default function Home() {
                                   <button
                                     onClick={buyNow}
                                     disabled={loadingCheckout}
-                                    className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                                    className="w-full py-3 bg-[#44c57e] text-white rounded-lg font-semibold hover:bg-[#3aaa6a] disabled:opacity-50 transition-colors"
                                   >
                                     {loadingCheckout ? loadingMessage : "Add to Cart & Buy"}
                                   </button>
@@ -1064,7 +1064,7 @@ export default function Home() {
                                       <button
                                         onClick={collectCard}
                                         disabled={loadingCheckout}
-                                        className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                                        className="w-full py-3 bg-[#44c57e] text-white rounded-lg font-semibold hover:bg-[#3aaa6a] disabled:opacity-50 transition-colors"
                                       >
                                         {loadingCheckout ? loadingMessage : "Save Card First"}
                                       </button>
@@ -1211,7 +1211,7 @@ export default function Home() {
                       {iframeLoading && (
                         <div className="absolute inset-0 flex items-center justify-center bg-white z-10">
                           <div className="flex flex-col items-center">
-                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#44c57e]"></div>
                             <p className="mt-4 text-gray-600">Loading checkout...</p>
                           </div>
                         </div>

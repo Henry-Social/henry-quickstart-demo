@@ -6,6 +6,8 @@ import { getValidImageUrl } from "@/lib/utils";
 import { useParams } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
+import Link from "next/link";
+import HenryWordmark from "@/assets/henry-wordmark";
 
 interface ProductDetails {
   productResults: {
@@ -110,6 +112,8 @@ export default function ProductPage() {
 
         if (result.success && result.data) {
           setProductDetails(result.data);
+          // Reset thumbnail index when loading new product
+          setSelectedThumbnailIndex(0);
 
           // Extract basic product info from the details response
           if (result.data.productResults) {
@@ -326,10 +330,8 @@ export default function ProductPage() {
       const checkoutResult = await checkoutResponse.json();
 
       if (checkoutResult.success && checkoutResult.data?.checkout_url) {
-        const url = new URL(checkoutResult.data.checkout_url);
-        url.searchParams.set("embed", "true");
-        setCheckoutIframeUrl(url.toString());
-        setShowCheckoutIframe(true);
+        // Open in new tab for mobile checkout
+        window.open(checkoutResult.data.checkout_url, "_blank");
       } else {
         throw new Error(checkoutResult.message || "Failed to create checkout");
       }
@@ -348,7 +350,9 @@ export default function ProductPage() {
       <header className="bg-white shadow-sm sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <h1 className="text-2xl font-bold text-blue-600">Henry Labs</h1>
+            <Link href="/" className="flex items-center">
+              <HenryWordmark className="h-8" />
+            </Link>
             <div className="flex items-center gap-4">
               <select
                 value={checkoutMethod}
@@ -371,7 +375,7 @@ export default function ProductPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {loading ? (
           <div className="flex justify-center items-center min-h-[60vh]">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#44c57e]"></div>
           </div>
         ) : !showCheckoutIframe ? (
           <div className="bg-white rounded-lg shadow-sm p-6">
@@ -434,7 +438,7 @@ export default function ProductPage() {
                               onClick={() => setSelectedThumbnailIndex(index)}
                               className={`relative flex-shrink-0 w-16 h-16 rounded-md border-2 transition-all bg-white ${
                                 selectedThumbnailIndex === index
-                                  ? "border-blue-500 opacity-100 shadow-md"
+                                  ? "border-[#44c57e] opacity-100 shadow-md"
                                   : "border-gray-300 opacity-80 hover:opacity-100 hover:border-gray-400"
                               }`}
                             >
@@ -464,7 +468,9 @@ export default function ProductPage() {
                   </div>
 
                   {/* Price */}
-                  <div className="text-4xl font-bold text-blue-600">${productPrice.toFixed(2)}</div>
+                  <div className="text-4xl font-bold text-[#44c57e]">
+                    ${productPrice.toFixed(2)}
+                  </div>
 
                   {/* Rating */}
                   <div className="flex items-center gap-2">
@@ -509,7 +515,7 @@ export default function ProductPage() {
                                 disabled={!item.available}
                                 className={`px-4 py-2 border rounded-lg transition-colors ${
                                   item.selected
-                                    ? "bg-blue-600 text-white border-blue-600"
+                                    ? "bg-[#44c57e] text-white border-[#44c57e]"
                                     : item.available
                                       ? "bg-white hover:bg-gray-50 border-gray-300"
                                       : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
@@ -527,7 +533,7 @@ export default function ProductPage() {
                                   [variant.title]: !prev[variant.title],
                                 }))
                               }
-                              className="mt-2 text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                              className="mt-2 text-sm text-[#44c57e] hover:text-[#3aaa6a] font-medium flex items-center gap-1"
                             >
                               <span>
                                 {isExpanded ? "Show less" : `Show ${variant.items.length - 8} more`}
@@ -560,7 +566,7 @@ export default function ProductPage() {
                       <button
                         onClick={buyNow}
                         disabled={loadingCheckout}
-                        className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                        className="w-full py-3 bg-[#44c57e] text-white rounded-lg font-semibold hover:bg-[#3aaa6a] disabled:opacity-50 transition-colors"
                       >
                         {loadingCheckout ? loadingMessage : "Add to Cart & Buy"}
                       </button>
@@ -572,7 +578,7 @@ export default function ProductPage() {
                           <button
                             onClick={collectCard}
                             disabled={loadingCheckout}
-                            className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                            className="w-full py-3 bg-[#44c57e] text-white rounded-lg font-semibold hover:bg-[#3aaa6a] disabled:opacity-50 transition-colors"
                           >
                             {loadingCheckout ? loadingMessage : "Save Card First"}
                           </button>
@@ -659,7 +665,7 @@ export default function ProductPage() {
               {iframeLoading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-white z-10">
                   <div className="flex flex-col items-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#44c57e]"></div>
                     <p className="mt-4 text-gray-600">Loading checkout...</p>
                   </div>
                 </div>
