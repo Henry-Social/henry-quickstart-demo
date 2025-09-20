@@ -189,9 +189,23 @@ export default function Home() {
     }
   };
 
+  // Go back to homepage
+  const goToHomepage = () => {
+    setHeroView(true);
+    setProducts([]);
+    setSearchQuery("");
+    setSelectedProduct(null);
+    setProductDetails(null);
+    setShowProductModal(false);
+    setShowCheckoutIframe(false);
+    setCheckoutIframeUrl(null);
+    setErrorMessage(null);
+    setCheckoutResponse(null);
+  };
+
   // Get product details
   const getProductDetails = async (product: Product) => {
-    // On mobile, open custom product page in new tab
+    // On mobile, open custom product page in same page
     if (isMobile) {
       const params = new URLSearchParams({
         imageUrl: product.imageUrl || "",
@@ -199,7 +213,7 @@ export default function Home() {
         name: product.name || "",
         productLink: product.productLink || "",
       });
-      window.open(`/product/${product.id}?${params.toString()}`, "_blank");
+      window.location.href = `/product/${product.id}?${params.toString()}`;
       return;
     }
 
@@ -571,7 +585,14 @@ export default function Home() {
               <div className="flex items-center justify-between h-16">
                 {/* Logo */}
                 <div className="flex items-center">
-                  <HenryWordmark className="h-8 text-blue-600" />
+                  <button 
+                    onClick={goToHomepage}
+                    className="hover:opacity-80 transition-opacity"
+                    type="button"
+                    aria-label="Go to homepage"
+                  >
+                    <HenryWordmark className="h-8 text-blue-600" />
+                  </button>
                 </div>
 
                 {/* Checkout Options */}

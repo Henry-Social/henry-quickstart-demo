@@ -2,6 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { getValidImageUrl } from "@/lib/utils";
+import HenryWordmark from "@/assets/henry-wordmark";
 
 import { useParams } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
@@ -153,12 +154,10 @@ export default function ProductPage() {
       const result = await response.json();
 
       if (result.success && result.data?.modal_url) {
-        const url = new URL(result.data.modal_url);
-        url.searchParams.set("embed", "true");
-        setCheckoutIframeUrl(url.toString());
-        setShowCheckoutIframe(true);
-        setIframeLoading(true);
-        setIsCardCollection(true);
+        // Open in new tab
+        window.open(result.data.modal_url, "_blank");
+        setLoadingCheckout(false);
+        return;
       } else {
         setErrorMessage(result.message || "Failed to initiate card collection");
       }
@@ -187,12 +186,10 @@ export default function ProductPage() {
       const result = await response.json();
 
       if (result.success && result.data?.modal_url) {
-        const url = new URL(result.data.modal_url);
-        url.searchParams.set("embed", "true");
-        setCheckoutIframeUrl(url.toString());
-        setShowCheckoutIframe(true);
-        setIframeLoading(true);
-        setIsCardCollection(true);
+        // Open in new tab
+        window.open(result.data.modal_url, "_blank");
+        setLoadingCheckout(false);
+        return;
       } else {
         setErrorMessage(result.message || "Failed to initiate guest card collection");
       }
@@ -326,10 +323,10 @@ export default function ProductPage() {
       const checkoutResult = await checkoutResponse.json();
 
       if (checkoutResult.success && checkoutResult.data?.checkout_url) {
-        const url = new URL(checkoutResult.data.checkout_url);
-        url.searchParams.set("embed", "true");
-        setCheckoutIframeUrl(url.toString());
-        setShowCheckoutIframe(true);
+        // Open in new tab
+        window.open(checkoutResult.data.checkout_url, "_blank");
+        setLoadingCheckout(false);
+        return;
       } else {
         throw new Error(checkoutResult.message || "Failed to create checkout");
       }
@@ -342,13 +339,25 @@ export default function ProductPage() {
     }
   };
 
+  // Go back to homepage
+  const goToHomepage = () => {
+    window.location.href = "/";
+  };
+
   return (
     <main className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow-sm sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <h1 className="text-2xl font-bold text-blue-600">Henry Labs</h1>
+            <button 
+              onClick={goToHomepage}
+              className="hover:opacity-80 transition-opacity"
+              type="button"
+              aria-label="Go to homepage"
+            >
+              <HenryWordmark className="h-8 text-blue-600" />
+            </button>
             <div className="flex items-center gap-4">
               <select
                 value={checkoutMethod}
