@@ -345,7 +345,7 @@ export default function ProductPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-gray-50 overflow-x-hidden">
       {/* Header */}
       <header className="bg-white shadow-sm sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -372,17 +372,17 @@ export default function ProductPage() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 overflow-x-hidden">
         {loading ? (
           <div className="flex justify-center items-center min-h-[60vh]">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#44c57e]"></div>
           </div>
         ) : !showCheckoutIframe ? (
-          <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 overflow-x-hidden">
             {productDetails ? (
               <div className="grid md:grid-cols-2 gap-8">
                 {/* Product Image */}
-                <div className="space-y-4">
+                <div className="space-y-4 max-w-full overflow-hidden">
                   {/* Main Image */}
                   <div className="relative h-80 rounded-lg overflow-hidden bg-white shadow-inner">
                     {productDetails.productResults.thumbnails &&
