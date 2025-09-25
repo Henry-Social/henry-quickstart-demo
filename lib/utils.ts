@@ -24,3 +24,22 @@ export function getValidImageUrl(url: string | undefined | null): string {
     return placeholderImage;
   }
 }
+
+export function extractMerchantDomain(url: string | undefined | null): string | null {
+  if (!url || url.trim() === "") {
+    return null;
+  }
+
+  try {
+    const urlObj = new URL(url);
+    // Extract hostname and remove www. prefix if present
+    let domain = urlObj.hostname;
+    if (domain.startsWith("www.")) {
+      domain = domain.substring(4);
+    }
+    return domain;
+  } catch {
+    // If URL parsing fails, return null
+    return null;
+  }
+}
