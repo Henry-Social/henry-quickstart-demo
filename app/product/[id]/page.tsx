@@ -73,6 +73,7 @@ export default function ProductPage() {
   const [selectedThumbnailIndex, setSelectedThumbnailIndex] = useState(0);
   const [merchantSupported, setMerchantSupported] = useState<boolean | null>(null);
   const [checkingMerchantStatus, setCheckingMerchantStatus] = useState(false);
+  const [isOrderCompleted, setIsOrderCompleted] = useState(false);
 
   // Handle closing the iframe
   const handleCloseIframe = useCallback(() => {
@@ -83,6 +84,7 @@ export default function ProductPage() {
     setShowCheckoutIframe(false);
     setCheckoutIframeUrl(null);
     setIframeLoading(true);
+    setIsOrderCompleted(false);
   }, [isCardCollection]);
 
   // Listen for iframe completion messages
@@ -93,7 +95,8 @@ export default function ProductPage() {
       if (event.data) {
         const { status, action } = event.data;
         if (status === "complete" || action === "orderCompleted") {
-          handleCloseIframe();
+          // Instead of closing, mark order as completed
+          setIsOrderCompleted(true);
         }
       }
     };
@@ -102,7 +105,7 @@ export default function ProductPage() {
     return () => {
       window.removeEventListener("message", handleMessage);
     };
-  }, [showCheckoutIframe, handleCloseIframe]);
+  }, [showCheckoutIframe]);
 
   // Check merchant status
   const checkMerchantStatus = async (productUrl: string) => {
@@ -704,22 +707,36 @@ export default function ProductPage() {
           <div className="bg-white rounded-lg shadow-sm overflow-hidden" style={{ height: "80vh" }}>
             <div className="flex items-center justify-between p-4 border-b bg-gray-50">
               <h3 className="text-lg font-semibold">
-                {isCardCollection ? "Save Your Card" : "Complete Your Purchase"}
+                {isOrderCompleted
+                  ? "Order Completed!"
+                  : isCardCollection
+                    ? "Save Your Card"
+                    : "Complete Your Purchase"}
               </h3>
-              <button
-                onClick={handleCloseIframe}
-                className="p-2 hover:bg-gray-200 rounded-full transition-colors"
-                aria-label="Close"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
+              <div className="flex items-center gap-2">
+                {isOrderCompleted && (
+                  <button
+                    onClick={handleCloseIframe}
+                    className="px-4 py-2 bg-[#44c57e] text-white rounded-lg font-semibold hover:bg-[#3aaa6a] transition-colors"
+                  >
+                    Done
+                  </button>
+                )}
+                <button
+                  onClick={handleCloseIframe}
+                  className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+                  aria-label="Close"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
             </div>
 
             <div className="relative h-full">
