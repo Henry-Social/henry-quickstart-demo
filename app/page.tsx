@@ -75,7 +75,6 @@ export default function Home() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [merchantSupported, setMerchantSupported] = useState<boolean | null>(null);
   const [checkingMerchantStatus, setCheckingMerchantStatus] = useState(false);
-  const [isOrderCompleted, setIsOrderCompleted] = useState(false);
 
   const placeholders = [
     "Yoga mats with good grip",
@@ -121,7 +120,6 @@ export default function Home() {
     setShowCheckoutIframe(false);
     setCheckoutIframeUrl(null);
     setIframeLoading(true);
-    setIsOrderCompleted(false);
   }, [isCardCollection]);
 
   // Close product modal
@@ -146,8 +144,7 @@ export default function Home() {
 
         // Check for completion status
         if (status === "complete" || action === "orderCompleted") {
-          // Instead of closing, mark order as completed
-          setIsOrderCompleted(true);
+          handleCloseIframe();
         }
       }
     };
@@ -158,7 +155,7 @@ export default function Home() {
     return () => {
       window.removeEventListener("message", handleMessage);
     };
-  }, [showCheckoutIframe]);
+  }, [showCheckoutIframe, handleCloseIframe]);
 
   // Search for products
   const searchProducts = async () => {
@@ -1202,11 +1199,7 @@ export default function Home() {
                   <div className="relative h-full flex flex-col">
                     <div className="flex items-center justify-between p-4 border-b bg-gray-50 flex-shrink-0">
                       <h3 className="text-lg font-semibold">
-                        {isOrderCompleted
-                          ? "Order Completed!"
-                          : isCardCollection
-                            ? "Save Your Card"
-                            : "Complete Your Purchase"}
+                        {isCardCollection ? "Save Your Card" : "Complete Your Purchase"}
                       </h3>
                       <div className="flex items-center gap-2">
                         {/* View Mode Toggle */}
@@ -1256,14 +1249,6 @@ export default function Home() {
                             </svg>
                           </button>
                         </div>
-                        {isOrderCompleted && (
-                          <button
-                            onClick={handleCloseIframe}
-                            className="px-4 py-2 bg-[#44c57e] text-white rounded-lg font-semibold hover:bg-[#3aaa6a] transition-colors"
-                          >
-                            Done
-                          </button>
-                        )}
                         <button
                           onClick={handleCloseIframe}
                           className="p-2 hover:bg-gray-200 rounded-full transition-colors"
