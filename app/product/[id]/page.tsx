@@ -91,8 +91,10 @@ export default function ProductPage() {
 
     const handleMessage = (event: MessageEvent) => {
       if (event.data) {
-        const { status, action } = event.data;
-        if (status === "complete" || action === "orderCompleted") {
+        const { action, orderId, status } = event.data;
+        // Check for checkout closed action from Done button
+        if (action === "checkoutClosed") {
+          console.log("Checkout closed", { orderId, status });
           handleCloseIframe();
         }
       }

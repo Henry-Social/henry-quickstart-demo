@@ -140,10 +140,11 @@ export default function Home() {
     const handleMessage = (event: MessageEvent) => {
       // Check if message is from iframe with completion status
       if (event.data) {
-        const { status, action } = event.data;
+        const { action, orderId, status } = event.data;
 
-        // Check for completion status
-        if (status === "complete" || action === "orderCompleted") {
+        // Check for checkout closed action from Done button
+        if (action === "checkoutClosed") {
+          console.log("Checkout closed", { orderId, status });
           handleCloseIframe();
         }
       }
