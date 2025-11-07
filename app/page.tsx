@@ -48,6 +48,26 @@ interface ProductDetails {
 type CheckoutMethod = "cart" | "saved-card" | "guest";
 type ViewMode = "desktop" | "mobile";
 
+const buildDefaultVariantSelections = (details: ProductDetails): Record<string, string> => {
+  const variants = details.productResults.variants;
+  if (!variants || variants.length === 0) {
+    return {};
+  }
+
+  return variants.reduce<Record<string, string>>((acc, variant) => {
+    const selectedItem =
+      variant.items.find((item) => item.selected && item.available !== false) ||
+      variant.items.find((item) => item.available !== false) ||
+      variant.items[0];
+
+    if (selectedItem) {
+      acc[variant.title] = selectedItem.name;
+    }
+
+    return acc;
+  }, {});
+};
+
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
@@ -69,6 +89,7 @@ export default function Home() {
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [viewMode, setViewMode] = useState<ViewMode>("desktop");
   const [expandedVariants, setExpandedVariants] = useState<Record<string, boolean>>({});
+  const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
   const [isMobile, setIsMobile] = useState(false);
   const [selectedThumbnailIndex, setSelectedThumbnailIndex] = useState(0);
   const [heroView, setHeroView] = useState(true);
@@ -131,7 +152,36 @@ export default function Home() {
     setCheckoutIframeUrl(null);
     setExpandedVariants({});
     setSelectedThumbnailIndex(0);
+    setSelectedVariants({});
   };
+
+  const handleVariantSelection = useCallback((variantTitle: string, optionName: string) => {
+    setSelectedVariants((prev) => {
+      if (prev[variantTitle] === optionName) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        [variantTitle]: optionName,
+      };
+    });
+  }, []);
+
+  const getVariantMetadata = useCallback(() => {
+    const variants = productDetails?.productResults?.variants;
+    if (!variants || variants.length === 0) {
+      return {};
+    }
+
+    return variants.reduce<Record<string, string>>((acc, variant) => {
+      const selection = selectedVariants[variant.title];
+      if (selection) {
+        acc[variant.title] = selection;
+      }
+      return acc;
+    }, {});
+  }, [productDetails, selectedVariants]);
 
   // Listen for iframe completion messages
   useEffect(() => {
@@ -237,6 +287,7 @@ export default function Home() {
     setSelectedProduct(product);
     setShowProductModal(true);
     setMerchantSupported(null); // Reset merchant status for new product
+    setSelectedVariants({});
 
     try {
       // Fetch product details first
@@ -245,6 +296,7 @@ export default function Home() {
 
       if (productResult?.success && productResult.data) {
         setProductDetails(productResult.data);
+        setSelectedVariants(buildDefaultVariantSelections(productResult.data));
 
         // Check merchant status using the actual store link (not Google Shopping link)
         const storeLink = productResult.data.productResults?.stores?.[0]?.link;
@@ -356,13 +408,7 @@ export default function Home() {
     setCheckoutResponse(null);
 
     try {
-      const selectedSize = productDetails.productResults.variants
-        .find((v) => v.title === "Size")
-        ?.items.find((i) => i.selected)?.name;
-
-      const selectedColor = productDetails.productResults.variants
-        .find((v) => v.title === "Color")
-        ?.items.find((i) => i.selected)?.name;
+      const variantMetadata = getVariantMetadata();
 
       const checkoutResponse = await fetch("/api/henry/checkout/single", {
         method: "POST",
@@ -389,10 +435,7 @@ export default function Home() {
             productLink:
               productDetails.productResults.stores[0]?.link || selectedProduct.productLink,
             productImageLink: getValidImageUrl(selectedProduct.imageUrl),
-            metadata: {
-              Size: selectedSize || "",
-              Color: selectedColor || "",
-            },
+            metadata: variantMetadata,
           },
         }),
       });
@@ -421,14 +464,7 @@ export default function Home() {
     setLoadingMessage("Processing...");
 
     try {
-      // Extract selected variants
-      const selectedSize = productDetails.productResults.variants
-        .find((v) => v.title === "Size")
-        ?.items.find((i) => i.selected)?.name;
-
-      const selectedColor = productDetails.productResults.variants
-        .find((v) => v.title === "Color")
-        ?.items.find((i) => i.selected)?.name;
+      const variantMetadata = getVariantMetadata();
 
       // Add to cart
       const cartResponse = await fetch("/api/henry/cart/add", {
@@ -447,10 +483,7 @@ export default function Home() {
               productLink:
                 productDetails.productResults.stores[0]?.link || selectedProduct.productLink,
               productImageLink: getValidImageUrl(selectedProduct.imageUrl),
-              metadata: {
-                Size: selectedSize,
-                Color: selectedColor,
-              },
+              metadata: variantMetadata,
             },
           ],
         }),
@@ -1031,21 +1064,34 @@ export default function Home() {
                                           !isExpanded && hasMore ? "max-h-24 overflow-hidden" : ""
                                         }`}
                                       >
-                                        {itemsToShow.map((item) => (
-                                          <button
-                                            key={item.name}
-                                            disabled={!item.available}
-                                            className={`px-4 py-2 border rounded-lg transition-colors ${
-                                              item.selected
-                                                ? "bg-[#44c57e] text-white border-[#44c57e]"
-                                                : item.available
-                                                  ? "bg-white hover:bg-gray-50 border-gray-300"
-                                                  : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
-                                            }`}
-                                          >
-                                            {item.name}
-                                          </button>
-                                        ))}
+                                        {itemsToShow.map((item) => {
+                                          const isAvailable = item.available !== false;
+                                          const isSelected =
+                                            selectedVariants[variant.title] === item.name;
+
+                                          return (
+                                            <button
+                                              key={item.name}
+                                              type="button"
+                                              disabled={!isAvailable}
+                                              onClick={() => {
+                                                if (isAvailable) {
+                                                  handleVariantSelection(variant.title, item.name);
+                                                }
+                                              }}
+                                              aria-pressed={isSelected}
+                                              className={`px-4 py-2 border rounded-lg transition-colors ${
+                                                isSelected
+                                                  ? "bg-[#44c57e] text-white border-[#44c57e]"
+                                                  : isAvailable
+                                                    ? "bg-white hover:bg-gray-50 border-gray-300"
+                                                    : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                                              }`}
+                                            >
+                                              {item.name}
+                                            </button>
+                                          );
+                                        })}
                                       </div>
                                       {hasMore && (
                                         <button
