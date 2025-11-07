@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useState, useRef, useMemo } from "react";
 import HenryWordmark from "@/assets/henry-wordmark";
 import { getValidImageUrl } from "@/lib/utils";
 
@@ -68,6 +68,26 @@ const buildDefaultVariantSelections = (details: ProductDetails): Record<string, 
   }, {});
 };
 
+const getVariantPriority = (title: string) => {
+  const normalized = title.toLowerCase();
+  if (normalized.includes("size")) return 2;
+  if (normalized.includes("color")) return 1;
+  return 0;
+};
+
+const findVariantSelection = (
+  variants: ProductDetails["productResults"]["variants"],
+  selected: Record<string, string>,
+  keyword: string,
+) => {
+  const match = variants.find((variant) => variant.title.toLowerCase().includes(keyword));
+  if (!match) return null;
+  return {
+    title: match.title,
+    value: selected[match.title],
+  };
+};
+
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
@@ -88,7 +108,6 @@ export default function Home() {
   const [showProductModal, setShowProductModal] = useState(false);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [viewMode, setViewMode] = useState<ViewMode>("desktop");
-  const [expandedVariants, setExpandedVariants] = useState<Record<string, boolean>>({});
   const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
   const [isMobile, setIsMobile] = useState(false);
   const [selectedThumbnailIndex, setSelectedThumbnailIndex] = useState(0);
@@ -148,7 +167,6 @@ export default function Home() {
     setProductDetails(null);
     setShowCheckoutIframe(false);
     setCheckoutIframeUrl(null);
-    setExpandedVariants({});
     setSelectedThumbnailIndex(0);
     setSelectedVariants({});
   };
@@ -179,6 +197,22 @@ export default function Home() {
       }
       return acc;
     }, {});
+  }, [productDetails, selectedVariants]);
+
+  const sortedVariants = useMemo(() => {
+    const variants = productDetails?.productResults?.variants;
+    if (!variants || variants.length === 0) {
+      return [];
+    }
+    return [...variants].sort((a, b) => getVariantPriority(b.title) - getVariantPriority(a.title));
+  }, [productDetails]);
+
+  const primarySelections = useMemo(() => {
+    const variants = productDetails?.productResults?.variants ?? [];
+    return {
+      size: findVariantSelection(variants, selectedVariants, "size"),
+      color: findVariantSelection(variants, selectedVariants, "color"),
+    };
   }, [productDetails, selectedVariants]);
 
   // Listen for iframe completion messages
@@ -373,6 +407,11 @@ export default function Home() {
 
     try {
       const variantMetadata = getVariantMetadata();
+      const metadata = {
+        ...variantMetadata,
+        ...(primarySelections.size?.value ? { Size: primarySelections.size.value } : {}),
+        ...(primarySelections.color?.value ? { Color: primarySelections.color.value } : {}),
+      };
 
       const checkoutResponse = await fetch("/api/henry/checkout/single", {
         method: "POST",
@@ -399,7 +438,7 @@ export default function Home() {
             productLink:
               productDetails.productResults.stores[0]?.link || selectedProduct.productLink,
             productImageLink: getValidImageUrl(selectedProduct.imageUrl),
-            metadata: variantMetadata,
+            metadata,
           },
         }),
       });
@@ -429,6 +468,11 @@ export default function Home() {
 
     try {
       const variantMetadata = getVariantMetadata();
+      const metadata = {
+        ...variantMetadata,
+        ...(primarySelections.size?.value ? { Size: primarySelections.size.value } : {}),
+        ...(primarySelections.color?.value ? { Color: primarySelections.color.value } : {}),
+      };
 
       // Add to cart
       const cartResponse = await fetch("/api/henry/cart/add", {
@@ -447,7 +491,7 @@ export default function Home() {
               productLink:
                 productDetails.productResults.stores[0]?.link || selectedProduct.productLink,
               productImageLink: getValidImageUrl(selectedProduct.imageUrl),
-              metadata: variantMetadata,
+              metadata,
             },
           ],
         }),
@@ -1013,88 +1057,63 @@ export default function Home() {
                                 </span>
                               </div>
 
+                              {(primarySelections.size || primarySelections.color) && (
+                                <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+                                  {primarySelections.size && (
+                                    <span>
+                                      Size:{" "}
+                                      <span className="font-semibold">
+                                        {primarySelections.size.value || "Select a size"}
+                                      </span>
+                                    </span>
+                                  )}
+                                  {primarySelections.color && (
+                                    <span>
+                                      Color:{" "}
+                                      <span className="font-semibold">
+                                        {primarySelections.color.value || "Select a color"}
+                                      </span>
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+
                               {/* Variants */}
-                              {productDetails.productResults.variants.map((variant) => {
-                                const isExpanded = expandedVariants[variant.title];
-                                const itemsToShow = isExpanded
-                                  ? variant.items
-                                  : variant.items.slice(0, 8);
-                                const hasMore = variant.items.length > 8;
+                              {sortedVariants.map((variant) => (
+                                <div key={variant.title}>
+                                  <h4 className="font-medium mb-2">{variant.title}:</h4>
+                                  <div className="flex flex-wrap gap-2">
+                                    {variant.items.map((item) => {
+                                      const isAvailable = item.available !== false;
+                                      const isSelected =
+                                        selectedVariants[variant.title] === item.name;
 
-                                return (
-                                  <div key={variant.title}>
-                                    <h4 className="font-medium mb-2">{variant.title}:</h4>
-                                    <div className="relative">
-                                      <div
-                                        className={`flex flex-wrap gap-2 ${
-                                          !isExpanded && hasMore ? "max-h-24 overflow-hidden" : ""
-                                        }`}
-                                      >
-                                        {itemsToShow.map((item) => {
-                                          const isAvailable = item.available !== false;
-                                          const isSelected =
-                                            selectedVariants[variant.title] === item.name;
-
-                                          return (
-                                            <button
-                                              key={item.name}
-                                              type="button"
-                                              disabled={!isAvailable}
-                                              onClick={() => {
-                                                if (isAvailable) {
-                                                  handleVariantSelection(variant.title, item.name);
-                                                }
-                                              }}
-                                              aria-pressed={isSelected}
-                                              className={`px-4 py-2 border rounded-lg transition-colors ${
-                                                isSelected
-                                                  ? "bg-[#44c57e] text-white border-[#44c57e]"
-                                                  : isAvailable
-                                                    ? "bg-white hover:bg-gray-50 border-gray-300"
-                                                    : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
-                                              }`}
-                                            >
-                                              {item.name}
-                                            </button>
-                                          );
-                                        })}
-                                      </div>
-                                      {hasMore && (
+                                      return (
                                         <button
-                                          onClick={() =>
-                                            setExpandedVariants((prev) => ({
-                                              ...prev,
-                                              [variant.title]: !prev[variant.title],
-                                            }))
-                                          }
-                                          className="mt-2 text-sm text-[#44c57e] hover:text-[#3aaa6a] font-medium flex items-center gap-1"
+                                          key={item.name}
+                                          type="button"
+                                          disabled={!isAvailable}
+                                          onClick={() => {
+                                            if (isAvailable) {
+                                              handleVariantSelection(variant.title, item.name);
+                                            }
+                                          }}
+                                          aria-pressed={isSelected}
+                                          className={`px-4 py-2 border rounded-lg transition-colors ${
+                                            isSelected
+                                              ? "bg-[#44c57e] text-white border-[#44c57e]"
+                                              : isAvailable
+                                                ? "bg-white hover:bg-gray-50 border-gray-300"
+                                                : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                                          }`}
                                         >
-                                          <span>
-                                            {isExpanded
-                                              ? "Show less"
-                                              : `Show ${variant.items.length - 8} more`}
-                                          </span>
-                                          <svg
-                                            className={`w-4 h-4 transition-transform ${
-                                              isExpanded ? "rotate-180" : ""
-                                            }`}
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                          >
-                                            <path
-                                              strokeLinecap="round"
-                                              strokeLinejoin="round"
-                                              strokeWidth={2}
-                                              d="M19 9l-7 7-7-7"
-                                            />
-                                          </svg>
+                                          {item.name}
                                         </button>
-                                      )}
-                                    </div>
+                                      );
+                                    })}
                                   </div>
-                                );
-                              })}
+                                </div>
+                              ))}
 
                               {/* Checkout Buttons */}
                               <div className="pt-4 space-y-3">

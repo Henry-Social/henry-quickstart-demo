@@ -1,10 +1,10 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { getValidImageUrl, extractMerchantDomain } from "@/lib/utils";
+import { getValidImageUrl } from "@/lib/utils";
 
 import { useParams } from "next/navigation";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import HenryWordmark from "@/assets/henry-wordmark";
@@ -42,6 +42,46 @@ interface ProductDetails {
 
 type CheckoutMethod = "cart" | "saved-card" | "guest";
 
+const buildDefaultVariantSelections = (details: ProductDetails): Record<string, string> => {
+  const variants = details.productResults.variants;
+  if (!variants || variants.length === 0) {
+    return {};
+  }
+
+  return variants.reduce<Record<string, string>>((acc, variant) => {
+    const selectedItem =
+      variant.items.find((item) => item.selected && item.available !== false) ||
+      variant.items.find((item) => item.available !== false) ||
+      variant.items[0];
+
+    if (selectedItem) {
+      acc[variant.title] = selectedItem.name;
+    }
+
+    return acc;
+  }, {});
+};
+
+const getVariantPriority = (title: string) => {
+  const normalized = title.toLowerCase();
+  if (normalized.includes("size")) return 2;
+  if (normalized.includes("color")) return 1;
+  return 0;
+};
+
+const findVariantSelection = (
+  variants: ProductDetails["productResults"]["variants"],
+  selected: Record<string, string>,
+  keyword: string,
+) => {
+  const match = variants.find((variant) => variant.title.toLowerCase().includes(keyword));
+  if (!match) return null;
+  return {
+    title: match.title,
+    value: selected[match.title],
+  };
+};
+
 export default function ProductPage() {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -64,15 +104,56 @@ export default function ProductPage() {
   const [checkoutIframeUrl, setCheckoutIframeUrl] = useState<string | null>(null);
   const [iframeLoading, setIframeLoading] = useState(true);
   const [isCardCollection, setIsCardCollection] = useState(false);
-  const [expandedVariants, setExpandedVariants] = useState<Record<string, boolean>>({});
   const [userId] = useState(`user_${Math.random().toString(36).substring(7)}`);
   const [productPrice, setProductPrice] = useState<number>(urlPrice ? parseFloat(urlPrice) : 0);
   const [productName, setProductName] = useState<string>(urlName);
   const [productImage, setProductImage] = useState<string>(urlImageUrl);
   const [productLink, setProductLink] = useState<string>(urlProductLink);
   const [selectedThumbnailIndex, setSelectedThumbnailIndex] = useState(0);
-  const [merchantSupported, setMerchantSupported] = useState<boolean | null>(null);
-  const [checkingMerchantStatus, setCheckingMerchantStatus] = useState(false);
+  const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
+
+  const handleVariantSelection = useCallback((variantTitle: string, optionName: string) => {
+    setSelectedVariants((prev) => {
+      if (prev[variantTitle] === optionName) {
+        return prev;
+      }
+      return {
+        ...prev,
+        [variantTitle]: optionName,
+      };
+    });
+  }, []);
+
+  const getVariantMetadata = useCallback(() => {
+    const variants = productDetails?.productResults?.variants;
+    if (!variants || variants.length === 0) {
+      return {};
+    }
+
+    return variants.reduce<Record<string, string>>((acc, variant) => {
+      const selection = selectedVariants[variant.title];
+      if (selection) {
+        acc[variant.title] = selection;
+      }
+      return acc;
+    }, {});
+  }, [productDetails, selectedVariants]);
+
+  const sortedVariants = useMemo(() => {
+    const variants = productDetails?.productResults?.variants;
+    if (!variants || variants.length === 0) {
+      return [];
+    }
+    return [...variants].sort((a, b) => getVariantPriority(b.title) - getVariantPriority(a.title));
+  }, [productDetails]);
+
+  const primarySelections = useMemo(() => {
+    const variants = productDetails?.productResults?.variants ?? [];
+    return {
+      size: findVariantSelection(variants, selectedVariants, "size"),
+      color: findVariantSelection(variants, selectedVariants, "color"),
+    };
+  }, [productDetails, selectedVariants]);
 
   // Handle closing the iframe
   const handleCloseIframe = useCallback(() => {
@@ -106,34 +187,7 @@ export default function ProductPage() {
     };
   }, [showCheckoutIframe, handleCloseIframe]);
 
-  // Check merchant status
-  const checkMerchantStatus = async (productUrl: string) => {
-    const domain = extractMerchantDomain(productUrl);
-    if (!domain) {
-      setMerchantSupported(false);
-      return;
-    }
-
-    setCheckingMerchantStatus(true);
-    try {
-      const response = await fetch(`/api/henry/merchants/${domain}/status`);
-      const result = await response.json();
-
-      if (result.success && result.data) {
-        setMerchantSupported(result.data.merchantSupportStatus);
-      } else {
-        // Default to not supported if there's an error
-        setMerchantSupported(false);
-      }
-    } catch (error) {
-      console.error("Error checking merchant status:", error);
-      setMerchantSupported(false);
-    } finally {
-      setCheckingMerchantStatus(false);
-    }
-  };
-
-  // Fetch product details and check merchant status
+  // Fetch product details
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -144,6 +198,7 @@ export default function ProductPage() {
         // Process product details
         if (productResult?.success && productResult.data) {
           setProductDetails(productResult.data);
+          setSelectedVariants(buildDefaultVariantSelections(productResult.data));
           setSelectedThumbnailIndex(0);
 
           if (productResult.data.productResults) {
@@ -157,19 +212,11 @@ export default function ProductPage() {
 
             setProductImage(urlImageUrl || productResult.data.productResults.image || "");
 
-            // Use the actual store link for merchant check, not the Google Shopping URL
             const storeLink = firstStore?.link;
             if (storeLink) {
               setProductLink(storeLink);
-              // Check merchant status with the actual store URL
-              checkMerchantStatus(storeLink);
             } else {
-              // Fallback to URL param if no store link
-              const link = urlProductLink || "";
-              setProductLink(link);
-              if (link && !link.includes("google.com")) {
-                checkMerchantStatus(link);
-              }
+              setProductLink(urlProductLink || "");
             }
           }
         }
@@ -260,13 +307,12 @@ export default function ProductPage() {
     setErrorMessage(null);
 
     try {
-      const selectedSize = productDetails.productResults.variants
-        .find((v) => v.title === "Size")
-        ?.items.find((i) => i.selected)?.name;
-
-      const selectedColor = productDetails.productResults.variants
-        .find((v) => v.title === "Color")
-        ?.items.find((i) => i.selected)?.name;
+      const variantMetadata = getVariantMetadata();
+      const metadata = {
+        ...variantMetadata,
+        ...(primarySelections.size?.value ? { Size: primarySelections.size.value } : {}),
+        ...(primarySelections.color?.value ? { Color: primarySelections.color.value } : {}),
+      };
 
       const checkoutResponse = await fetch("/api/henry/checkout/single", {
         method: "POST",
@@ -292,10 +338,7 @@ export default function ProductPage() {
             quantity: 1,
             productLink: productDetails.productResults.stores[0]?.link || productLink,
             productImageLink: getValidImageUrl(productImage),
-            metadata: {
-              Size: selectedSize || "",
-              Color: selectedColor || "",
-            },
+            metadata,
           },
         }),
       });
@@ -321,13 +364,12 @@ export default function ProductPage() {
     setLoadingMessage("Processing...");
 
     try {
-      const selectedSize = productDetails.productResults.variants
-        .find((v) => v.title === "Size")
-        ?.items.find((i) => i.selected)?.name;
-
-      const selectedColor = productDetails.productResults.variants
-        .find((v) => v.title === "Color")
-        ?.items.find((i) => i.selected)?.name;
+      const variantMetadata = getVariantMetadata();
+      const metadata = {
+        ...variantMetadata,
+        ...(primarySelections.size?.value ? { Size: primarySelections.size.value } : {}),
+        ...(primarySelections.color?.value ? { Color: primarySelections.color.value } : {}),
+      };
 
       // Add to cart
       const cartResponse = await fetch("/api/henry/cart/add", {
@@ -345,10 +387,7 @@ export default function ProductPage() {
               quantity: 1,
               productLink: productDetails.productResults.stores[0]?.link || productLink,
               productImageLink: getValidImageUrl(productImage),
-              metadata: {
-                Size: selectedSize,
-                Color: selectedColor,
-              },
+              metadata,
             },
           ],
         }),
@@ -538,153 +577,124 @@ export default function ProductPage() {
                   </div>
 
                   {/* Variants */}
-                  {productDetails.productResults.variants.map((variant) => {
-                    const isExpanded = expandedVariants[variant.title];
-                    const itemsToShow = isExpanded ? variant.items : variant.items.slice(0, 8);
-                    const hasMore = variant.items.length > 8;
+                  {(primarySelections.size || primarySelections.color) && (
+                    <div className="flex flex-wrap gap-3 text-sm text-gray-600">
+                      {primarySelections.size && (
+                        <span>
+                          Size:{" "}
+                          <span className="font-semibold">
+                            {primarySelections.size.value || "Select a size"}
+                          </span>
+                        </span>
+                      )}
+                      {primarySelections.color && (
+                        <span>
+                          Color:{" "}
+                          <span className="font-semibold">
+                            {primarySelections.color.value || "Select a color"}
+                          </span>
+                        </span>
+                      )}
+                    </div>
+                  )}
 
-                    return (
-                      <div key={variant.title}>
-                        <h4 className="font-medium mb-3 text-lg">{variant.title}:</h4>
-                        <div className="relative">
-                          <div
-                            className={`flex flex-wrap gap-2 ${
-                              !isExpanded && hasMore ? "max-h-24 overflow-hidden" : ""
-                            }`}
-                          >
-                            {itemsToShow.map((item) => (
-                              <button
-                                key={item.name}
-                                disabled={!item.available}
-                                className={`px-4 py-2 border rounded-lg transition-colors ${
-                                  item.selected
-                                    ? "bg-[#44c57e] text-white border-[#44c57e]"
-                                    : item.available
-                                      ? "bg-white hover:bg-gray-50 border-gray-300"
-                                      : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
-                                }`}
-                              >
-                                {item.name}
-                              </button>
-                            ))}
-                          </div>
-                          {hasMore && (
+                  {sortedVariants.map((variant) => (
+                    <div key={variant.title}>
+                      <h4 className="font-medium mb-3 text-lg">{variant.title}:</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {variant.items.map((item) => {
+                          const isAvailable = item.available !== false;
+                          const isSelected = selectedVariants[variant.title] === item.name;
+
+                          return (
                             <button
-                              onClick={() =>
-                                setExpandedVariants((prev) => ({
-                                  ...prev,
-                                  [variant.title]: !prev[variant.title],
-                                }))
-                              }
-                              className="mt-2 text-sm text-[#44c57e] hover:text-[#3aaa6a] font-medium flex items-center gap-1"
+                              key={item.name}
+                              type="button"
+                              disabled={!isAvailable}
+                              onClick={() => {
+                                if (isAvailable) {
+                                  handleVariantSelection(variant.title, item.name);
+                                }
+                              }}
+                              aria-pressed={isSelected}
+                              className={`px-4 py-2 border rounded-lg transition-colors ${
+                                isSelected
+                                  ? "bg-[#44c57e] text-white border-[#44c57e]"
+                                  : isAvailable
+                                    ? "bg-white hover:bg-gray-50 border-gray-300"
+                                    : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                              }`}
                             >
-                              <span>
-                                {isExpanded ? "Show less" : `Show ${variant.items.length - 8} more`}
-                              </span>
-                              <svg
-                                className={`w-4 h-4 transition-transform ${
-                                  isExpanded ? "rotate-180" : ""
-                                }`}
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M19 9l-7 7-7-7"
-                                />
-                              </svg>
+                              {item.name}
                             </button>
-                          )}
-                        </div>
+                          );
+                        })}
                       </div>
-                    );
-                  })}
+                    </div>
+                  ))}
 
                   {/* Checkout Buttons */}
                   <div className="pt-4 space-y-3">
-                    {checkingMerchantStatus ? (
-                      // Loading skeleton while checking merchant status
-                      <div className="w-full py-4 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 rounded-lg animate-pulse">
-                        <div className="h-5 bg-white/40 rounded-md w-36 mx-auto backdrop-blur-sm"></div>
-                      </div>
-                    ) : merchantSupported === false ? (
-                      // Visit Site button for unsupported merchants
-                      <a
-                        href={productDetails?.productResults?.stores?.[0]?.link || productLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors text-center"
+                    {checkoutMethod === "cart" && (
+                      <button
+                        onClick={buyNow}
+                        disabled={loadingCheckout}
+                        className="w-full py-3 bg-[#44c57e] text-white rounded-lg font-semibold hover:bg-[#3aaa6a] disabled:opacity-50 transition-colors"
                       >
-                        Visit Site
-                      </a>
-                    ) : (
-                      // Original checkout buttons for supported merchants
+                        {loadingCheckout ? loadingMessage : "Add to Cart & Buy"}
+                      </button>
+                    )}
+
+                    {checkoutMethod === "saved-card" && (
                       <>
-                        {checkoutMethod === "cart" && (
+                        {!hasCollectedCard ? (
                           <button
-                            onClick={buyNow}
+                            onClick={collectCard}
                             disabled={loadingCheckout}
                             className="w-full py-3 bg-[#44c57e] text-white rounded-lg font-semibold hover:bg-[#3aaa6a] disabled:opacity-50 transition-colors"
                           >
-                            {loadingCheckout ? loadingMessage : "Add to Cart & Buy"}
+                            {loadingCheckout ? loadingMessage : "Save Card First"}
+                          </button>
+                        ) : (
+                          <button
+                            onClick={singleCheckout}
+                            disabled={loadingCheckout}
+                            className="w-full py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 transition-colors"
+                          >
+                            {loadingCheckout ? loadingMessage : "Buy with Saved Card"}
                           </button>
                         )}
-
-                        {checkoutMethod === "saved-card" && (
-                          <>
-                            {!hasCollectedCard ? (
-                              <button
-                                onClick={collectCard}
-                                disabled={loadingCheckout}
-                                className="w-full py-3 bg-[#44c57e] text-white rounded-lg font-semibold hover:bg-[#3aaa6a] disabled:opacity-50 transition-colors"
-                              >
-                                {loadingCheckout ? loadingMessage : "Save Card First"}
-                              </button>
-                            ) : (
-                              <button
-                                onClick={singleCheckout}
-                                disabled={loadingCheckout}
-                                className="w-full py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 transition-colors"
-                              >
-                                {loadingCheckout ? loadingMessage : "Buy with Saved Card"}
-                              </button>
-                            )}
-                            {hasCollectedCard && (
-                              <p className="text-sm text-green-600 text-center">
-                                ✓ Card saved successfully
-                              </p>
-                            )}
-                          </>
+                        {hasCollectedCard && (
+                          <p className="text-sm text-green-600 text-center">
+                            ✓ Card saved successfully
+                          </p>
                         )}
+                      </>
+                    )}
 
-                        {checkoutMethod === "guest" && (
-                          <>
-                            {!hasCollectedCard ? (
-                              <button
-                                onClick={collectGuestCard}
-                                disabled={loadingCheckout}
-                                className="w-full py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 disabled:opacity-50 transition-colors"
-                              >
-                                {loadingCheckout ? loadingMessage : "Guest Card Collection"}
-                              </button>
-                            ) : (
-                              <button
-                                onClick={singleCheckout}
-                                disabled={loadingCheckout}
-                                className="w-full py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 transition-colors"
-                              >
-                                {loadingCheckout ? loadingMessage : "Complete Guest Checkout"}
-                              </button>
-                            )}
-                            {hasCollectedCard && (
-                              <p className="text-sm text-green-600 text-center">
-                                ✓ Card collected successfully
-                              </p>
-                            )}
-                          </>
+                    {checkoutMethod === "guest" && (
+                      <>
+                        {!hasCollectedCard ? (
+                          <button
+                            onClick={collectGuestCard}
+                            disabled={loadingCheckout}
+                            className="w-full py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 disabled:opacity-50 transition-colors"
+                          >
+                            {loadingCheckout ? loadingMessage : "Guest Card Collection"}
+                          </button>
+                        ) : (
+                          <button
+                            onClick={singleCheckout}
+                            disabled={loadingCheckout}
+                            className="w-full py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 transition-colors"
+                          >
+                            {loadingCheckout ? loadingMessage : "Complete Guest Checkout"}
+                          </button>
+                        )}
+                        {hasCollectedCard && (
+                          <p className="text-sm text-green-600 text-center">
+                            ✓ Card collected successfully
+                          </p>
                         )}
                       </>
                     )}
