@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useState, useRef } from "react";
 import HenryWordmark from "@/assets/henry-wordmark";
-import { getValidImageUrl, extractMerchantDomain } from "@/lib/utils";
+import { getValidImageUrl } from "@/lib/utils";
 
 interface Product {
   id: string;
@@ -94,8 +94,6 @@ export default function Home() {
   const [selectedThumbnailIndex, setSelectedThumbnailIndex] = useState(0);
   const [heroView, setHeroView] = useState(true);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const [merchantSupported, setMerchantSupported] = useState<boolean | null>(null);
-  const [checkingMerchantStatus, setCheckingMerchantStatus] = useState(false);
 
   const placeholders = [
     "Yoga mats with good grip",
@@ -242,32 +240,6 @@ export default function Home() {
     }
   };
 
-  // Check merchant status
-  const checkMerchantStatus = async (productUrl: string) => {
-    const domain = extractMerchantDomain(productUrl);
-    if (!domain) {
-      setMerchantSupported(false);
-      return;
-    }
-
-    setCheckingMerchantStatus(true);
-    try {
-      const response = await fetch(`/api/henry/merchants/${domain}/status`);
-      const result = await response.json();
-
-      if (result.success && result.data) {
-        setMerchantSupported(result.data.merchantSupportStatus);
-      } else {
-        setMerchantSupported(false);
-      }
-    } catch (error) {
-      console.error("Error checking merchant status:", error);
-      setMerchantSupported(false);
-    } finally {
-      setCheckingMerchantStatus(false);
-    }
-  };
-
   // Get product details
   const getProductDetails = async (product: Product) => {
     // On mobile, open custom product page in same tab
@@ -286,7 +258,6 @@ export default function Home() {
     setLoading(true);
     setSelectedProduct(product);
     setShowProductModal(true);
-    setMerchantSupported(null); // Reset merchant status for new product
     setSelectedVariants({});
 
     try {
@@ -297,13 +268,6 @@ export default function Home() {
       if (productResult?.success && productResult.data) {
         setProductDetails(productResult.data);
         setSelectedVariants(buildDefaultVariantSelections(productResult.data));
-
-        // Check merchant status using the actual store link (not Google Shopping link)
-        const storeLink = productResult.data.productResults?.stores?.[0]?.link;
-        if (storeLink) {
-          // Don't wait for merchant check to complete - let it run async
-          checkMerchantStatus(storeLink);
-        }
       }
     } catch (error) {
       // Silent error handling
@@ -1132,95 +1096,68 @@ export default function Home() {
 
                               {/* Checkout Buttons */}
                               <div className="pt-4 space-y-3">
-                                {checkingMerchantStatus ? (
-                                  // Loading skeleton while checking merchant status
-                                  <div className="w-full py-4 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 rounded-lg animate-pulse">
-                                    <div className="h-5 bg-white/40 rounded-md w-36 mx-auto backdrop-blur-sm"></div>
-                                  </div>
-                                ) : merchantSupported === false ? (
-                                  // Visit Site button for unsupported merchants
-                                  <a
-                                    href={
-                                      productDetails?.productResults?.stores?.[0]?.link ||
-                                      selectedProduct?.productLink
-                                    }
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="block w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors text-center"
+                                {checkoutMethod === "cart" && (
+                                  <button
+                                    onClick={buyNow}
+                                    disabled={loadingCheckout}
+                                    className="w-full py-3 bg-[#44c57e] text-white rounded-lg font-semibold hover:bg-[#3aaa6a] disabled:opacity-50 transition-colors"
                                   >
-                                    Visit Site
-                                  </a>
-                                ) : (
-                                  // Original checkout buttons for supported merchants
+                                    {loadingCheckout ? loadingMessage : "Add to Cart & Buy"}
+                                  </button>
+                                )}
+
+                                {checkoutMethod === "saved-card" && (
                                   <>
-                                    {checkoutMethod === "cart" && (
+                                    {!hasCollectedCard ? (
                                       <button
-                                        onClick={buyNow}
+                                        onClick={collectCard}
                                         disabled={loadingCheckout}
                                         className="w-full py-3 bg-[#44c57e] text-white rounded-lg font-semibold hover:bg-[#3aaa6a] disabled:opacity-50 transition-colors"
                                       >
-                                        {loadingCheckout ? loadingMessage : "Add to Cart & Buy"}
+                                        {loadingCheckout ? loadingMessage : "Save Card First"}
+                                      </button>
+                                    ) : (
+                                      <button
+                                        onClick={singleCheckout}
+                                        disabled={loadingCheckout}
+                                        className="w-full py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 transition-colors"
+                                      >
+                                        {loadingCheckout ? loadingMessage : "Buy with Saved Card"}
                                       </button>
                                     )}
-
-                                    {checkoutMethod === "saved-card" && (
-                                      <>
-                                        {!hasCollectedCard ? (
-                                          <button
-                                            onClick={collectCard}
-                                            disabled={loadingCheckout}
-                                            className="w-full py-3 bg-[#44c57e] text-white rounded-lg font-semibold hover:bg-[#3aaa6a] disabled:opacity-50 transition-colors"
-                                          >
-                                            {loadingCheckout ? loadingMessage : "Save Card First"}
-                                          </button>
-                                        ) : (
-                                          <button
-                                            onClick={singleCheckout}
-                                            disabled={loadingCheckout}
-                                            className="w-full py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 transition-colors"
-                                          >
-                                            {loadingCheckout
-                                              ? loadingMessage
-                                              : "Buy with Saved Card"}
-                                          </button>
-                                        )}
-                                        {hasCollectedCard && (
-                                          <p className="text-sm text-green-600 text-center">
-                                            ✓ Card saved successfully
-                                          </p>
-                                        )}
-                                      </>
+                                    {hasCollectedCard && (
+                                      <p className="text-sm text-green-600 text-center">
+                                        ✓ Card saved successfully
+                                      </p>
                                     )}
+                                  </>
+                                )}
 
-                                    {checkoutMethod === "guest" && (
-                                      <>
-                                        {!hasCollectedCard ? (
-                                          <button
-                                            onClick={collectGuestCard}
-                                            disabled={loadingCheckout}
-                                            className="w-full py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 disabled:opacity-50 transition-colors"
-                                          >
-                                            {loadingCheckout
-                                              ? loadingMessage
-                                              : "Guest Card Collection"}
-                                          </button>
-                                        ) : (
-                                          <button
-                                            onClick={singleCheckout}
-                                            disabled={loadingCheckout}
-                                            className="w-full py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 transition-colors"
-                                          >
-                                            {loadingCheckout
-                                              ? loadingMessage
-                                              : "Complete Guest Checkout"}
-                                          </button>
-                                        )}
-                                        {hasCollectedCard && (
-                                          <p className="text-sm text-green-600 text-center">
-                                            ✓ Card collected successfully
-                                          </p>
-                                        )}
-                                      </>
+                                {checkoutMethod === "guest" && (
+                                  <>
+                                    {!hasCollectedCard ? (
+                                      <button
+                                        onClick={collectGuestCard}
+                                        disabled={loadingCheckout}
+                                        className="w-full py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 disabled:opacity-50 transition-colors"
+                                      >
+                                        {loadingCheckout ? loadingMessage : "Guest Card Collection"}
+                                      </button>
+                                    ) : (
+                                      <button
+                                        onClick={singleCheckout}
+                                        disabled={loadingCheckout}
+                                        className="w-full py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 transition-colors"
+                                      >
+                                        {loadingCheckout
+                                          ? loadingMessage
+                                          : "Complete Guest Checkout"}
+                                      </button>
+                                    )}
+                                    {hasCollectedCard && (
+                                      <p className="text-sm text-green-600 text-center">
+                                        ✓ Card collected successfully
+                                      </p>
                                     )}
                                   </>
                                 )}
