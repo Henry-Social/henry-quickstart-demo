@@ -503,6 +503,7 @@ export default function Home() {
           <div className="bg-white py-4">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex justify-end items-center space-x-4">
+                {/* Checkout method dropdown temporarily hidden
                 <div className="relative">
                   <select
                     value={checkoutMethod}
@@ -532,6 +533,7 @@ export default function Home() {
                     />
                   </svg>
                 </div>
+                */}
                 <div className="text-xs text-gray-500">{userId}</div>
               </div>
             </div>
