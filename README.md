@@ -16,7 +16,7 @@ This demo showcases:
 1. **Install dependencies:**
 
 ```bash
-pnpm install
+bun install
 ```
 
 2. **Configure environment variables:**
@@ -30,7 +30,7 @@ Then edit `.env.local` and add your Henry API key.
 3. **Run the development server:**
 
 ```bash
-pnpm dev
+bun dev
 ```
 
 4. **Open the app:**
