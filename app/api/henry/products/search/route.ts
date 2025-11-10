@@ -10,9 +10,6 @@ export async function POST(request: NextRequest) {
     console.log(result, "resulst from api response **");
     return NextResponse.json(result);
   } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to search products" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to search products" }, { status: 500 });
   }
 }

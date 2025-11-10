@@ -24,4 +24,3 @@ export const henry = new HenrySDK({
 });
 
 export type HenryClient = typeof henry;
-
