@@ -1,86 +1,17 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
+import type { ProductDetails } from "@/lib/types";
 import { getValidImageUrl } from "@/lib/utils";
 
 import { useParams } from "next/navigation";
 import { useEffect, useState, useCallback, useMemo } from "react";
+import {
+  buildDefaultVariantSelections,
+  getVariantPriority,
+  findVariantSelection,
+} from "@/lib/variants";
 import Image from "next/image";
-import Link from "next/link";
-import HenryWordmark from "@/assets/henry-wordmark";
-
-interface ProductDetails {
-  productResults: {
-    title: string;
-    brand: string;
-    reviews: number;
-    rating: number;
-    image?: string;
-    thumbnails?: string[];
-    stores: Array<{
-      name: string;
-      link: string;
-      price: string;
-      shipping: string;
-      total: string;
-    }>;
-    variants: Array<{
-      title: string;
-      items: Array<{
-        name: string;
-        selected?: boolean;
-        available?: boolean;
-      }>;
-    }>;
-  };
-  relatedSearches: Array<{
-    query: string;
-    image: string;
-    link: string;
-  }>;
-}
-
-type CheckoutMethod = "cart" | "saved-card" | "guest";
-
-const buildDefaultVariantSelections = (details: ProductDetails): Record<string, string> => {
-  const variants = details.productResults.variants;
-  if (!variants || variants.length === 0) {
-    return {};
-  }
-
-  return variants.reduce<Record<string, string>>((acc, variant) => {
-    const selectedItem =
-      variant.items.find((item) => item.selected && item.available !== false) ||
-      variant.items.find((item) => item.available !== false) ||
-      variant.items[0];
-
-    if (selectedItem) {
-      acc[variant.title] = selectedItem.name;
-    }
-
-    return acc;
-  }, {});
-};
-
-const getVariantPriority = (title: string) => {
-  const normalized = title.toLowerCase();
-  if (normalized.includes("size")) return 2;
-  if (normalized.includes("color")) return 1;
-  return 0;
-};
-
-const findVariantSelection = (
-  variants: ProductDetails["productResults"]["variants"],
-  selected: Record<string, string>,
-  keyword: string,
-) => {
-  const match = variants.find((variant) => variant.title.toLowerCase().includes(keyword));
-  if (!match) return null;
-  return {
-    title: match.title,
-    value: selected[match.title],
-  };
-};
 
 export default function ProductPage() {
   const params = useParams();
@@ -93,36 +24,44 @@ export default function ProductPage() {
   const urlName = searchParams.get("name") || "";
   const urlProductLink = searchParams.get("productLink") || "";
 
-  const [productDetails, setProductDetails] = useState<ProductDetails | null>(null);
+  const [productDetails, setProductDetails] = useState<ProductDetails | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
   const [loadingCheckout, setLoadingCheckout] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("Processing...");
-  const [checkoutMethod, setCheckoutMethod] = useState<CheckoutMethod>("cart");
-  const [hasCollectedCard, setHasCollectedCard] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showCheckoutIframe, setShowCheckoutIframe] = useState(false);
-  const [checkoutIframeUrl, setCheckoutIframeUrl] = useState<string | null>(null);
   const [iframeLoading, setIframeLoading] = useState(true);
-  const [isCardCollection, setIsCardCollection] = useState(false);
+  const [checkoutIframeUrl, setCheckoutIframeUrl] = useState<string | null>(
+    null
+  );
   const [userId] = useState(`user_${Math.random().toString(36).substring(7)}`);
-  const [productPrice, setProductPrice] = useState<number>(urlPrice ? parseFloat(urlPrice) : 0);
+  const [productPrice, setProductPrice] = useState<number>(
+    urlPrice ? parseFloat(urlPrice) : 0
+  );
   const [productName, setProductName] = useState<string>(urlName);
   const [productImage, setProductImage] = useState<string>(urlImageUrl);
   const [productLink, setProductLink] = useState<string>(urlProductLink);
   const [selectedThumbnailIndex, setSelectedThumbnailIndex] = useState(0);
-  const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
+  const [selectedVariants, setSelectedVariants] = useState<
+    Record<string, string>
+  >({});
 
-  const handleVariantSelection = useCallback((variantTitle: string, optionName: string) => {
-    setSelectedVariants((prev) => {
-      if (prev[variantTitle] === optionName) {
-        return prev;
-      }
-      return {
-        ...prev,
-        [variantTitle]: optionName,
-      };
-    });
-  }, []);
+  const handleVariantSelection = useCallback(
+    (variantTitle: string, optionName: string) => {
+      setSelectedVariants((prev) => {
+        if (prev[variantTitle] === optionName) {
+          return prev;
+        }
+        return {
+          ...prev,
+          [variantTitle]: optionName,
+        };
+      });
+    },
+    []
+  );
 
   const getVariantMetadata = useCallback(() => {
     const variants = productDetails?.productResults?.variants;
@@ -144,7 +83,9 @@ export default function ProductPage() {
     if (!variants || variants.length === 0) {
       return [];
     }
-    return [...variants].sort((a, b) => getVariantPriority(b.title) - getVariantPriority(a.title));
+    return [...variants].sort(
+      (a, b) => getVariantPriority(b.title) - getVariantPriority(a.title)
+    );
   }, [productDetails]);
 
   const primarySelections = useMemo(() => {
@@ -157,48 +98,26 @@ export default function ProductPage() {
 
   // Handle closing the iframe
   const handleCloseIframe = useCallback(() => {
-    if (isCardCollection) {
-      setHasCollectedCard(true);
-      setIsCardCollection(false);
-    }
     setShowCheckoutIframe(false);
     setCheckoutIframeUrl(null);
-    setIframeLoading(true);
-  }, [isCardCollection]);
-
-  // Listen for iframe completion messages
-  useEffect(() => {
-    if (!showCheckoutIframe) return;
-
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data) {
-        const { action, orderId, status } = event.data;
-        // Check for checkout closed action from Done button
-        if (action === "checkoutClosed") {
-          console.log("Checkout closed", { orderId, status });
-          handleCloseIframe();
-        }
-      }
-    };
-
-    window.addEventListener("message", handleMessage);
-    return () => {
-      window.removeEventListener("message", handleMessage);
-    };
-  }, [showCheckoutIframe, handleCloseIframe]);
+  }, []);
 
   // Fetch product details
   useEffect(() => {
     const fetchData = async () => {
       try {
         // Fetch product details
-        const response = await fetch(`/api/henry/products/details?productId=${productId}`);
+        const response = await fetch(
+          `/api/henry/products/details?productId=${productId}`
+        );
         const productResult = await response.json();
 
         // Process product details
         if (productResult?.success && productResult.data) {
           setProductDetails(productResult.data);
-          setSelectedVariants(buildDefaultVariantSelections(productResult.data));
+          setSelectedVariants(
+            buildDefaultVariantSelections(productResult.data)
+          );
           setSelectedThumbnailIndex(0);
 
           if (productResult.data.productResults) {
@@ -206,11 +125,15 @@ export default function ProductPage() {
 
             const firstStore = productResult.data.productResults.stores?.[0];
             if (firstStore?.price) {
-              const price = parseFloat(firstStore.price.replace(/[^0-9.]/g, ""));
+              const price = parseFloat(
+                firstStore.price.replace(/[^0-9.]/g, "")
+              );
               setProductPrice(price || 0);
             }
 
-            setProductImage(urlImageUrl || productResult.data.productResults.image || "");
+            setProductImage(
+              urlImageUrl || productResult.data.productResults.image || ""
+            );
 
             const storeLink = firstStore?.link;
             if (storeLink) {
@@ -230,132 +153,6 @@ export default function ProductPage() {
     fetchData();
   }, [productId]);
 
-  // Collect card for authenticated user
-  const collectCard = async () => {
-    setLoadingCheckout(true);
-    setLoadingMessage("Getting card collection link...");
-    setErrorMessage(null);
-
-    try {
-      const response = await fetch("/api/henry/wallet/card-collect", {
-        method: "POST",
-        headers: {
-          "x-user-id": userId,
-        },
-      });
-
-      const result = await response.json();
-
-      if (result.success && result.data?.modal_url) {
-        const url = new URL(result.data.modal_url);
-        url.searchParams.set("embed", "true");
-        setCheckoutIframeUrl(url.toString());
-        setShowCheckoutIframe(true);
-        setIframeLoading(true);
-        setIsCardCollection(true);
-      } else {
-        setErrorMessage(result.message || "Failed to initiate card collection");
-      }
-    } catch (error) {
-      console.error("Card collection error:", error);
-      setErrorMessage("An error occurred while collecting card");
-    } finally {
-      setLoadingCheckout(false);
-    }
-  };
-
-  // Collect card for guest user
-  const collectGuestCard = async () => {
-    setLoadingCheckout(true);
-    setLoadingMessage("Getting guest card collection link...");
-    setErrorMessage(null);
-
-    try {
-      const response = await fetch("/api/henry/wallet/card-collect-guest", {
-        method: "POST",
-        headers: {
-          "x-user-id": userId,
-        },
-      });
-
-      const result = await response.json();
-
-      if (result.success && result.data?.modal_url) {
-        const url = new URL(result.data.modal_url);
-        url.searchParams.set("embed", "true");
-        setCheckoutIframeUrl(url.toString());
-        setShowCheckoutIframe(true);
-        setIframeLoading(true);
-        setIsCardCollection(true);
-      } else {
-        setErrorMessage(result.message || "Failed to initiate guest card collection");
-      }
-    } catch (error) {
-      console.error("Guest card collection error:", error);
-      setErrorMessage("An error occurred while collecting guest card");
-    } finally {
-      setLoadingCheckout(false);
-    }
-  };
-
-  // Single product checkout
-  const singleCheckout = async () => {
-    if (!productDetails) return;
-
-    setLoadingCheckout(true);
-    setLoadingMessage("Processing single product checkout...");
-    setErrorMessage(null);
-
-    try {
-      const variantMetadata = getVariantMetadata();
-      const metadata = {
-        ...variantMetadata,
-        ...(primarySelections.size?.value ? { Size: primarySelections.size.value } : {}),
-        ...(primarySelections.color?.value ? { Color: primarySelections.color.value } : {}),
-      };
-
-      const checkoutResponse = await fetch("/api/henry/checkout/single", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user-id": userId,
-        },
-        body: JSON.stringify({
-          shippingDetails: {
-            fullName: "Demo User",
-            email: "demo@example.com",
-            phoneNumber: "+1234567890",
-            addressLine1: "123 Demo Street",
-            countryCode: "US",
-            city: "New York",
-            stateOrProvince: "NY",
-            postalCode: "10001",
-          },
-          productDetails: {
-            productId: productId,
-            name: productDetails.productResults.title,
-            price: productPrice.toString(),
-            quantity: 1,
-            productLink: productDetails.productResults.stores[0]?.link || productLink,
-            productImageLink: getValidImageUrl(productImage),
-            metadata,
-          },
-        }),
-      });
-
-      const checkoutResult = await checkoutResponse.json();
-
-      if (!checkoutResult.success) {
-        setErrorMessage(checkoutResult.message || "Failed to complete checkout");
-      }
-    } catch (error) {
-      console.error("Single checkout error:", error);
-      setErrorMessage("An error occurred during checkout");
-    } finally {
-      setLoadingCheckout(false);
-    }
-  };
-
   // Buy now flow (cart checkout)
   const buyNow = async () => {
     if (!productDetails) return;
@@ -367,8 +164,12 @@ export default function ProductPage() {
       const variantMetadata = getVariantMetadata();
       const metadata = {
         ...variantMetadata,
-        ...(primarySelections.size?.value ? { Size: primarySelections.size.value } : {}),
-        ...(primarySelections.color?.value ? { Color: primarySelections.color.value } : {}),
+        ...(primarySelections.size?.value
+          ? { Size: primarySelections.size.value }
+          : {}),
+        ...(primarySelections.color?.value
+          ? { Color: primarySelections.color.value }
+          : {}),
       };
 
       // Add to cart
@@ -385,7 +186,8 @@ export default function ProductPage() {
               name: productDetails.productResults.title,
               price: productPrice.toString(),
               quantity: 1,
-              productLink: productDetails.productResults.stores[0]?.link || productLink,
+              productLink:
+                productDetails.productResults.stores[0]?.link || productLink,
               productImageLink: getValidImageUrl(productImage),
               metadata,
             },
@@ -419,7 +221,10 @@ export default function ProductPage() {
       }
     } catch (error) {
       console.error("Cart checkout error:", error);
-      const errorMsg = error instanceof Error ? error.message : "An error occurred during checkout";
+      const errorMsg =
+        error instanceof Error
+          ? error.message
+          : "An error occurred during checkout";
       setErrorMessage(errorMsg);
     } finally {
       setLoadingCheckout(false);
@@ -432,24 +237,7 @@ export default function ProductPage() {
       <header className="bg-white shadow-sm sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <Link href="/" className="flex items-center">
-              <HenryWordmark className="h-8" />
-            </Link>
-            <div className="flex items-center gap-4">
-              <select
-                value={checkoutMethod}
-                onChange={(e) => {
-                  setCheckoutMethod(e.target.value as CheckoutMethod);
-                  setHasCollectedCard(false);
-                  setErrorMessage(null);
-                }}
-                className="text-sm bg-gray-100 px-3 py-1.5 rounded"
-              >
-                <option value="cart">Cart</option>
-                <option value="saved-card">Saved Card</option>
-                <option value="guest">Guest</option>
-              </select>
-            </div>
+            <div className="font-semibold text-[#44c57e]">Henry</div>
           </div>
         </div>
       </header>
@@ -472,8 +260,14 @@ export default function ProductPage() {
                       <>
                         <div className="absolute inset-0 image-gradient-overlay z-10 pointer-events-none" />
                         <Image
-                          src={productDetails.productResults.thumbnails![selectedThumbnailIndex]}
-                          alt={productDetails.productResults.title || productName}
+                          src={
+                            productDetails.productResults.thumbnails![
+                              selectedThumbnailIndex
+                            ]
+                          }
+                          alt={
+                            productDetails.productResults.title || productName
+                          }
                           fill
                           className="object-contain p-4"
                           unoptimized
@@ -483,8 +277,12 @@ export default function ProductPage() {
                       <>
                         <div className="absolute inset-0 image-gradient-overlay z-10 pointer-events-none" />
                         <Image
-                          src={productDetails.productResults.image || productImage}
-                          alt={productDetails.productResults.title || productName}
+                          src={
+                            productDetails.productResults.image || productImage
+                          }
+                          alt={
+                            productDetails.productResults.title || productName
+                          }
                           fill
                           className="object-contain p-4"
                           unoptimized
@@ -514,25 +312,30 @@ export default function ProductPage() {
                     productDetails.productResults.thumbnails.length > 1 && (
                       <div className="overflow-x-auto pb-2 max-w-full [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-gray-100">
                         <div className="flex gap-2 py-1 px-0.5 min-w-min">
-                          {productDetails.productResults.thumbnails!.map((thumbnail, index) => (
-                            <button
-                              key={index}
-                              onClick={() => setSelectedThumbnailIndex(index)}
-                              className={`relative flex-shrink-0 w-16 h-16 rounded-md border-2 transition-all bg-white ${
-                                selectedThumbnailIndex === index
-                                  ? "border-[#44c57e] opacity-100 shadow-md"
-                                  : "border-gray-300 opacity-80 hover:opacity-100 hover:border-gray-400"
-                              }`}
-                            >
-                              <Image
-                                src={thumbnail}
-                                alt={`${productDetails.productResults.title || productName} - View ${index + 1}`}
-                                fill
-                                className="object-contain p-1.5 rounded-sm"
-                                unoptimized
-                              />
-                            </button>
-                          ))}
+                          {productDetails.productResults.thumbnails!.map(
+                            (thumbnail, index) => (
+                              <button
+                                key={index}
+                                onClick={() => setSelectedThumbnailIndex(index)}
+                                className={`relative flex-shrink-0 w-16 h-16 rounded-md border-2 transition-all bg-white ${
+                                  selectedThumbnailIndex === index
+                                    ? "border-[#44c57e] opacity-100 shadow-md"
+                                    : "border-gray-300 opacity-80 hover:opacity-100 hover:border-gray-400"
+                                }`}
+                              >
+                                <Image
+                                  src={thumbnail}
+                                  alt={`${
+                                    productDetails.productResults.title ||
+                                    productName
+                                  } - View ${index + 1}`}
+                                  fill
+                                  className="object-contain p-1.5 rounded-sm"
+                                  unoptimized
+                                />
+                              </button>
+                            )
+                          )}
                         </div>
                       </div>
                     )}
@@ -600,11 +403,14 @@ export default function ProductPage() {
 
                   {sortedVariants.map((variant) => (
                     <div key={variant.title}>
-                      <h4 className="font-medium mb-3 text-lg">{variant.title}:</h4>
+                      <h4 className="font-medium mb-3 text-lg">
+                        {variant.title}:
+                      </h4>
                       <div className="flex flex-wrap gap-2">
                         {variant.items.map((item) => {
                           const isAvailable = item.available !== false;
-                          const isSelected = selectedVariants[variant.title] === item.name;
+                          const isSelected =
+                            selectedVariants[variant.title] === item.name;
 
                           return (
                             <button
@@ -613,7 +419,10 @@ export default function ProductPage() {
                               disabled={!isAvailable}
                               onClick={() => {
                                 if (isAvailable) {
-                                  handleVariantSelection(variant.title, item.name);
+                                  handleVariantSelection(
+                                    variant.title,
+                                    item.name
+                                  );
                                 }
                               }}
                               aria-pressed={isSelected}
@@ -621,8 +430,8 @@ export default function ProductPage() {
                                 isSelected
                                   ? "bg-[#44c57e] text-white border-[#44c57e]"
                                   : isAvailable
-                                    ? "bg-white hover:bg-gray-50 border-gray-300"
-                                    : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                                  ? "bg-white hover:bg-gray-50 border-gray-300"
+                                  : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
                               }`}
                             >
                               {item.name}
@@ -633,71 +442,14 @@ export default function ProductPage() {
                     </div>
                   ))}
 
-                  {/* Checkout Buttons */}
                   <div className="pt-4 space-y-3">
-                    {checkoutMethod === "cart" && (
-                      <button
-                        onClick={buyNow}
-                        disabled={loadingCheckout}
-                        className="w-full py-3 bg-[#44c57e] text-white rounded-lg font-semibold hover:bg-[#3aaa6a] disabled:opacity-50 transition-colors"
-                      >
-                        {loadingCheckout ? loadingMessage : "Add to Cart & Buy"}
-                      </button>
-                    )}
-
-                    {checkoutMethod === "saved-card" && (
-                      <>
-                        {!hasCollectedCard ? (
-                          <button
-                            onClick={collectCard}
-                            disabled={loadingCheckout}
-                            className="w-full py-3 bg-[#44c57e] text-white rounded-lg font-semibold hover:bg-[#3aaa6a] disabled:opacity-50 transition-colors"
-                          >
-                            {loadingCheckout ? loadingMessage : "Save Card First"}
-                          </button>
-                        ) : (
-                          <button
-                            onClick={singleCheckout}
-                            disabled={loadingCheckout}
-                            className="w-full py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 transition-colors"
-                          >
-                            {loadingCheckout ? loadingMessage : "Buy with Saved Card"}
-                          </button>
-                        )}
-                        {hasCollectedCard && (
-                          <p className="text-sm text-green-600 text-center">
-                            ✓ Card saved successfully
-                          </p>
-                        )}
-                      </>
-                    )}
-
-                    {checkoutMethod === "guest" && (
-                      <>
-                        {!hasCollectedCard ? (
-                          <button
-                            onClick={collectGuestCard}
-                            disabled={loadingCheckout}
-                            className="w-full py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 disabled:opacity-50 transition-colors"
-                          >
-                            {loadingCheckout ? loadingMessage : "Guest Card Collection"}
-                          </button>
-                        ) : (
-                          <button
-                            onClick={singleCheckout}
-                            disabled={loadingCheckout}
-                            className="w-full py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 transition-colors"
-                          >
-                            {loadingCheckout ? loadingMessage : "Complete Guest Checkout"}
-                          </button>
-                        )}
-                        {hasCollectedCard && (
-                          <p className="text-sm text-green-600 text-center">
-                            ✓ Card collected successfully
-                          </p>
-                        )}
-                      </>
-                    )}
+                    <button
+                      onClick={buyNow}
+                      disabled={loadingCheckout}
+                      className="w-full py-3 bg-[#44c57e] text-white rounded-lg font-semibold hover:bg-[#3aaa6a] disabled:opacity-50 transition-colors"
+                    >
+                      {loadingCheckout ? loadingMessage : "Add to Cart & Buy"}
+                    </button>
 
                     {errorMessage && (
                       <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
@@ -708,22 +460,32 @@ export default function ProductPage() {
                 </div>
               </div>
             ) : (
-              <div className="text-center py-12 text-gray-500">Unable to load product details</div>
+              <div className="text-center py-12 text-gray-500">
+                Unable to load product details
+              </div>
             )}
           </div>
         ) : (
           /* Checkout Iframe */
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden" style={{ height: "80vh" }}>
+          <div
+            className="bg-white rounded-lg shadow-sm overflow-hidden"
+            style={{ height: "80vh" }}
+          >
             <div className="flex items-center justify-between p-4 border-b bg-gray-50">
               <h3 className="text-lg font-semibold">
-                {isCardCollection ? "Save Your Card" : "Complete Your Purchase"}
+                {"Complete Your Purchase"}
               </h3>
               <button
                 onClick={handleCloseIframe}
                 className="p-2 hover:bg-gray-200 rounded-full transition-colors"
                 aria-label="Close"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
