@@ -8,7 +8,11 @@ interface CheckoutModalProps {
   title?: string;
 }
 
-export default function CheckoutModal({ url, onClose, title = "Complete Your Purchase" }: CheckoutModalProps) {
+export default function CheckoutModal({
+  url,
+  onClose,
+  title = "Complete Your Purchase",
+}: CheckoutModalProps) {
   const [loading, setLoading] = useState(true);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const allowedOrigin = useMemo(() => {
@@ -45,7 +49,12 @@ export default function CheckoutModal({ url, onClose, title = "Complete Your Pur
           aria-label="Close"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
           </svg>
         </button>
       </div>
@@ -71,4 +80,3 @@ export default function CheckoutModal({ url, onClose, title = "Complete Your Pur
     </div>
   );
 }
-

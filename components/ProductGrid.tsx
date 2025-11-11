@@ -14,10 +14,7 @@ export default function ProductGrid({ products, loading, onSelect }: Props) {
     return (
       <div className="product-grid">
         {[...Array(15)].map((_, index) => (
-          <div
-            key={`skeleton-${index}`}
-            className="bg-white rounded-xl shadow-sm overflow-hidden"
-          >
+          <div key={`skeleton-${index}`} className="bg-white rounded-xl shadow-sm overflow-hidden">
             <div className="skeleton aspect-square" />
             <div className="p-4 space-y-3">
               <div className="skeleton h-3 w-16 rounded" />
@@ -77,16 +74,10 @@ export default function ProductGrid({ products, loading, onSelect }: Props) {
             </div>
           )}
           <div className="p-4 flex flex-col h-32">
-            <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide">
-              {product.source}
-            </p>
-            <h3 className="text-sm text-gray-900 line-clamp-2 mb-auto">
-              {product.name}
-            </h3>
+            <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide">{product.source}</p>
+            <h3 className="text-sm text-gray-900 line-clamp-2 mb-auto">{product.name}</h3>
             <div className="pt-2">
-              <p className="text-base font-bold text-black">
-                ${product.price.toFixed(2)}
-              </p>
+              <p className="text-base font-bold text-black">${product.price.toFixed(2)}</p>
             </div>
           </div>
         </div>

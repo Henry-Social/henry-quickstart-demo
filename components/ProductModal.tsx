@@ -61,9 +61,7 @@ export default function ProductModal({
     if (!variants || variants.length === 0) {
       return [];
     }
-    return [...variants].sort(
-      (a, b) => getVariantPriority(b.title) - getVariantPriority(a.title)
-    );
+    return [...variants].sort((a, b) => getVariantPriority(b.title) - getVariantPriority(a.title));
   }, [productDetails]);
 
   if (!isOpen || !selectedProduct) return null;
@@ -79,9 +77,7 @@ export default function ProductModal({
       {/* Modal Content */}
       <div
         className={`relative bg-white rounded-2xl shadow-2xl modal-content overflow-hidden transition-all duration-300 ${
-          viewMode === "desktop"
-            ? "w-[min(1512px,90vw)] h-[min(982px,90%)]"
-            : "w-[430px] h-[100%]"
+          viewMode === "desktop" ? "w-[min(1512px,90vw)] h-[min(982px,90%)]" : "w-[430px] h-[100%]"
         }`}
       >
         {!showCheckoutIframe ? (
@@ -95,19 +91,12 @@ export default function ProductModal({
                   <button
                     onClick={() => setViewMode("desktop")}
                     className={`p-2 rounded transition-colors ${
-                      viewMode === "desktop"
-                        ? "bg-white shadow-sm"
-                        : "hover:bg-gray-200"
+                      viewMode === "desktop" ? "bg-white shadow-sm" : "hover:bg-gray-200"
                     }`}
                     aria-label="Desktop view"
                     title="Desktop view"
                   >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -119,19 +108,12 @@ export default function ProductModal({
                   <button
                     onClick={() => setViewMode("mobile")}
                     className={`p-2 rounded transition-colors ${
-                      viewMode === "mobile"
-                        ? "bg-white shadow-sm"
-                        : "hover:bg-gray-200"
+                      viewMode === "mobile" ? "bg-white shadow-sm" : "hover:bg-gray-200"
                     }`}
                     aria-label="Mobile view"
                     title="Mobile view"
                   >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -146,12 +128,7 @@ export default function ProductModal({
                   className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                   aria-label="Close"
                 >
-                  <svg
-                    className="w-6 h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -164,17 +141,12 @@ export default function ProductModal({
             </div>
 
             {/* Modal Body */}
-            <div
-              className="relative overflow-y-auto"
-              style={{ height: "calc(100% - 72px)" }}
-            >
+            <div className="relative overflow-y-auto" style={{ height: "calc(100% - 72px)" }}>
               {loading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-white z-10">
                   <div className="flex flex-col items-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#44c57e]"></div>
-                    <p className="mt-4 text-gray-600">
-                      Loading product details...
-                    </p>
+                    <p className="mt-4 text-gray-600">Loading product details...</p>
                   </div>
                 </div>
               )}
@@ -191,9 +163,7 @@ export default function ProductModal({
                             <div className="absolute inset-0 image-gradient-overlay z-10 pointer-events-none" />
                             <Image
                               src={
-                                productDetails.productResults.thumbnails![
-                                  selectedThumbnailIndex
-                                ]
+                                productDetails.productResults.thumbnails![selectedThumbnailIndex]
                               }
                               alt={productDetails.productResults.title}
                               fill
@@ -242,31 +212,27 @@ export default function ProductModal({
                         productDetails.productResults.thumbnails.length > 1 && (
                           <div className="overflow-x-auto pb-2 max-w-full [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-gray-100">
                             <div className="flex gap-2 py-1 px-0.5 min-w-min">
-                              {productDetails.productResults.thumbnails!.map(
-                                (thumbnail, index) => (
-                                  <button
-                                    key={index}
-                                    onClick={() =>
-                                      setSelectedThumbnailIndex(index)
-                                    }
-                                    className={`relative flex-shrink-0 w-14 h-14 rounded-md border-2 transition-all bg-white ${
-                                      selectedThumbnailIndex === index
-                                        ? "border-[#44c57e] opacity-100 shadow-md"
-                                        : "border-gray-300 opacity-80 hover:opacity-100 hover:border-gray-400"
-                                    }`}
-                                  >
-                                    <Image
-                                      src={thumbnail}
-                                      alt={`${
-                                        productDetails.productResults.title
-                                      } - View ${index + 1}`}
-                                      fill
-                                      className="object-contain p-1.5 rounded-sm"
-                                      unoptimized
-                                    />
-                                  </button>
-                                )
-                              )}
+                              {productDetails.productResults.thumbnails!.map((thumbnail, index) => (
+                                <button
+                                  key={index}
+                                  onClick={() => setSelectedThumbnailIndex(index)}
+                                  className={`relative flex-shrink-0 w-14 h-14 rounded-md border-2 transition-all bg-white ${
+                                    selectedThumbnailIndex === index
+                                      ? "border-[#44c57e] opacity-100 shadow-md"
+                                      : "border-gray-300 opacity-80 hover:opacity-100 hover:border-gray-400"
+                                  }`}
+                                >
+                                  <Image
+                                    src={thumbnail}
+                                    alt={`${
+                                      productDetails.productResults.title
+                                    } - View ${index + 1}`}
+                                    fill
+                                    className="object-contain p-1.5 rounded-sm"
+                                    unoptimized
+                                  />
+                                </button>
+                              ))}
                             </div>
                           </div>
                         )}
@@ -295,8 +261,7 @@ export default function ProductModal({
                             <span
                               key={i}
                               className={
-                                i <
-                                Math.floor(productDetails.productResults.rating)
+                                i < Math.floor(productDetails.productResults.rating)
                                   ? "text-yellow-500"
                                   : "text-gray-300"
                               }
@@ -318,8 +283,7 @@ export default function ProductModal({
                             <span>
                               Size:{" "}
                               <span className="font-semibold">
-                                {primarySelections.size.value ||
-                                  "Select a size"}
+                                {primarySelections.size.value || "Select a size"}
                               </span>
                             </span>
                           )}
@@ -327,8 +291,7 @@ export default function ProductModal({
                             <span>
                               Color:{" "}
                               <span className="font-semibold">
-                                {primarySelections.color.value ||
-                                  "Select a color"}
+                                {primarySelections.color.value || "Select a color"}
                               </span>
                             </span>
                           )}
@@ -338,30 +301,26 @@ export default function ProductModal({
                       {/* Variants */}
                       {sortedVariants?.map((variant) => (
                         <div key={variant.title}>
-                          <h4 className="font-medium mb-3 text-lg">
-                            {variant.title}:
-                          </h4>
+                          <h4 className="font-medium mb-3 text-lg">{variant.title}:</h4>
                           <div className="flex flex-wrap gap-2">
                             {variant.items.map((item) => {
                               const isAvailable = item.available !== false;
-                              const isSelected =
-                                selectedVariants[variant.title] === item.name;
+                              const isSelected = selectedVariants[variant.title] === item.name;
                               return (
                                 <button
                                   key={item.name}
                                   type="button"
                                   disabled={!isAvailable}
                                   onClick={() => {
-                                    if (isAvailable)
-                                      onSelectVariant(variant.title, item.name);
+                                    if (isAvailable) onSelectVariant(variant.title, item.name);
                                   }}
                                   aria-pressed={isSelected}
                                   className={`px-4 py-2 border rounded-lg transition-colors ${
                                     isSelected
                                       ? "bg-[#44c57e] text-white border-[#44c57e]"
                                       : isAvailable
-                                      ? "bg-white hover:bg-gray-50 border-gray-300"
-                                      : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                                        ? "bg-white hover:bg-gray-50 border-gray-300"
+                                        : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
                                   }`}
                                 >
                                   {item.name}
@@ -379,16 +338,12 @@ export default function ProductModal({
                           disabled={loadingCheckout}
                           className="w-full py-3 bg-[#44c57e] text-white rounded-lg font-semibold hover:bg-[#3aaa6a] disabled:opacity-50 transition-colors"
                         >
-                          {loadingCheckout
-                            ? loadingMessage
-                            : "Add to Cart & Buy"}
+                          {loadingCheckout ? loadingMessage : "Add to Cart & Buy"}
                         </button>
 
                         {errorMessage && (
                           <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                            <p className="text-sm text-red-700">
-                              {errorMessage}
-                            </p>
+                            <p className="text-sm text-red-700">{errorMessage}</p>
                           </div>
                         )}
                       </div>

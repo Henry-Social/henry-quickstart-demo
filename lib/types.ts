@@ -37,4 +37,3 @@ export interface ProductDetails {
     link: string;
   }>;
 }
-

@@ -1,8 +1,6 @@
 import type { ProductDetails } from "./types";
 
-export const buildDefaultVariantSelections = (
-  details: ProductDetails,
-): Record<string, string> => {
+export const buildDefaultVariantSelections = (details: ProductDetails): Record<string, string> => {
   const variants = details.productResults.variants;
   if (!variants || variants.length === 0) {
     return {};
@@ -41,4 +39,3 @@ export const findVariantSelection = (
     value: selected[match.title],
   };
 };
-

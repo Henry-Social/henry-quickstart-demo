@@ -24,44 +24,33 @@ export default function ProductPage() {
   const urlName = searchParams.get("name") || "";
   const urlProductLink = searchParams.get("productLink") || "";
 
-  const [productDetails, setProductDetails] = useState<ProductDetails | null>(
-    null
-  );
+  const [productDetails, setProductDetails] = useState<ProductDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingCheckout, setLoadingCheckout] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("Processing...");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showCheckoutIframe, setShowCheckoutIframe] = useState(false);
   const [iframeLoading, setIframeLoading] = useState(true);
-  const [checkoutIframeUrl, setCheckoutIframeUrl] = useState<string | null>(
-    null
-  );
+  const [checkoutIframeUrl, setCheckoutIframeUrl] = useState<string | null>(null);
   const [userId] = useState(`user_${Math.random().toString(36).substring(7)}`);
-  const [productPrice, setProductPrice] = useState<number>(
-    urlPrice ? parseFloat(urlPrice) : 0
-  );
+  const [productPrice, setProductPrice] = useState<number>(urlPrice ? parseFloat(urlPrice) : 0);
   const [productName, setProductName] = useState<string>(urlName);
   const [productImage, setProductImage] = useState<string>(urlImageUrl);
   const [productLink, setProductLink] = useState<string>(urlProductLink);
   const [selectedThumbnailIndex, setSelectedThumbnailIndex] = useState(0);
-  const [selectedVariants, setSelectedVariants] = useState<
-    Record<string, string>
-  >({});
+  const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
 
-  const handleVariantSelection = useCallback(
-    (variantTitle: string, optionName: string) => {
-      setSelectedVariants((prev) => {
-        if (prev[variantTitle] === optionName) {
-          return prev;
-        }
-        return {
-          ...prev,
-          [variantTitle]: optionName,
-        };
-      });
-    },
-    []
-  );
+  const handleVariantSelection = useCallback((variantTitle: string, optionName: string) => {
+    setSelectedVariants((prev) => {
+      if (prev[variantTitle] === optionName) {
+        return prev;
+      }
+      return {
+        ...prev,
+        [variantTitle]: optionName,
+      };
+    });
+  }, []);
 
   const getVariantMetadata = useCallback(() => {
     const variants = productDetails?.productResults?.variants;
@@ -83,9 +72,7 @@ export default function ProductPage() {
     if (!variants || variants.length === 0) {
       return [];
     }
-    return [...variants].sort(
-      (a, b) => getVariantPriority(b.title) - getVariantPriority(a.title)
-    );
+    return [...variants].sort((a, b) => getVariantPriority(b.title) - getVariantPriority(a.title));
   }, [productDetails]);
 
   const primarySelections = useMemo(() => {
@@ -107,17 +94,13 @@ export default function ProductPage() {
     const fetchData = async () => {
       try {
         // Fetch product details
-        const response = await fetch(
-          `/api/henry/products/details?productId=${productId}`
-        );
+        const response = await fetch(`/api/henry/products/details?productId=${productId}`);
         const productResult = await response.json();
 
         // Process product details
         if (productResult?.success && productResult.data) {
           setProductDetails(productResult.data);
-          setSelectedVariants(
-            buildDefaultVariantSelections(productResult.data)
-          );
+          setSelectedVariants(buildDefaultVariantSelections(productResult.data));
           setSelectedThumbnailIndex(0);
 
           if (productResult.data.productResults) {
@@ -125,15 +108,11 @@ export default function ProductPage() {
 
             const firstStore = productResult.data.productResults.stores?.[0];
             if (firstStore?.price) {
-              const price = parseFloat(
-                firstStore.price.replace(/[^0-9.]/g, "")
-              );
+              const price = parseFloat(firstStore.price.replace(/[^0-9.]/g, ""));
               setProductPrice(price || 0);
             }
 
-            setProductImage(
-              urlImageUrl || productResult.data.productResults.image || ""
-            );
+            setProductImage(urlImageUrl || productResult.data.productResults.image || "");
 
             const storeLink = firstStore?.link;
             if (storeLink) {
@@ -164,12 +143,8 @@ export default function ProductPage() {
       const variantMetadata = getVariantMetadata();
       const metadata = {
         ...variantMetadata,
-        ...(primarySelections.size?.value
-          ? { Size: primarySelections.size.value }
-          : {}),
-        ...(primarySelections.color?.value
-          ? { Color: primarySelections.color.value }
-          : {}),
+        ...(primarySelections.size?.value ? { Size: primarySelections.size.value } : {}),
+        ...(primarySelections.color?.value ? { Color: primarySelections.color.value } : {}),
       };
 
       // Add to cart
@@ -186,8 +161,7 @@ export default function ProductPage() {
               name: productDetails.productResults.title,
               price: productPrice.toString(),
               quantity: 1,
-              productLink:
-                productDetails.productResults.stores[0]?.link || productLink,
+              productLink: productDetails.productResults.stores[0]?.link || productLink,
               productImageLink: getValidImageUrl(productImage),
               metadata,
             },
@@ -221,10 +195,7 @@ export default function ProductPage() {
       }
     } catch (error) {
       console.error("Cart checkout error:", error);
-      const errorMsg =
-        error instanceof Error
-          ? error.message
-          : "An error occurred during checkout";
+      const errorMsg = error instanceof Error ? error.message : "An error occurred during checkout";
       setErrorMessage(errorMsg);
     } finally {
       setLoadingCheckout(false);
@@ -260,14 +231,8 @@ export default function ProductPage() {
                       <>
                         <div className="absolute inset-0 image-gradient-overlay z-10 pointer-events-none" />
                         <Image
-                          src={
-                            productDetails.productResults.thumbnails![
-                              selectedThumbnailIndex
-                            ]
-                          }
-                          alt={
-                            productDetails.productResults.title || productName
-                          }
+                          src={productDetails.productResults.thumbnails![selectedThumbnailIndex]}
+                          alt={productDetails.productResults.title || productName}
                           fill
                           className="object-contain p-4"
                           unoptimized
@@ -277,12 +242,8 @@ export default function ProductPage() {
                       <>
                         <div className="absolute inset-0 image-gradient-overlay z-10 pointer-events-none" />
                         <Image
-                          src={
-                            productDetails.productResults.image || productImage
-                          }
-                          alt={
-                            productDetails.productResults.title || productName
-                          }
+                          src={productDetails.productResults.image || productImage}
+                          alt={productDetails.productResults.title || productName}
                           fill
                           className="object-contain p-4"
                           unoptimized
@@ -312,30 +273,27 @@ export default function ProductPage() {
                     productDetails.productResults.thumbnails.length > 1 && (
                       <div className="overflow-x-auto pb-2 max-w-full [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-gray-100">
                         <div className="flex gap-2 py-1 px-0.5 min-w-min">
-                          {productDetails.productResults.thumbnails!.map(
-                            (thumbnail, index) => (
-                              <button
-                                key={index}
-                                onClick={() => setSelectedThumbnailIndex(index)}
-                                className={`relative flex-shrink-0 w-16 h-16 rounded-md border-2 transition-all bg-white ${
-                                  selectedThumbnailIndex === index
-                                    ? "border-[#44c57e] opacity-100 shadow-md"
-                                    : "border-gray-300 opacity-80 hover:opacity-100 hover:border-gray-400"
-                                }`}
-                              >
-                                <Image
-                                  src={thumbnail}
-                                  alt={`${
-                                    productDetails.productResults.title ||
-                                    productName
-                                  } - View ${index + 1}`}
-                                  fill
-                                  className="object-contain p-1.5 rounded-sm"
-                                  unoptimized
-                                />
-                              </button>
-                            )
-                          )}
+                          {productDetails.productResults.thumbnails!.map((thumbnail, index) => (
+                            <button
+                              key={index}
+                              onClick={() => setSelectedThumbnailIndex(index)}
+                              className={`relative flex-shrink-0 w-16 h-16 rounded-md border-2 transition-all bg-white ${
+                                selectedThumbnailIndex === index
+                                  ? "border-[#44c57e] opacity-100 shadow-md"
+                                  : "border-gray-300 opacity-80 hover:opacity-100 hover:border-gray-400"
+                              }`}
+                            >
+                              <Image
+                                src={thumbnail}
+                                alt={`${
+                                  productDetails.productResults.title || productName
+                                } - View ${index + 1}`}
+                                fill
+                                className="object-contain p-1.5 rounded-sm"
+                                unoptimized
+                              />
+                            </button>
+                          ))}
                         </div>
                       </div>
                     )}
@@ -403,14 +361,11 @@ export default function ProductPage() {
 
                   {sortedVariants.map((variant) => (
                     <div key={variant.title}>
-                      <h4 className="font-medium mb-3 text-lg">
-                        {variant.title}:
-                      </h4>
+                      <h4 className="font-medium mb-3 text-lg">{variant.title}:</h4>
                       <div className="flex flex-wrap gap-2">
                         {variant.items.map((item) => {
                           const isAvailable = item.available !== false;
-                          const isSelected =
-                            selectedVariants[variant.title] === item.name;
+                          const isSelected = selectedVariants[variant.title] === item.name;
 
                           return (
                             <button
@@ -419,10 +374,7 @@ export default function ProductPage() {
                               disabled={!isAvailable}
                               onClick={() => {
                                 if (isAvailable) {
-                                  handleVariantSelection(
-                                    variant.title,
-                                    item.name
-                                  );
+                                  handleVariantSelection(variant.title, item.name);
                                 }
                               }}
                               aria-pressed={isSelected}
@@ -430,8 +382,8 @@ export default function ProductPage() {
                                 isSelected
                                   ? "bg-[#44c57e] text-white border-[#44c57e]"
                                   : isAvailable
-                                  ? "bg-white hover:bg-gray-50 border-gray-300"
-                                  : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                                    ? "bg-white hover:bg-gray-50 border-gray-300"
+                                    : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
                               }`}
                             >
                               {item.name}
@@ -460,32 +412,20 @@ export default function ProductPage() {
                 </div>
               </div>
             ) : (
-              <div className="text-center py-12 text-gray-500">
-                Unable to load product details
-              </div>
+              <div className="text-center py-12 text-gray-500">Unable to load product details</div>
             )}
           </div>
         ) : (
           /* Checkout Iframe */
-          <div
-            className="bg-white rounded-lg shadow-sm overflow-hidden"
-            style={{ height: "80vh" }}
-          >
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden" style={{ height: "80vh" }}>
             <div className="flex items-center justify-between p-4 border-b bg-gray-50">
-              <h3 className="text-lg font-semibold">
-                {"Complete Your Purchase"}
-              </h3>
+              <h3 className="text-lg font-semibold">{"Complete Your Purchase"}</h3>
               <button
                 onClick={handleCloseIframe}
                 className="p-2 hover:bg-gray-200 rounded-full transition-colors"
                 aria-label="Close"
               >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"

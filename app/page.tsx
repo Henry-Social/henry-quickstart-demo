@@ -7,10 +7,7 @@ import ProductModal from "@/components/ProductModal";
 import SearchBar from "@/components/SearchBar";
 import type { Product, ProductDetails } from "@/lib/types";
 import { getValidImageUrl } from "@/lib/utils";
-import {
-  buildDefaultVariantSelections,
-  findVariantSelection,
-} from "@/lib/variants";
+import { buildDefaultVariantSelections, findVariantSelection } from "@/lib/variants";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type ViewMode = "desktop" | "mobile";
@@ -19,9 +16,7 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [productDetails, setProductDetails] = useState<ProductDetails | null>(
-    null
-  );
+  const [productDetails, setProductDetails] = useState<ProductDetails | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingCheckout, setLoadingCheckout] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("Processing...");
@@ -29,16 +24,12 @@ export default function Home() {
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showCheckoutIframe, setShowCheckoutIframe] = useState(false);
-  const [checkoutIframeUrl, setCheckoutIframeUrl] = useState<string | null>(
-    null
-  );
+  const [checkoutIframeUrl, setCheckoutIframeUrl] = useState<string | null>(null);
 
   const [showProductModal, setShowProductModal] = useState(false);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [viewMode, setViewMode] = useState<ViewMode>("desktop");
-  const [selectedVariants, setSelectedVariants] = useState<
-    Record<string, string>
-  >({});
+  const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
   const [isMobile, setIsMobile] = useState(false);
   const [selectedThumbnailIndex, setSelectedThumbnailIndex] = useState(0);
   const [heroView, setHeroView] = useState(true);
@@ -70,21 +61,18 @@ export default function Home() {
     setSelectedVariants({});
   };
 
-  const handleVariantSelection = useCallback(
-    (variantTitle: string, optionName: string) => {
-      setSelectedVariants((prev) => {
-        if (prev[variantTitle] === optionName) {
-          return prev;
-        }
+  const handleVariantSelection = useCallback((variantTitle: string, optionName: string) => {
+    setSelectedVariants((prev) => {
+      if (prev[variantTitle] === optionName) {
+        return prev;
+      }
 
-        return {
-          ...prev,
-          [variantTitle]: optionName,
-        };
-      });
-    },
-    []
-  );
+      return {
+        ...prev,
+        [variantTitle]: optionName,
+      };
+    });
+  }, []);
 
   const getVariantMetadata = useCallback(() => {
     const variants = productDetails?.productResults?.variants;
@@ -165,9 +153,7 @@ export default function Home() {
 
     try {
       // Fetch product details first
-      const response = await fetch(
-        `/api/henry/products/details?productId=${product.id}`
-      );
+      const response = await fetch(`/api/henry/products/details?productId=${product.id}`);
       const productResult = await response.json();
 
       if (productResult?.success && productResult.data) {
@@ -192,12 +178,8 @@ export default function Home() {
       const variantMetadata = getVariantMetadata();
       const metadata = {
         ...variantMetadata,
-        ...(primarySelections.size?.value
-          ? { Size: primarySelections.size.value }
-          : {}),
-        ...(primarySelections.color?.value
-          ? { Color: primarySelections.color.value }
-          : {}),
+        ...(primarySelections.size?.value ? { Size: primarySelections.size.value } : {}),
+        ...(primarySelections.color?.value ? { Color: primarySelections.color.value } : {}),
       };
 
       // Add to cart
@@ -215,8 +197,7 @@ export default function Home() {
               price: selectedProduct.price.toString(),
               quantity: 1,
               productLink:
-                productDetails.productResults.stores[0]?.link ||
-                selectedProduct.productLink,
+                productDetails.productResults.stores[0]?.link || selectedProduct.productLink,
               productImageLink: getValidImageUrl(selectedProduct.imageUrl),
               metadata,
             },
@@ -259,10 +240,7 @@ export default function Home() {
       }
     } catch (error) {
       console.error("Buy now error:", error);
-      const errorMsg =
-        error instanceof Error
-          ? error.message
-          : "An error occurred during checkout";
+      const errorMsg = error instanceof Error ? error.message : "An error occurred during checkout";
       setErrorMessage(errorMsg);
     } finally {
       setLoadingCheckout(false);
@@ -353,11 +331,7 @@ export default function Home() {
                 className="w-full max-w-2xl"
               />
             </div>
-            <ProductGrid
-              products={products}
-              loading={loading}
-              onSelect={getProductDetails}
-            />
+            <ProductGrid products={products} loading={loading} onSelect={getProductDetails} />
           </div>
 
           {/* Product Details Modal */}
