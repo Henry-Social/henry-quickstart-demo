@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     const result = await henry.products.search(searchBody);
     console.log(result, "resulst from api response **");
     return NextResponse.json(result);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to search products" }, { status: 500 });
   }
 }

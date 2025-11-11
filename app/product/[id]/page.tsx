@@ -1,17 +1,15 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import Image from "next/image";
+import { useParams, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ProductDetails } from "@/lib/types";
 import { getValidImageUrl } from "@/lib/utils";
-
-import { useParams } from "next/navigation";
-import { useEffect, useState, useCallback, useMemo } from "react";
 import {
   buildDefaultVariantSelections,
-  getVariantPriority,
   findVariantSelection,
+  getVariantPriority,
 } from "@/lib/variants";
-import Image from "next/image";
 
 export default function ProductPage() {
   const params = useParams();
@@ -130,7 +128,7 @@ export default function ProductPage() {
     };
 
     fetchData();
-  }, [productId]);
+  }, [productId, urlImageUrl, urlProductLink]);
 
   // Buy now flow (cart checkout)
   const buyNow = async () => {
@@ -257,6 +255,7 @@ export default function ProductPage() {
                           stroke="currentColor"
                           viewBox="0 0 24 24"
                         >
+                          <title>No Image</title>
                           <path
                             strokeLinecap="round"
                             strokeLinejoin="round"

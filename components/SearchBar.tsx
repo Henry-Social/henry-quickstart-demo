@@ -1,6 +1,6 @@
 "use client";
 
-import { RefObject } from "react";
+import type { RefObject } from "react";
 
 type Props = {
   value: string;

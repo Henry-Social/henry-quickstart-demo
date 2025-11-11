@@ -1,5 +1,4 @@
 import HenryWordmark from "@/assets/henry-wordmark";
-import React from "react";
 
 const Header = ({ userId }: { userId: string }) => {
   return (

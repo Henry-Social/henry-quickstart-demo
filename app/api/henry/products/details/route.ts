@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 
     const result = await henry.products.retrieveDetails({ productId });
     return NextResponse.json(result);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to get product details" }, { status: 500 });
   }
 }

@@ -1,9 +1,9 @@
 "use client";
 
 import Image from "next/image";
+import { useMemo } from "react";
 import CheckoutModal from "@/components/CheckoutModal";
 import type { Product, ProductDetails } from "@/lib/types";
-import { useMemo } from "react";
 import { getVariantPriority } from "@/lib/variants";
 
 export type ViewMode = "desktop" | "mobile";

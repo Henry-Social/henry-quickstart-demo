@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import HenryWordmark from "@/assets/henry-wordmark";
 import Header from "@/components/Header";
 import ProductGrid from "@/components/ProductGrid";
@@ -8,7 +9,6 @@ import SearchBar from "@/components/SearchBar";
 import type { Product, ProductDetails } from "@/lib/types";
 import { getValidImageUrl } from "@/lib/utils";
 import { buildDefaultVariantSelections, findVariantSelection } from "@/lib/variants";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type ViewMode = "desktop" | "mobile";
 
@@ -124,7 +124,7 @@ export default function Home() {
       } else {
         setProducts([]);
       }
-    } catch (error) {
+    } catch (_error) {
       setProducts([]);
     } finally {
       setLoading(false);
@@ -160,7 +160,7 @@ export default function Home() {
         setProductDetails(productResult.data);
         setSelectedVariants(buildDefaultVariantSelections(productResult.data));
       }
-    } catch (error) {
+    } catch (_error) {
       // Silent error handling
     } finally {
       setLoading(false);

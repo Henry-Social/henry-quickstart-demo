@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { henry } from "@/lib/henry";
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: { merchantDomain: string } },
 ) {
   try {
