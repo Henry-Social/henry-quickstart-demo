@@ -45,10 +45,11 @@ interface ProductDetails {
   }>;
 }
 
-type CheckoutMethod = "cart" | "saved-card" | "guest";
 type ViewMode = "desktop" | "mobile";
 
-const buildDefaultVariantSelections = (details: ProductDetails): Record<string, string> => {
+const buildDefaultVariantSelections = (
+  details: ProductDetails
+): Record<string, string> => {
   const variants = details.productResults.variants;
   if (!variants || variants.length === 0) {
     return {};
@@ -78,9 +79,11 @@ const getVariantPriority = (title: string) => {
 const findVariantSelection = (
   variants: ProductDetails["productResults"]["variants"],
   selected: Record<string, string>,
-  keyword: string,
+  keyword: string
 ) => {
-  const match = variants.find((variant) => variant.title.toLowerCase().includes(keyword));
+  const match = variants.find((variant) =>
+    variant.title.toLowerCase().includes(keyword)
+  );
   if (!match) return null;
   return {
     title: match.title,
@@ -92,23 +95,26 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [productDetails, setProductDetails] = useState<ProductDetails | null>(null);
+  const [productDetails, setProductDetails] = useState<ProductDetails | null>(
+    null
+  );
   const [loading, setLoading] = useState(false);
   const [loadingCheckout, setLoadingCheckout] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("Processing...");
   const [userId, setUserId] = useState("demo_user");
-  const [checkoutMethod, setCheckoutMethod] = useState<CheckoutMethod>("cart");
-  const [hasCollectedCard, setHasCollectedCard] = useState(false);
-  const [checkoutResponse, setCheckoutResponse] = useState<any>(null);
+
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showCheckoutIframe, setShowCheckoutIframe] = useState(false);
-  const [checkoutIframeUrl, setCheckoutIframeUrl] = useState<string | null>(null);
+  const [checkoutIframeUrl, setCheckoutIframeUrl] = useState<string | null>(
+    null
+  );
   const [iframeLoading, setIframeLoading] = useState(true);
-  const [isCardCollection, setIsCardCollection] = useState(false);
   const [showProductModal, setShowProductModal] = useState(false);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [viewMode, setViewMode] = useState<ViewMode>("desktop");
-  const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
+  const [selectedVariants, setSelectedVariants] = useState<
+    Record<string, string>
+  >({});
   const [isMobile, setIsMobile] = useState(false);
   const [selectedThumbnailIndex, setSelectedThumbnailIndex] = useState(0);
   const [heroView, setHeroView] = useState(true);
@@ -150,15 +156,10 @@ export default function Home() {
 
   // Handle closing the iframe
   const handleCloseIframe = useCallback(() => {
-    // If this was a card collection flow, mark card as collected
-    if (isCardCollection) {
-      setHasCollectedCard(true);
-      setIsCardCollection(false);
-    }
     setShowCheckoutIframe(false);
     setCheckoutIframeUrl(null);
     setIframeLoading(true);
-  }, [isCardCollection]);
+  }, []);
 
   // Close product modal
   const handleCloseProductModal = () => {
@@ -171,18 +172,21 @@ export default function Home() {
     setSelectedVariants({});
   };
 
-  const handleVariantSelection = useCallback((variantTitle: string, optionName: string) => {
-    setSelectedVariants((prev) => {
-      if (prev[variantTitle] === optionName) {
-        return prev;
-      }
+  const handleVariantSelection = useCallback(
+    (variantTitle: string, optionName: string) => {
+      setSelectedVariants((prev) => {
+        if (prev[variantTitle] === optionName) {
+          return prev;
+        }
 
-      return {
-        ...prev,
-        [variantTitle]: optionName,
-      };
-    });
-  }, []);
+        return {
+          ...prev,
+          [variantTitle]: optionName,
+        };
+      });
+    },
+    []
+  );
 
   const getVariantMetadata = useCallback(() => {
     const variants = productDetails?.productResults?.variants;
@@ -204,7 +208,9 @@ export default function Home() {
     if (!variants || variants.length === 0) {
       return [];
     }
-    return [...variants].sort((a, b) => getVariantPriority(b.title) - getVariantPriority(a.title));
+    return [...variants].sort(
+      (a, b) => getVariantPriority(b.title) - getVariantPriority(a.title)
+    );
   }, [productDetails]);
 
   const primarySelections = useMemo(() => {
@@ -296,7 +302,9 @@ export default function Home() {
 
     try {
       // Fetch product details first
-      const response = await fetch(`/api/henry/products/details?productId=${product.id}`);
+      const response = await fetch(
+        `/api/henry/products/details?productId=${product.id}`
+      );
       const productResult = await response.json();
 
       if (productResult?.success && productResult.data) {
@@ -307,155 +315,6 @@ export default function Home() {
       // Silent error handling
     } finally {
       setLoading(false);
-    }
-  };
-
-  // Collect card for authenticated user
-  const collectCard = async () => {
-    setLoadingCheckout(true);
-    setLoadingMessage("Getting card collection link...");
-    setErrorMessage(null);
-    setCheckoutResponse(null);
-
-    try {
-      const response = await fetch("/api/henry/wallet/card-collect", {
-        method: "POST",
-        headers: {
-          "x-user-id": userId,
-        },
-      });
-
-      const result = await response.json();
-
-      if (result.success && result.data?.modal_url) {
-        // Mobile: Open in new tab
-        if (isMobile) {
-          window.open(result.data.modal_url, "_blank");
-          setLoadingCheckout(false);
-          return;
-        }
-
-        // Desktop: Open in iframe
-        const url = new URL(result.data.modal_url);
-        url.searchParams.set("embed", "true");
-        setCheckoutIframeUrl(url.toString());
-        setShowCheckoutIframe(true);
-        setIframeLoading(true);
-        setIsCardCollection(true);
-      } else {
-        setErrorMessage(result.message || "Failed to initiate card collection");
-      }
-    } catch (error) {
-      console.error("Card collection error:", error);
-      setErrorMessage("An error occurred while collecting card");
-    } finally {
-      setLoadingCheckout(false);
-    }
-  };
-
-  // Collect card for guest user
-  const collectGuestCard = async () => {
-    setLoadingCheckout(true);
-    setLoadingMessage("Getting guest card collection link...");
-    setErrorMessage(null);
-    setCheckoutResponse(null);
-
-    try {
-      const response = await fetch("/api/henry/wallet/card-collect-guest", {
-        method: "POST",
-        headers: {
-          "x-user-id": userId,
-        },
-      });
-
-      const result = await response.json();
-
-      if (result.success && result.data?.modal_url) {
-        // Mobile: Open in new tab
-        if (isMobile) {
-          window.open(result.data.modal_url, "_blank");
-          setLoadingCheckout(false);
-          return;
-        }
-
-        // Desktop: Open in iframe
-        const url = new URL(result.data.modal_url);
-        url.searchParams.set("embed", "true");
-        setCheckoutIframeUrl(url.toString());
-        setShowCheckoutIframe(true);
-        setIframeLoading(true);
-        setIsCardCollection(true);
-      } else {
-        setErrorMessage(result.message || "Failed to initiate guest card collection");
-      }
-    } catch (error) {
-      console.error("Guest card collection error:", error);
-      setErrorMessage("An error occurred while collecting guest card");
-    } finally {
-      setLoadingCheckout(false);
-    }
-  };
-
-  // Single product checkout
-  const singleCheckout = async () => {
-    if (!selectedProduct || !productDetails) return;
-
-    setLoadingCheckout(true);
-    setLoadingMessage("Processing single product checkout...");
-    setErrorMessage(null);
-    setCheckoutResponse(null);
-
-    try {
-      const variantMetadata = getVariantMetadata();
-      const metadata = {
-        ...variantMetadata,
-        ...(primarySelections.size?.value ? { Size: primarySelections.size.value } : {}),
-        ...(primarySelections.color?.value ? { Color: primarySelections.color.value } : {}),
-      };
-
-      const checkoutResponse = await fetch("/api/henry/checkout/single", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user-id": userId,
-        },
-        body: JSON.stringify({
-          shippingDetails: {
-            fullName: "Demo User",
-            email: "demo@example.com",
-            phoneNumber: "+1234567890",
-            addressLine1: "123 Demo Street",
-            countryCode: "US",
-            city: "New York",
-            stateOrProvince: "NY",
-            postalCode: "10001",
-          },
-          productDetails: {
-            productId: selectedProduct.id,
-            name: productDetails.productResults.title,
-            price: selectedProduct.price.toString(),
-            quantity: 1,
-            productLink:
-              productDetails.productResults.stores[0]?.link || selectedProduct.productLink,
-            productImageLink: getValidImageUrl(selectedProduct.imageUrl),
-            metadata,
-          },
-        }),
-      });
-
-      const checkoutResult = await checkoutResponse.json();
-
-      if (checkoutResult.success) {
-        setCheckoutResponse(checkoutResult);
-      } else {
-        setErrorMessage(checkoutResult.message || "Failed to complete checkout");
-        setCheckoutResponse(checkoutResult);
-      }
-    } catch (error) {
-      console.error("Single checkout error:", error);
-      setErrorMessage("An error occurred during checkout");
-    } finally {
-      setLoadingCheckout(false);
     }
   };
 
@@ -470,8 +329,12 @@ export default function Home() {
       const variantMetadata = getVariantMetadata();
       const metadata = {
         ...variantMetadata,
-        ...(primarySelections.size?.value ? { Size: primarySelections.size.value } : {}),
-        ...(primarySelections.color?.value ? { Color: primarySelections.color.value } : {}),
+        ...(primarySelections.size?.value
+          ? { Size: primarySelections.size.value }
+          : {}),
+        ...(primarySelections.color?.value
+          ? { Color: primarySelections.color.value }
+          : {}),
       };
 
       // Add to cart
@@ -489,7 +352,8 @@ export default function Home() {
               price: selectedProduct.price.toString(),
               quantity: 1,
               productLink:
-                productDetails.productResults.stores[0]?.link || selectedProduct.productLink,
+                productDetails.productResults.stores[0]?.link ||
+                selectedProduct.productLink,
               productImageLink: getValidImageUrl(selectedProduct.imageUrl),
               metadata,
             },
@@ -532,7 +396,10 @@ export default function Home() {
       }
     } catch (error) {
       console.error("Buy now error:", error);
-      const errorMsg = error instanceof Error ? error.message : "An error occurred during checkout";
+      const errorMsg =
+        error instanceof Error
+          ? error.message
+          : "An error occurred during checkout";
       setErrorMessage(errorMsg);
     } finally {
       setLoadingCheckout(false);
@@ -543,41 +410,10 @@ export default function Home() {
     <main className="min-h-screen bg-gray-50">
       {heroView ? (
         <div className="min-h-screen flex flex-col">
-          {/* Top bar with checkout options */}
+          {/* Top bar */}
           <div className="bg-white py-4">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex justify-end items-center space-x-4">
-                {/* Checkout method dropdown temporarily hidden
-                <div className="relative">
-                  <select
-                    value={checkoutMethod}
-                    onChange={(e) => {
-                      setCheckoutMethod(e.target.value as CheckoutMethod);
-                      setHasCollectedCard(false);
-                      setCheckoutResponse(null);
-                      setErrorMessage(null);
-                    }}
-                    className="appearance-none bg-gray-100 px-4 py-2 pr-8 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#44c57e]"
-                  >
-                    <option value="cart">Cart Checkout</option>
-                    <option value="saved-card">Saved Card</option>
-                    <option value="guest">Guest Checkout</option>
-                  </select>
-                  <svg
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </div>
-                */}
                 <div className="text-xs text-gray-500">{userId}</div>
               </div>
             </div>
@@ -621,7 +457,11 @@ export default function Home() {
                   className="absolute right-2 top-1/2 transform -translate-y-1/2 px-4 py-2 bg-[#44c57e] text-white rounded-full hover:bg-[#3aaa6a] disabled:opacity-50 transition-colors duration-200"
                 >
                   {loading ? (
-                    <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                    <svg
+                      className="animate-spin h-5 w-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
                       <circle
                         className="opacity-25"
                         cx="12"
@@ -657,35 +497,6 @@ export default function Home() {
 
                 {/* Checkout Options */}
                 <div className="flex items-center space-x-4">
-                  <div className="relative">
-                    <select
-                      value={checkoutMethod}
-                      onChange={(e) => {
-                        setCheckoutMethod(e.target.value as CheckoutMethod);
-                        setHasCollectedCard(false);
-                        setCheckoutResponse(null);
-                        setErrorMessage(null);
-                      }}
-                      className="appearance-none bg-gray-100 px-4 py-2 pr-8 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#44c57e]"
-                    >
-                      <option value="cart">Cart Checkout</option>
-                      <option value="saved-card">Saved Card</option>
-                      <option value="guest">Guest Checkout</option>
-                    </select>
-                    <svg
-                      className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
-                  </div>
                   <div className="text-xs text-gray-500">{userId}</div>
                 </div>
               </div>
@@ -726,7 +537,11 @@ export default function Home() {
                   className="absolute right-2 top-1/2 transform -translate-y-1/2 px-4 py-2 bg-[#44c57e] text-white rounded-full hover:bg-[#3aaa6a] disabled:opacity-50 transition-colors duration-200"
                 >
                   {loading ? (
-                    <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                    <svg
+                      className="animate-spin h-5 w-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
                       <circle
                         className="opacity-25"
                         cx="12"
@@ -811,7 +626,9 @@ export default function Home() {
                       <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide">
                         {product.source}
                       </p>
-                      <h3 className="text-sm text-gray-900 line-clamp-2 mb-auto">{product.name}</h3>
+                      <h3 className="text-sm text-gray-900 line-clamp-2 mb-auto">
+                        {product.name}
+                      </h3>
                       <div className="pt-2">
                         <p className="text-base font-bold text-black">
                           ${product.price.toFixed(2)}
@@ -852,7 +669,9 @@ export default function Home() {
                           <button
                             onClick={() => setViewMode("desktop")}
                             className={`p-2 rounded transition-colors ${
-                              viewMode === "desktop" ? "bg-white shadow-sm" : "hover:bg-gray-200"
+                              viewMode === "desktop"
+                                ? "bg-white shadow-sm"
+                                : "hover:bg-gray-200"
                             }`}
                             aria-label="Desktop view"
                             title="Desktop view"
@@ -874,7 +693,9 @@ export default function Home() {
                           <button
                             onClick={() => setViewMode("mobile")}
                             className={`p-2 rounded transition-colors ${
-                              viewMode === "mobile" ? "bg-white shadow-sm" : "hover:bg-gray-200"
+                              viewMode === "mobile"
+                                ? "bg-white shadow-sm"
+                                : "hover:bg-gray-200"
                             }`}
                             aria-label="Mobile view"
                             title="Mobile view"
@@ -925,7 +746,9 @@ export default function Home() {
                         <div className="absolute inset-0 flex items-center justify-center bg-white z-10">
                           <div className="flex flex-col items-center">
                             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#44c57e]"></div>
-                            <p className="mt-4 text-gray-600">Loading product details...</p>
+                            <p className="mt-4 text-gray-600">
+                              Loading product details...
+                            </p>
                           </div>
                         </div>
                       )}
@@ -937,14 +760,14 @@ export default function Home() {
                               {/* Main Image */}
                               <div className="relative h-80 rounded-lg overflow-hidden bg-white shadow-inner">
                                 {productDetails.productResults.thumbnails &&
-                                productDetails.productResults.thumbnails.length > 0 ? (
+                                productDetails.productResults.thumbnails
+                                  .length > 0 ? (
                                   <>
                                     <div className="absolute inset-0 image-gradient-overlay z-10 pointer-events-none" />
                                     <Image
                                       src={
-                                        productDetails.productResults.thumbnails![
-                                          selectedThumbnailIndex
-                                        ]
+                                        productDetails.productResults
+                                          .thumbnails![selectedThumbnailIndex]
                                       }
                                       alt={productDetails.productResults.title}
                                       fill
@@ -990,14 +813,17 @@ export default function Home() {
 
                               {/* Thumbnails Carousel */}
                               {productDetails.productResults.thumbnails &&
-                                productDetails.productResults.thumbnails.length > 1 && (
+                                productDetails.productResults.thumbnails
+                                  .length > 1 && (
                                   <div className="overflow-x-auto pb-2 max-w-full [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-gray-100">
                                     <div className="flex gap-2 py-1 px-0.5 min-w-min">
                                       {productDetails.productResults.thumbnails!.map(
                                         (thumbnail, index) => (
                                           <button
                                             key={index}
-                                            onClick={() => setSelectedThumbnailIndex(index)}
+                                            onClick={() =>
+                                              setSelectedThumbnailIndex(index)
+                                            }
                                             className={`relative flex-shrink-0 w-14 h-14 rounded-md border-2 transition-all bg-white ${
                                               selectedThumbnailIndex === index
                                                 ? "border-[#44c57e] opacity-100 shadow-md"
@@ -1006,13 +832,16 @@ export default function Home() {
                                           >
                                             <Image
                                               src={thumbnail}
-                                              alt={`${productDetails.productResults.title} - View ${index + 1}`}
+                                              alt={`${
+                                                productDetails.productResults
+                                                  .title
+                                              } - View ${index + 1}`}
                                               fill
                                               className="object-contain p-1.5 rounded-sm"
                                               unoptimized
                                             />
                                           </button>
-                                        ),
+                                        )
                                       )}
                                     </div>
                                   </div>
@@ -1042,7 +871,10 @@ export default function Home() {
                                     <span
                                       key={i}
                                       className={
-                                        i < Math.floor(productDetails.productResults.rating)
+                                        i <
+                                        Math.floor(
+                                          productDetails.productResults.rating
+                                        )
                                           ? "text-yellow-500"
                                           : "text-gray-300"
                                       }
@@ -1053,17 +885,20 @@ export default function Home() {
                                 </div>
                                 <span className="text-sm text-gray-600">
                                   {productDetails.productResults.rating}/5 (
-                                  {productDetails.productResults.reviews} reviews)
+                                  {productDetails.productResults.reviews}{" "}
+                                  reviews)
                                 </span>
                               </div>
 
-                              {(primarySelections.size || primarySelections.color) && (
+                              {(primarySelections.size ||
+                                primarySelections.color) && (
                                 <div className="flex flex-wrap gap-4 text-sm text-gray-600">
                                   {primarySelections.size && (
                                     <span>
                                       Size:{" "}
                                       <span className="font-semibold">
-                                        {primarySelections.size.value || "Select a size"}
+                                        {primarySelections.size.value ||
+                                          "Select a size"}
                                       </span>
                                     </span>
                                   )}
@@ -1071,7 +906,8 @@ export default function Home() {
                                     <span>
                                       Color:{" "}
                                       <span className="font-semibold">
-                                        {primarySelections.color.value || "Select a color"}
+                                        {primarySelections.color.value ||
+                                          "Select a color"}
                                       </span>
                                     </span>
                                   )}
@@ -1081,12 +917,16 @@ export default function Home() {
                               {/* Variants */}
                               {sortedVariants.map((variant) => (
                                 <div key={variant.title}>
-                                  <h4 className="font-medium mb-2">{variant.title}:</h4>
+                                  <h4 className="font-medium mb-2">
+                                    {variant.title}:
+                                  </h4>
                                   <div className="flex flex-wrap gap-2">
                                     {variant.items.map((item) => {
-                                      const isAvailable = item.available !== false;
+                                      const isAvailable =
+                                        item.available !== false;
                                       const isSelected =
-                                        selectedVariants[variant.title] === item.name;
+                                        selectedVariants[variant.title] ===
+                                        item.name;
 
                                       return (
                                         <button
@@ -1095,7 +935,10 @@ export default function Home() {
                                           disabled={!isAvailable}
                                           onClick={() => {
                                             if (isAvailable) {
-                                              handleVariantSelection(variant.title, item.name);
+                                              handleVariantSelection(
+                                                variant.title,
+                                                item.name
+                                              );
                                             }
                                           }}
                                           aria-pressed={isSelected}
@@ -1103,8 +946,8 @@ export default function Home() {
                                             isSelected
                                               ? "bg-[#44c57e] text-white border-[#44c57e]"
                                               : isAvailable
-                                                ? "bg-white hover:bg-gray-50 border-gray-300"
-                                                : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                                              ? "bg-white hover:bg-gray-50 border-gray-300"
+                                              : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
                                           }`}
                                         >
                                           {item.name}
@@ -1117,75 +960,21 @@ export default function Home() {
 
                               {/* Checkout Buttons */}
                               <div className="pt-4 space-y-3">
-                                {checkoutMethod === "cart" && (
-                                  <button
-                                    onClick={buyNow}
-                                    disabled={loadingCheckout}
-                                    className="w-full py-3 bg-[#44c57e] text-white rounded-lg font-semibold hover:bg-[#3aaa6a] disabled:opacity-50 transition-colors"
-                                  >
-                                    {loadingCheckout ? loadingMessage : "Add to Cart & Buy"}
-                                  </button>
-                                )}
-
-                                {checkoutMethod === "saved-card" && (
-                                  <>
-                                    {!hasCollectedCard ? (
-                                      <button
-                                        onClick={collectCard}
-                                        disabled={loadingCheckout}
-                                        className="w-full py-3 bg-[#44c57e] text-white rounded-lg font-semibold hover:bg-[#3aaa6a] disabled:opacity-50 transition-colors"
-                                      >
-                                        {loadingCheckout ? loadingMessage : "Save Card First"}
-                                      </button>
-                                    ) : (
-                                      <button
-                                        onClick={singleCheckout}
-                                        disabled={loadingCheckout}
-                                        className="w-full py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 transition-colors"
-                                      >
-                                        {loadingCheckout ? loadingMessage : "Buy with Saved Card"}
-                                      </button>
-                                    )}
-                                    {hasCollectedCard && (
-                                      <p className="text-sm text-green-600 text-center">
-                                        ✓ Card saved successfully
-                                      </p>
-                                    )}
-                                  </>
-                                )}
-
-                                {checkoutMethod === "guest" && (
-                                  <>
-                                    {!hasCollectedCard ? (
-                                      <button
-                                        onClick={collectGuestCard}
-                                        disabled={loadingCheckout}
-                                        className="w-full py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 disabled:opacity-50 transition-colors"
-                                      >
-                                        {loadingCheckout ? loadingMessage : "Guest Card Collection"}
-                                      </button>
-                                    ) : (
-                                      <button
-                                        onClick={singleCheckout}
-                                        disabled={loadingCheckout}
-                                        className="w-full py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 transition-colors"
-                                      >
-                                        {loadingCheckout
-                                          ? loadingMessage
-                                          : "Complete Guest Checkout"}
-                                      </button>
-                                    )}
-                                    {hasCollectedCard && (
-                                      <p className="text-sm text-green-600 text-center">
-                                        ✓ Card collected successfully
-                                      </p>
-                                    )}
-                                  </>
-                                )}
+                                <button
+                                  onClick={buyNow}
+                                  disabled={loadingCheckout}
+                                  className="w-full py-3 bg-[#44c57e] text-white rounded-lg font-semibold hover:bg-[#3aaa6a] disabled:opacity-50 transition-colors"
+                                >
+                                  {loadingCheckout
+                                    ? loadingMessage
+                                    : "Add to Cart & Buy"}
+                                </button>
 
                                 {errorMessage && (
                                   <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                                    <p className="text-sm text-red-700">{errorMessage}</p>
+                                    <p className="text-sm text-red-700">
+                                      {errorMessage}
+                                    </p>
                                   </div>
                                 )}
                               </div>
@@ -1204,7 +993,7 @@ export default function Home() {
                   <div className="relative h-full flex flex-col">
                     <div className="flex items-center justify-between p-4 border-b bg-gray-50 flex-shrink-0">
                       <h3 className="text-lg font-semibold">
-                        {isCardCollection ? "Save Your Card" : "Complete Your Purchase"}
+                        Complete Your Purchase
                       </h3>
                       <div className="flex items-center gap-2">
                         {/* View Mode Toggle */}
@@ -1212,7 +1001,9 @@ export default function Home() {
                           <button
                             onClick={() => setViewMode("desktop")}
                             className={`p-2 rounded transition-colors ${
-                              viewMode === "desktop" ? "bg-white shadow-sm" : "hover:bg-gray-200"
+                              viewMode === "desktop"
+                                ? "bg-white shadow-sm"
+                                : "hover:bg-gray-200"
                             }`}
                             aria-label="Desktop view"
                             title="Desktop view"
@@ -1234,7 +1025,9 @@ export default function Home() {
                           <button
                             onClick={() => setViewMode("mobile")}
                             className={`p-2 rounded transition-colors ${
-                              viewMode === "mobile" ? "bg-white shadow-sm" : "hover:bg-gray-200"
+                              viewMode === "mobile"
+                                ? "bg-white shadow-sm"
+                                : "hover:bg-gray-200"
                             }`}
                             aria-label="Mobile view"
                             title="Mobile view"
@@ -1281,7 +1074,9 @@ export default function Home() {
                         <div className="absolute inset-0 flex items-center justify-center bg-white z-10">
                           <div className="flex flex-col items-center">
                             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#44c57e]"></div>
-                            <p className="mt-4 text-gray-600">Loading checkout...</p>
+                            <p className="mt-4 text-gray-600">
+                              Loading checkout...
+                            </p>
                           </div>
                         </div>
                       )}

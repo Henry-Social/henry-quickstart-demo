@@ -62,8 +62,8 @@ app/
 ## Key Files
 
 - `app/page.tsx` - Complete UI implementation matching the quickstart guide
-- `app/api/henry/*` - Backend API routes that securely proxy requests to Henry API
-- Each API route handles authentication with Henry API using server-side API key
+- `app/api/henry/*` - Backend API routes that use the Henry TypeScript SDK to call Henry APIs
+- Each API route authenticates with Henry via a server-side API key
 
 ## Mock User System
 
@@ -72,7 +72,8 @@ The app generates a random user ID for each session to simulate user authenticat
 ## Environment Variables
 
 - `HENRY_API_KEY` - Your Henry API key (required)
-- `HENRY_API_URL` - Henry API base URL (defaults to sandbox)
+- `HENRY_ENV` - Target environment: `sandbox` or `production` (defaults to `sandbox`)
+- `HENRY_SDK_BASE_URL` - Optional override for the SDK base URL (advanced)
 
 ## Testing
 
