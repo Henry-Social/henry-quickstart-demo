@@ -80,8 +80,8 @@ export default function ProductModal({
       <div
         className={`relative bg-white rounded-2xl shadow-2xl modal-content overflow-hidden transition-all duration-300 ${
           viewMode === "desktop"
-            ? "w-[min(1512px,90vw)] h-[min(982px,90vh)]"
-            : "w-[430px] h-[932px]"
+            ? "w-[min(1512px,90vw)] h-[min(982px,90%)]"
+            : "w-[430px] h-[100%]"
         }`}
       >
         {!showCheckoutIframe ? (
