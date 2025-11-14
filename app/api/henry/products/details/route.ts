@@ -19,9 +19,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const query = variantId ? { productId, variantId } : { productId };
+    const query: { productId: string; variantId?: string } = variantId
+      ? { productId, variantId }
+      : { productId };
     // Henry's API accepts an optional variantId even though the current SDK types do not expose it.
-    const result = await henry.products.retrieveDetails(query as any);
+    const result = await henry.products.retrieveDetails(query);
     return NextResponse.json(result, {
       headers: {
         "Cache-Control": "no-store",

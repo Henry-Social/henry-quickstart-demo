@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import HenryWordmark from "@/assets/henry-wordmark";
 import Header from "@/components/Header";
@@ -11,6 +11,8 @@ import type { Product } from "@/lib/types";
 import { usePersistentUserId } from "@/lib/usePersistentUserId";
 import { useCartCount } from "@/lib/useCartCount";
 
+export const dynamic = "force-dynamic";
+
 const placeholders = [
   "Yoga mats with good grip",
   "Nike shoes",
@@ -20,7 +22,7 @@ const placeholders = [
   "Running gear",
 ];
 
-export default function Home() {
+function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
@@ -139,5 +141,13 @@ export default function Home() {
     >
       <ProductGrid products={products} loading={loading} onSelect={handleProductSelect} />
     </SearchPageShell>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<main className="min-h-screen bg-gray-50" />}>
+      <HomeContent />
+    </Suspense>
   );
 }

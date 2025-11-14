@@ -2,11 +2,13 @@
 
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import SearchPageShell from "@/components/SearchPageShell";
 import { usePersistentUserId } from "@/lib/usePersistentUserId";
 import { getValidImageUrl } from "@/lib/utils";
 import { useCartCount } from "@/lib/useCartCount";
+
+export const dynamic = "force-dynamic";
 
 type CartItem = {
   productId: string;
@@ -18,7 +20,7 @@ type CartItem = {
   metadata?: Record<string, string>;
 };
 
-export default function CartPage() {
+function CartPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(() => searchParams.get("q") ?? "");
@@ -262,5 +264,13 @@ export default function CartPage() {
         </div>
       </div>
     </SearchPageShell>
+  );
+}
+
+export default function CartPage() {
+  return (
+    <Suspense fallback={<main className="min-h-screen bg-gray-50" />}>
+      <CartPageContent />
+    </Suspense>
   );
 }

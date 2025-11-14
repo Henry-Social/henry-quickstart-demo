@@ -1,8 +1,10 @@
 "use client";
 
+"use client";
+
 import Image from "next/image";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ProductMediaSkeleton from "@/components/ProductMediaSkeleton";
 import SearchPageShell from "@/components/SearchPageShell";
 import type { ProductDetails } from "@/lib/types";
@@ -16,7 +18,9 @@ import {
   mergeVariantSelections,
 } from "@/lib/variants";
 
-export default function ProductPage() {
+export const dynamic = "force-dynamic";
+
+function ProductPageContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -600,5 +604,13 @@ export default function ProductPage() {
         </div>
       </div>
     </SearchPageShell>
+  );
+}
+
+export default function ProductPage() {
+  return (
+    <Suspense fallback={<main className="min-h-screen bg-gray-50" />}>
+      <ProductPageContent />
+    </Suspense>
   );
 }

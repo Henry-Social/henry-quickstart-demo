@@ -1,6 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { henry } from "@/lib/henry";
 
+export const dynamic = "force-dynamic";
+
 export async function DELETE(_request: NextRequest, { params }: { params: { productId: string } }) {
   try {
     const userId = _request.headers.get("x-user-id") || "demo_user_123";
