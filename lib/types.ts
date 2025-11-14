@@ -28,6 +28,7 @@ export interface ProductDetails {
         name: string;
         selected?: boolean;
         available?: boolean;
+        id?: string;
       }>;
     }>;
   };

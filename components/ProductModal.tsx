@@ -18,7 +18,7 @@ type Props = {
   onClose: () => void;
   viewMode: ViewMode;
   setViewMode: (m: ViewMode) => void;
-  loading: boolean;
+  detailsLoading: boolean;
   loadingCheckout: boolean;
   loadingMessage: string;
   productDetails: ProductDetails | null;
@@ -40,7 +40,7 @@ export default function ProductModal({
   onClose,
   viewMode,
   setViewMode,
-  loading,
+  detailsLoading,
   loadingCheckout,
   loadingMessage,
   productDetails,
@@ -142,7 +142,7 @@ export default function ProductModal({
 
             {/* Modal Body */}
             <div className="relative overflow-y-auto" style={{ height: "calc(100% - 72px)" }}>
-              {loading && (
+              {detailsLoading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-white z-10">
                   <div className="flex flex-col items-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#44c57e]"></div>
@@ -350,7 +350,7 @@ export default function ProductModal({
                     </div>
                   </div>
                 </div>
-              ) : !loading ? (
+              ) : !detailsLoading ? (
                 <div className="p-6 text-center py-12 text-gray-500">
                   Unable to load product details
                 </div>

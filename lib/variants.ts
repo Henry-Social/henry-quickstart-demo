@@ -39,3 +39,29 @@ export const findVariantSelection = (
     value: selected[match.title],
   };
 };
+
+export const mergeVariantSelections = (
+  details: ProductDetails,
+  previousSelections?: Record<string, string>,
+) => {
+  const defaults = buildDefaultVariantSelections(details);
+  if (!previousSelections) {
+    return defaults;
+  }
+
+  const variants = details.productResults.variants;
+  if (!variants || variants.length === 0) {
+    return defaults;
+  }
+
+  return variants.reduce<Record<string, string>>(
+    (acc, variant) => {
+      const previousValue = previousSelections[variant.title];
+      if (previousValue && variant.items.some((item) => item.name === previousValue)) {
+        acc[variant.title] = previousValue;
+      }
+      return acc;
+    },
+    { ...defaults },
+  );
+};

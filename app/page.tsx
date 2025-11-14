@@ -8,7 +8,11 @@ import ProductModal from "@/components/ProductModal";
 import SearchBar from "@/components/SearchBar";
 import type { Product, ProductDetails } from "@/lib/types";
 import { getValidImageUrl } from "@/lib/utils";
-import { buildDefaultVariantSelections, findVariantSelection } from "@/lib/variants";
+import {
+  buildDefaultVariantSelections,
+  findVariantSelection,
+  mergeVariantSelections,
+} from "@/lib/variants";
 
 type ViewMode = "desktop" | "mobile";
 
@@ -17,6 +21,8 @@ export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [productDetails, setProductDetails] = useState<ProductDetails | null>(null);
+  const [productDetailsLoading, setProductDetailsLoading] = useState(false);
+  const [detailsProductId, setDetailsProductId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingCheckout, setLoadingCheckout] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("Processing...");
@@ -34,6 +40,7 @@ export default function Home() {
   const [selectedThumbnailIndex, setSelectedThumbnailIndex] = useState(0);
   const [heroView, setHeroView] = useState(true);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const detailsRequestIdRef = useRef(0);
 
   const placeholders = [
     "Yoga mats with good grip",
@@ -52,27 +59,90 @@ export default function Home() {
 
   // Close product modal
   const handleCloseProductModal = () => {
+    detailsRequestIdRef.current += 1;
+    setProductDetailsLoading(false);
     setShowProductModal(false);
     setSelectedProduct(null);
     setProductDetails(null);
+    setDetailsProductId(null);
     setShowCheckoutIframe(false);
     setCheckoutIframeUrl(null);
     setSelectedThumbnailIndex(0);
     setSelectedVariants({});
   };
 
-  const handleVariantSelection = useCallback((variantTitle: string, optionName: string) => {
-    setSelectedVariants((prev) => {
-      if (prev[variantTitle] === optionName) {
-        return prev;
+  const fetchProductDetails = useCallback(
+    async ({
+      productId,
+      preserveSelections = false,
+    }: {
+      productId: string;
+      preserveSelections?: boolean;
+    }) => {
+      const requestId = ++detailsRequestIdRef.current;
+      setProductDetailsLoading(true);
+
+      try {
+        const params = new URLSearchParams({ productId, _: Date.now().toString() });
+
+        const response = await fetch(`/api/henry/products/details?${params.toString()}`, {
+          cache: "no-store",
+        });
+        const productResult = await response.json();
+
+        if (requestId !== detailsRequestIdRef.current) {
+          return;
+        }
+
+        if (productResult?.success && productResult.data) {
+          setDetailsProductId(productId);
+          setProductDetails(productResult.data);
+          setSelectedThumbnailIndex(0);
+          setSelectedVariants((prev) =>
+            preserveSelections
+              ? mergeVariantSelections(productResult.data, prev)
+              : buildDefaultVariantSelections(productResult.data),
+          );
+        }
+      } catch (error) {
+        console.error("Error fetching product details:", error);
+      } finally {
+        if (requestId === detailsRequestIdRef.current) {
+          setProductDetailsLoading(false);
+        }
+      }
+    },
+    [],
+  );
+
+  const handleVariantSelection = useCallback(
+    (variantTitle: string, optionName: string) => {
+      if (selectedVariants[variantTitle] === optionName) {
+        return;
       }
 
-      return {
+      setSelectedVariants((prev) => ({
         ...prev,
         [variantTitle]: optionName,
-      };
-    });
-  }, []);
+      }));
+
+      if (!productDetails || !selectedProduct) {
+        return;
+      }
+
+      const variantProductId = productDetails.productResults.variants
+        ?.find((variant) => variant.title === variantTitle)
+        ?.items.find((item) => item.name === optionName)?.id;
+
+      if (variantProductId) {
+        fetchProductDetails({
+          productId: variantProductId,
+          preserveSelections: true,
+        });
+      }
+    },
+    [fetchProductDetails, productDetails, selectedProduct, selectedVariants],
+  );
 
   const getVariantMetadata = useCallback(() => {
     const variants = productDetails?.productResults?.variants;
@@ -132,7 +202,7 @@ export default function Home() {
   };
 
   // Get product details
-  const getProductDetails = async (product: Product) => {
+  const getProductDetails = (product: Product) => {
     // On mobile, open custom product page in same tab
     if (isMobile) {
       const params = new URLSearchParams({
@@ -146,25 +216,11 @@ export default function Home() {
     }
 
     // Desktop: show modal
-    setLoading(true);
     setSelectedProduct(product);
     setShowProductModal(true);
     setSelectedVariants({});
-
-    try {
-      // Fetch product details first
-      const response = await fetch(`/api/henry/products/details?productId=${product.id}`);
-      const productResult = await response.json();
-
-      if (productResult?.success && productResult.data) {
-        setProductDetails(productResult.data);
-        setSelectedVariants(buildDefaultVariantSelections(productResult.data));
-      }
-    } catch (_error) {
-      // Silent error handling
-    } finally {
-      setLoading(false);
-    }
+    setSelectedThumbnailIndex(0);
+    fetchProductDetails({ productId: product.id });
   };
 
   // Buy now flow (cart checkout)
@@ -192,7 +248,7 @@ export default function Home() {
         body: JSON.stringify({
           productsDetails: [
             {
-              productId: selectedProduct.id,
+              productId: detailsProductId ?? selectedProduct.id,
               name: productDetails.productResults.title,
               price: selectedProduct.price.toString(),
               quantity: 1,
@@ -340,7 +396,7 @@ export default function Home() {
             onClose={handleCloseProductModal}
             viewMode={viewMode}
             setViewMode={setViewMode}
-            loading={loading}
+            detailsLoading={productDetailsLoading}
             loadingCheckout={loadingCheckout}
             loadingMessage={loadingMessage}
             productDetails={productDetails}

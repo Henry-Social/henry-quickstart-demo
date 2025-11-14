@@ -2,13 +2,14 @@
 
 import Image from "next/image";
 import { useParams, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ProductDetails } from "@/lib/types";
 import { getValidImageUrl } from "@/lib/utils";
 import {
   buildDefaultVariantSelections,
   findVariantSelection,
   getVariantPriority,
+  mergeVariantSelections,
 } from "@/lib/variants";
 
 export default function ProductPage() {
@@ -23,7 +24,9 @@ export default function ProductPage() {
   const urlProductLink = searchParams.get("productLink") || "";
 
   const [productDetails, setProductDetails] = useState<ProductDetails | null>(null);
+  const [activeProductId, setActiveProductId] = useState(productId);
   const [loading, setLoading] = useState(true);
+  const [detailsRefreshing, setDetailsRefreshing] = useState(false);
   const [loadingCheckout, setLoadingCheckout] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("Processing...");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -37,18 +40,7 @@ export default function ProductPage() {
   const [productLink, setProductLink] = useState<string>(urlProductLink);
   const [selectedThumbnailIndex, setSelectedThumbnailIndex] = useState(0);
   const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
-
-  const handleVariantSelection = useCallback((variantTitle: string, optionName: string) => {
-    setSelectedVariants((prev) => {
-      if (prev[variantTitle] === optionName) {
-        return prev;
-      }
-      return {
-        ...prev,
-        [variantTitle]: optionName,
-      };
-    });
-  }, []);
+  const detailsRequestIdRef = useRef(0);
 
   const getVariantMetadata = useCallback(() => {
     const variants = productDetails?.productResults?.variants;
@@ -81,6 +73,109 @@ export default function ProductPage() {
     };
   }, [productDetails, selectedVariants]);
 
+  const applyProductDetails = useCallback(
+    (details: ProductDetails, preserveSelections: boolean) => {
+      setProductDetails(details);
+      setSelectedThumbnailIndex(0);
+      setSelectedVariants((prev) =>
+        preserveSelections
+          ? mergeVariantSelections(details, prev)
+          : buildDefaultVariantSelections(details),
+      );
+
+      const productInfo = details.productResults;
+      if (productInfo) {
+        setProductName(productInfo.title);
+
+        const firstStore = productInfo.stores?.[0];
+        if (firstStore?.price) {
+          const price = parseFloat(firstStore.price.replace(/[^0-9.]/g, ""));
+          setProductPrice(Number.isFinite(price) ? price : 0);
+        }
+
+        const primaryImage = productInfo.thumbnails?.[0] || productInfo.image || urlImageUrl || "";
+        setProductImage(primaryImage);
+
+        if (firstStore?.link) {
+          setProductLink(firstStore.link);
+        } else if (!preserveSelections && urlProductLink) {
+          setProductLink(urlProductLink);
+        }
+      }
+    },
+    [urlImageUrl, urlProductLink],
+  );
+
+  const fetchProductDetails = useCallback(
+    async ({
+      productIdOverride,
+      preserveSelections = false,
+    }: {
+      productIdOverride?: string;
+      preserveSelections?: boolean;
+    } = {}) => {
+      const requestId = ++detailsRequestIdRef.current;
+      const targetProductId = productIdOverride ?? productId;
+      if (preserveSelections) {
+        setDetailsRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+
+      try {
+        const params = new URLSearchParams({ productId: targetProductId });
+        params.set("_", Date.now().toString());
+
+        const response = await fetch(`/api/henry/products/details?${params.toString()}`, {
+          cache: "no-store",
+        });
+        const productResult = await response.json();
+
+        if (requestId !== detailsRequestIdRef.current) {
+          return;
+        }
+
+        if (productResult?.success && productResult.data) {
+          setActiveProductId(targetProductId);
+          applyProductDetails(productResult.data, preserveSelections);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        if (requestId === detailsRequestIdRef.current) {
+          if (preserveSelections) {
+            setDetailsRefreshing(false);
+          } else {
+            setLoading(false);
+          }
+        }
+      }
+    },
+    [applyProductDetails, productId],
+  );
+
+  const handleVariantSelection = useCallback(
+    (variantTitle: string, optionName: string) => {
+      if (selectedVariants[variantTitle] === optionName) {
+        return;
+      }
+
+      setSelectedVariants((prev) => ({
+        ...prev,
+        [variantTitle]: optionName,
+      }));
+
+      const variantProductId = productDetails?.productResults?.variants
+        ?.find((variant) => variant.title === variantTitle)
+        ?.items.find((item) => item.name === optionName)?.id;
+
+      if (variantProductId) {
+        fetchProductDetails({ productIdOverride: variantProductId, preserveSelections: true });
+      }
+    },
+    [fetchProductDetails, productDetails, selectedVariants],
+  );
+
   // Handle closing the iframe
   const handleCloseIframe = useCallback(() => {
     setShowCheckoutIframe(false);
@@ -89,46 +184,8 @@ export default function ProductPage() {
 
   // Fetch product details
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Fetch product details
-        const response = await fetch(`/api/henry/products/details?productId=${productId}`);
-        const productResult = await response.json();
-
-        // Process product details
-        if (productResult?.success && productResult.data) {
-          setProductDetails(productResult.data);
-          setSelectedVariants(buildDefaultVariantSelections(productResult.data));
-          setSelectedThumbnailIndex(0);
-
-          if (productResult.data.productResults) {
-            setProductName(productResult.data.productResults.title);
-
-            const firstStore = productResult.data.productResults.stores?.[0];
-            if (firstStore?.price) {
-              const price = parseFloat(firstStore.price.replace(/[^0-9.]/g, ""));
-              setProductPrice(price || 0);
-            }
-
-            setProductImage(urlImageUrl || productResult.data.productResults.image || "");
-
-            const storeLink = firstStore?.link;
-            if (storeLink) {
-              setProductLink(storeLink);
-            } else {
-              setProductLink(urlProductLink || "");
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [productId, urlImageUrl, urlProductLink]);
+    fetchProductDetails();
+  }, [fetchProductDetails]);
 
   // Buy now flow (cart checkout)
   const buyNow = async () => {
@@ -155,7 +212,7 @@ export default function ProductPage() {
         body: JSON.stringify({
           productsDetails: [
             {
-              productId: productId,
+              productId: activeProductId,
               name: productDetails.productResults.title,
               price: productPrice.toString(),
               quantity: 1,
@@ -217,7 +274,12 @@ export default function ProductPage() {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#44c57e]"></div>
           </div>
         ) : !showCheckoutIframe ? (
-          <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 overflow-x-hidden">
+          <div className="relative bg-white rounded-lg shadow-sm p-4 sm:p-6 overflow-x-hidden">
+            {detailsRefreshing && (
+              <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-20">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#44c57e]"></div>
+              </div>
+            )}
             {productDetails ? (
               <div className="grid md:grid-cols-2 gap-8">
                 {/* Product Image */}
