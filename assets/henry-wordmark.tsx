@@ -7,6 +7,7 @@ function HenryWordmark({ className }: { className?: string }) {
       xmlns="http://www.w3.org/2000/svg"
       className={`text-current ${className || ""}`}
     >
+      <title>Henry wordmark</title>
       <path
         d="M287.334 0.813965H310.465V157.825H287.334V88.559H207.471V157.825H184.34V0.813965H207.471V67.7535H287.334V0.813965Z"
         fill="currentColor"
