@@ -118,7 +118,6 @@ export default function Home() {
                 value={searchQuery}
                 onChange={setSearchQuery}
                 onSubmit={handleSearchSubmit}
-                loading={loading}
                 placeholder={placeholders[placeholderIndex]}
                 inputRef={searchInputRef}
               />
@@ -134,7 +133,6 @@ export default function Home() {
       searchValue={searchQuery}
       onSearchChange={setSearchQuery}
       onSearchSubmit={handleSearchSubmit}
-      loading={loading}
       placeholder={placeholders[placeholderIndex]}
       inputRef={searchInputRef}
       cartCount={cartCount}

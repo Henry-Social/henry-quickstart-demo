@@ -21,6 +21,7 @@ export default function SearchBar({
   className = "",
   variant = "default",
 }: Props) {
+  // The header variant uses subtler shadows so it blends into the nav.
   const isHeaderVariant = variant === "header";
   const inputClasses = [
     "w-full",

@@ -38,10 +38,6 @@ export default function ProductPage() {
   const [loadingMessage, setLoadingMessage] = useState("Processing...");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [addingToCart, setAddingToCart] = useState(false);
-  const [_cartFeedback, setCartFeedback] = useState<{
-    type: "success" | "error";
-    message: string;
-  } | null>(null);
   const userId = usePersistentUserId();
   const { cartCount, refreshCartCount } = useCartCount(userId);
   const [productPrice, setProductPrice] = useState<number>(urlPrice ? parseFloat(urlPrice) : 0);
@@ -169,6 +165,7 @@ export default function ProductPage() {
     );
   };
 
+  // Applies API detail data to UI state while preserving any viable variant selections.
   const applyProductDetails = useCallback(
     (details: ProductDetails, preserveSelections: boolean) => {
       setProductDetails(details);
@@ -285,21 +282,20 @@ export default function ProductPage() {
     };
   }, []);
 
+  // Adds the currently selected variant to the shared cart. When `silent` is true the caller handles
+  // its own loading/error UI (used by the Buy Now flow); otherwise we drive the inline button states.
   const addCurrentSelectionToCart = useCallback(
     async ({ silent = false }: { silent?: boolean } = {}) => {
       if (!productDetails || !userId) {
         if (!silent) {
-          setCartFeedback({
-            type: "error",
-            message: "Missing product details or user session.",
-          });
+          setErrorMessage("Missing product details or user session.");
         }
         return false;
       }
 
       if (!silent) {
         setAddingToCart(true);
-        setCartFeedback(null);
+        setErrorMessage(null);
       }
 
       try {
@@ -336,34 +332,21 @@ export default function ProductPage() {
           throw new Error(cartResult.message || "Failed to add to cart");
         }
 
-        if (!silent) {
-          setCartFeedback({
-            type: "success",
-            message: "Added to cart.",
-          });
-          if (addedToCartTimeoutRef.current) {
-            clearTimeout(addedToCartTimeoutRef.current);
-          }
-          setAddedToCartSuccess(true);
-          addedToCartTimeoutRef.current = setTimeout(() => {
-            setAddedToCartSuccess(false);
-          }, 3000);
+        if (addedToCartTimeoutRef.current) {
+          clearTimeout(addedToCartTimeoutRef.current);
         }
+        setAddedToCartSuccess(true);
+        addedToCartTimeoutRef.current = setTimeout(() => {
+          setAddedToCartSuccess(false);
+        }, 3000);
 
         await refreshCartCount();
 
         return true;
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : "Failed to add to cart";
-        if (!silent) {
-          setCartFeedback({
-            type: "error",
-            message: errorMsg,
-          });
-          setAddedToCartSuccess(false);
-        } else {
-          setErrorMessage(errorMsg);
-        }
+        setErrorMessage(errorMsg);
+        setAddedToCartSuccess(false);
         return false;
       } finally {
         if (!silent) {
@@ -416,6 +399,7 @@ export default function ProductPage() {
       const checkoutResult = await checkoutResponse.json();
 
       if (checkoutResult.success && checkoutResult.data?.checkout_url) {
+        // Keep the detail page open so users can continue browsing after checkout.
         window.open(checkoutResult.data.checkout_url, "_blank", "noopener,noreferrer");
       } else {
         throw new Error(checkoutResult.message || "Failed to create checkout");
@@ -440,7 +424,6 @@ export default function ProductPage() {
       searchValue={searchQuery}
       onSearchChange={setSearchQuery}
       onSearchSubmit={handleSearchSubmit}
-      loading={false}
       placeholder="Search for products"
       inputRef={searchInputRef}
       cartCount={cartCount}

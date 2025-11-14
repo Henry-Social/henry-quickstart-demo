@@ -6,6 +6,10 @@ const DEFAULT_HEADERS = {
   "Content-Type": "application/json",
 };
 
+/**
+ * Keeps a shared cart count in sync so every page can render the badge consistently.
+ * Fetching is skipped until a user id exists.
+ */
 export function useCartCount(userId: string) {
   const [cartCount, setCartCount] = useState(0);
   const [loading, setLoading] = useState(false);

@@ -78,18 +78,18 @@ export default function CartPage() {
     router.push(`/?q=${encodeURIComponent(trimmed)}`);
   }, [router, searchQuery]);
 
+  // Prices come back as strings with currency symbols; normalize them once.
+  const normalizePrice = useCallback((price: CartItem["price"]) => {
+    if (typeof price === "number") {
+      return price;
+    }
+    const parsed = Number.parseFloat(String(price).replace(/[^0-9.]/g, ""));
+    return Number.isNaN(parsed) ? 0 : parsed;
+  }, []);
+
   const subtotal = useMemo(() => {
-    return items.reduce((sum, item) => {
-      const priceValue =
-        typeof item.price === "number"
-          ? item.price
-          : Number.parseFloat(String(item.price).replace(/[^0-9.]/g, ""));
-      if (Number.isNaN(priceValue)) {
-        return sum;
-      }
-      return sum + priceValue * (item.quantity ?? 1);
-    }, 0);
-  }, [items]);
+    return items.reduce((sum, item) => sum + normalizePrice(item.price) * (item.quantity ?? 1), 0);
+  }, [items, normalizePrice]);
 
   const handleCheckout = async () => {
     if (!userId || items.length === 0) return;
@@ -119,6 +119,7 @@ export default function CartPage() {
     }
   };
 
+  // Remove an item then optimistically sync local state + badge.
   const handleRemoveItem = async (productId: string) => {
     if (!userId) return;
     setRemovingId(productId);
@@ -214,15 +215,10 @@ export default function CartPage() {
                       </div>
                       <div className="text-right">
                         <p className="font-semibold text-gray-900">
-                          {(() => {
-                            const numericPrice =
-                              typeof item.price === "number"
-                                ? item.price
-                                : Number.parseFloat(String(item.price).replace(/[^0-9.]/g, ""));
-                            return Number.isNaN(numericPrice)
-                              ? item.price
-                              : `$${numericPrice.toFixed(2)}`;
-                          })()}
+                          {normalizePrice(item.price).toLocaleString("en-US", {
+                            style: "currency",
+                            currency: "USD",
+                          })}
                         </p>
                         <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
                       </div>
@@ -245,7 +241,12 @@ export default function CartPage() {
         <div className="bg-white rounded-lg shadow-sm p-6 space-y-4">
           <div className="flex items-center justify-between text-lg font-semibold text-gray-900">
             <span>Subtotal</span>
-            <span>${subtotal.toFixed(2)}</span>
+            <span>
+              {subtotal.toLocaleString("en-US", {
+                style: "currency",
+                currency: "USD",
+              })}
+            </span>
           </div>
           <p className="text-sm text-gray-500">
             Taxes and shipping will be calculated during checkout.
