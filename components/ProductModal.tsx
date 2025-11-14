@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useMemo } from "react";
 import CheckoutModal from "@/components/CheckoutModal";
+import ProductMediaSkeleton from "@/components/ProductMediaSkeleton";
 import type { Product, ProductDetails } from "@/lib/types";
 import { getVariantPriority } from "@/lib/variants";
 
@@ -142,101 +143,22 @@ export default function ProductModal({
 
             {/* Modal Body */}
             <div className="relative overflow-y-auto" style={{ height: "calc(100% - 72px)" }}>
-              {detailsLoading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-white z-10">
-                  <div className="flex flex-col items-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#44c57e]"></div>
-                    <p className="mt-4 text-gray-600">Loading product details...</p>
-                  </div>
-                </div>
-              )}
-              {productDetails ? (
+              {!productDetails && detailsLoading ? (
                 <div className="p-4">
+                  <ProductMediaSkeleton />
+                </div>
+              ) : productDetails ? (
+                <div className="relative p-4">
                   <div className="flex flex-col lg:grid lg:grid-cols-2 gap-4">
-                    {/* Product Image */}
-                    <div className="space-y-4">
-                      {/* Main Image */}
-                      <div className="relative h-80 rounded-lg overflow-hidden bg-white shadow-inner">
-                        {productDetails.productResults.thumbnails &&
-                        productDetails.productResults.thumbnails.length > 0 ? (
-                          <>
-                            <div className="absolute inset-0 image-gradient-overlay z-10 pointer-events-none" />
-                            <Image
-                              src={
-                                productDetails.productResults.thumbnails![selectedThumbnailIndex]
-                              }
-                              alt={productDetails.productResults.title}
-                              fill
-                              className="object-contain p-4"
-                              unoptimized
-                            />
-                          </>
-                        ) : productDetails.productResults.image ||
-                          selectedProduct.imageUrl ||
-                          productDetails.relatedSearches?.[0]?.image ? (
-                          <>
-                            <div className="absolute inset-0 image-gradient-overlay z-10 pointer-events-none" />
-                            <Image
-                              src={
-                                productDetails.productResults.image ||
-                                selectedProduct.imageUrl ||
-                                productDetails.relatedSearches![0].image!
-                              }
-                              alt={productDetails.productResults.title}
-                              fill
-                              className="object-contain p-4"
-                              unoptimized
-                            />
-                          </>
-                        ) : (
-                          <div className="flex items-center justify-center h-full bg-gray-50">
-                            <svg
-                              className="w-24 h-24 text-gray-400"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={1}
-                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                              />
-                            </svg>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Thumbnails Carousel */}
-                      {productDetails.productResults.thumbnails &&
-                        productDetails.productResults.thumbnails.length > 1 && (
-                          <div className="overflow-x-auto pb-2 max-w-full [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-gray-100">
-                            <div className="flex gap-2 py-1 px-0.5 min-w-min">
-                              {productDetails.productResults.thumbnails!.map((thumbnail, index) => (
-                                <button
-                                  key={index}
-                                  onClick={() => setSelectedThumbnailIndex(index)}
-                                  className={`relative flex-shrink-0 w-14 h-14 rounded-md border-2 transition-all bg-white ${
-                                    selectedThumbnailIndex === index
-                                      ? "border-[#44c57e] opacity-100 shadow-md"
-                                      : "border-gray-300 opacity-80 hover:opacity-100 hover:border-gray-400"
-                                  }`}
-                                >
-                                  <Image
-                                    src={thumbnail}
-                                    alt={`${
-                                      productDetails.productResults.title
-                                    } - View ${index + 1}`}
-                                    fill
-                                    className="object-contain p-1.5 rounded-sm"
-                                    unoptimized
-                                  />
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                    </div>
+                    <ProductMediaSection
+                      loading={detailsLoading}
+                      productDetails={productDetails}
+                      selectedThumbnailIndex={selectedThumbnailIndex}
+                      setSelectedThumbnailIndex={setSelectedThumbnailIndex}
+                      fallbackImage={
+                        selectedProduct.imageUrl || productDetails.relatedSearches?.[0]?.image
+                      }
+                    />
 
                     {/* Product Info */}
                     <div className="space-y-3">
@@ -350,17 +272,114 @@ export default function ProductModal({
                     </div>
                   </div>
                 </div>
-              ) : !detailsLoading ? (
+              ) : (
                 <div className="p-6 text-center py-12 text-gray-500">
                   Unable to load product details
                 </div>
-              ) : null}
+              )}
             </div>
           </>
         ) : (
           <CheckoutModal url={checkoutIframeUrl} onClose={onCloseIframe} />
         )}
       </div>
+    </div>
+  );
+}
+
+type MediaSectionProps = {
+  loading: boolean;
+  productDetails: ProductDetails;
+  selectedThumbnailIndex: number;
+  setSelectedThumbnailIndex: (index: number) => void;
+  fallbackImage?: string | null;
+};
+
+function ProductMediaSection({
+  loading,
+  productDetails,
+  selectedThumbnailIndex,
+  setSelectedThumbnailIndex,
+  fallbackImage,
+}: MediaSectionProps) {
+  if (loading) {
+    return <ProductMediaSkeleton />;
+  }
+
+  const thumbnails = productDetails.productResults.thumbnails ?? [];
+  const hasThumbnails = thumbnails.length > 0;
+  const thumbnailList = hasThumbnails ? thumbnails : [];
+  const baseImage = productDetails.productResults.image || fallbackImage || "";
+
+  return (
+    <div className="space-y-4">
+      <div className="relative h-80 rounded-lg overflow-hidden bg-white shadow-inner">
+        {hasThumbnails ? (
+          <>
+            <div className="absolute inset-0 image-gradient-overlay z-10 pointer-events-none" />
+            <Image
+              src={thumbnails[selectedThumbnailIndex]}
+              alt={productDetails.productResults.title}
+              fill
+              className="object-contain p-4"
+              unoptimized
+            />
+          </>
+        ) : baseImage ? (
+          <>
+            <div className="absolute inset-0 image-gradient-overlay z-10 pointer-events-none" />
+            <Image
+              src={baseImage}
+              alt={productDetails.productResults.title}
+              fill
+              className="object-contain p-4"
+              unoptimized
+            />
+          </>
+        ) : (
+          <div className="flex items-center justify-center h-full bg-gray-50">
+            <svg
+              className="w-24 h-24 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1}
+                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
+            </svg>
+          </div>
+        )}
+      </div>
+
+      {thumbnailList.length > 1 && (
+        <div className="overflow-x-auto pb-2 max-w-full [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-gray-100">
+          <div className="flex gap-2 py-1 px-0.5 min-w-min">
+            {thumbnailList.map((thumbnail, index) => (
+              <button
+                key={`${thumbnail}-${index}`}
+                onClick={() => setSelectedThumbnailIndex(index)}
+                className={`relative flex-shrink-0 w-14 h-14 rounded-md border-2 transition-all bg-white ${
+                  selectedThumbnailIndex === index
+                    ? "border-[#44c57e] opacity-100 shadow-md"
+                    : "border-gray-300 opacity-80 hover:opacity-100 hover:border-gray-400"
+                }`}
+              >
+                <Image
+                  src={thumbnail}
+                  alt={`${productDetails.productResults.title} - View ${index + 1}`}
+                  fill
+                  className="object-contain p-1.5 rounded-sm"
+                  unoptimized
+                />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

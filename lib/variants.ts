@@ -54,12 +54,23 @@ export const mergeVariantSelections = (
     return defaults;
   }
 
+  const remainingValues = new Set(Object.values(previousSelections));
+
   return variants.reduce<Record<string, string>>(
     (acc, variant) => {
-      const previousValue = previousSelections[variant.title];
-      if (previousValue && variant.items.some((item) => item.name === previousValue)) {
-        acc[variant.title] = previousValue;
+      const matchByTitle = previousSelections[variant.title];
+      if (matchByTitle && variant.items.some((item) => item.name === matchByTitle)) {
+        acc[variant.title] = matchByTitle;
+        remainingValues.delete(matchByTitle);
+        return acc;
       }
+
+      const fallbackMatch = variant.items.find((item) => remainingValues.has(item.name));
+      if (fallbackMatch) {
+        acc[variant.title] = fallbackMatch.name;
+        remainingValues.delete(fallbackMatch.name);
+      }
+
       return acc;
     },
     { ...defaults },

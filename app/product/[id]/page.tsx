@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import ProductMediaSkeleton from "@/components/ProductMediaSkeleton";
 import type { ProductDetails } from "@/lib/types";
 import { getValidImageUrl } from "@/lib/utils";
 import {
@@ -41,6 +42,7 @@ export default function ProductPage() {
   const [selectedThumbnailIndex, setSelectedThumbnailIndex] = useState(0);
   const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
   const detailsRequestIdRef = useRef(0);
+  const showMediaSkeleton = !productDetails || detailsRefreshing;
 
   const getVariantMetadata = useCallback(() => {
     const variants = productDetails?.productResults?.variants;
@@ -72,6 +74,87 @@ export default function ProductPage() {
       color: findVariantSelection(variants, selectedVariants, "color"),
     };
   }, [productDetails, selectedVariants]);
+
+  const renderMediaSection = () => {
+    if (!productDetails || showMediaSkeleton) {
+      return <ProductMediaSkeleton className="max-w-full" />;
+    }
+
+    return (
+      <>
+        <div className="relative h-80 rounded-lg overflow-hidden bg-white shadow-inner">
+          {productDetails.productResults.thumbnails &&
+          productDetails.productResults.thumbnails.length > 0 ? (
+            <>
+              <div className="absolute inset-0 image-gradient-overlay z-10 pointer-events-none" />
+              <Image
+                src={productDetails.productResults.thumbnails![selectedThumbnailIndex]}
+                alt={productDetails.productResults.title || productName}
+                fill
+                className="object-contain p-4"
+                unoptimized
+              />
+            </>
+          ) : productDetails.productResults.image || productImage ? (
+            <>
+              <div className="absolute inset-0 image-gradient-overlay z-10 pointer-events-none" />
+              <Image
+                src={productDetails.productResults.image || productImage}
+                alt={productDetails.productResults.title || productName}
+                fill
+                className="object-contain p-4"
+                unoptimized
+              />
+            </>
+          ) : (
+            <div className="flex items-center justify-center h-full bg-gray-50">
+              <svg
+                className="w-24 h-24 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <title>No Image</title>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1}
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+            </div>
+          )}
+        </div>
+
+        {productDetails.productResults.thumbnails &&
+          productDetails.productResults.thumbnails.length > 1 && (
+            <div className="overflow-x-auto pb-2 max-w-full [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-gray-100">
+              <div className="flex gap-2 py-1 px-0.5 min-w-min">
+                {productDetails.productResults.thumbnails!.map((thumbnail, index) => (
+                  <button
+                    key={`${thumbnail}-${index}`}
+                    onClick={() => setSelectedThumbnailIndex(index)}
+                    className={`relative flex-shrink-0 w-16 h-16 rounded-md border-2 transition-all bg-white ${
+                      selectedThumbnailIndex === index
+                        ? "border-[#44c57e] opacity-100 shadow-md"
+                        : "border-gray-300 opacity-80 hover:opacity-100 hover:border-gray-400"
+                    }`}
+                  >
+                    <Image
+                      src={thumbnail}
+                      alt={`${productDetails.productResults.title || productName} - View ${index + 1}`}
+                      fill
+                      className="object-contain p-1.5 rounded-sm"
+                      unoptimized
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+      </>
+    );
+  };
 
   const applyProductDetails = useCallback(
     (details: ProductDetails, preserveSelections: boolean) => {
@@ -269,114 +352,29 @@ export default function ProductPage() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 overflow-x-hidden">
-        {loading ? (
-          <div className="flex justify-center items-center min-h-[60vh]">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#44c57e]"></div>
-          </div>
-        ) : !showCheckoutIframe ? (
-          <div className="relative bg-white rounded-lg shadow-sm p-4 sm:p-6 overflow-x-hidden">
-            {detailsRefreshing && (
-              <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-20">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#44c57e]"></div>
-              </div>
-            )}
-            {productDetails ? (
-              <div className="grid md:grid-cols-2 gap-8">
-                {/* Product Image */}
-                <div className="space-y-4 max-w-full overflow-hidden">
-                  {/* Main Image */}
-                  <div className="relative h-80 rounded-lg overflow-hidden bg-white shadow-inner">
-                    {productDetails.productResults.thumbnails &&
-                    productDetails.productResults.thumbnails.length > 0 ? (
-                      <>
-                        <div className="absolute inset-0 image-gradient-overlay z-10 pointer-events-none" />
-                        <Image
-                          src={productDetails.productResults.thumbnails![selectedThumbnailIndex]}
-                          alt={productDetails.productResults.title || productName}
-                          fill
-                          className="object-contain p-4"
-                          unoptimized
-                        />
-                      </>
-                    ) : productDetails.productResults.image || productImage ? (
-                      <>
-                        <div className="absolute inset-0 image-gradient-overlay z-10 pointer-events-none" />
-                        <Image
-                          src={productDetails.productResults.image || productImage}
-                          alt={productDetails.productResults.title || productName}
-                          fill
-                          className="object-contain p-4"
-                          unoptimized
-                        />
-                      </>
-                    ) : (
-                      <div className="flex items-center justify-center h-full bg-gray-50">
-                        <svg
-                          className="w-24 h-24 text-gray-400"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <title>No Image</title>
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={1}
-                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                          />
-                        </svg>
-                      </div>
-                    )}
-                  </div>
+        {!showCheckoutIframe ? (
+          <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 overflow-x-hidden">
+            <div className="grid md:grid-cols-2 gap-8">
+              <div className="space-y-4 max-w-full overflow-hidden">{renderMediaSection()}</div>
 
-                  {/* Thumbnails Carousel */}
-                  {productDetails.productResults.thumbnails &&
-                    productDetails.productResults.thumbnails.length > 1 && (
-                      <div className="overflow-x-auto pb-2 max-w-full [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-gray-100">
-                        <div className="flex gap-2 py-1 px-0.5 min-w-min">
-                          {productDetails.productResults.thumbnails!.map((thumbnail, index) => (
-                            <button
-                              key={index}
-                              onClick={() => setSelectedThumbnailIndex(index)}
-                              className={`relative flex-shrink-0 w-16 h-16 rounded-md border-2 transition-all bg-white ${
-                                selectedThumbnailIndex === index
-                                  ? "border-[#44c57e] opacity-100 shadow-md"
-                                  : "border-gray-300 opacity-80 hover:opacity-100 hover:border-gray-400"
-                              }`}
-                            >
-                              <Image
-                                src={thumbnail}
-                                alt={`${
-                                  productDetails.productResults.title || productName
-                                } - View ${index + 1}`}
-                                fill
-                                className="object-contain p-1.5 rounded-sm"
-                                unoptimized
-                              />
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                </div>
-
-                {/* Product Info */}
-                <div className="space-y-6">
-                  <div>
-                    <h1 className="text-3xl font-bold mb-2">
-                      {productDetails.productResults.title || productName}
-                    </h1>
+              {/* Product Info */}
+              <div className="space-y-6">
+                <div>
+                  <h1 className="text-3xl font-bold mb-2">
+                    {productDetails?.productResults.title || productName}
+                  </h1>
+                  {productDetails?.productResults.brand && (
                     <p className="text-gray-600 text-lg">
                       by {productDetails.productResults.brand}
                     </p>
-                  </div>
+                  )}
+                </div>
 
-                  {/* Price */}
-                  <div className="text-4xl font-bold text-[#44c57e]">
-                    ${productPrice.toFixed(2)}
-                  </div>
+                {/* Price */}
+                <div className="text-4xl font-bold text-[#44c57e]">${productPrice.toFixed(2)}</div>
 
-                  {/* Rating */}
+                {/* Rating */}
+                {productDetails && (
                   <div className="flex items-center gap-2">
                     <div className="flex">
                       {[...Array(5)].map((_, i) => (
@@ -397,83 +395,85 @@ export default function ProductPage() {
                       {productDetails.productResults.reviews} reviews)
                     </span>
                   </div>
+                )}
 
-                  {/* Variants */}
-                  {(primarySelections.size || primarySelections.color) && (
-                    <div className="flex flex-wrap gap-3 text-sm text-gray-600">
-                      {primarySelections.size && (
-                        <span>
-                          Size:{" "}
-                          <span className="font-semibold">
-                            {primarySelections.size.value || "Select a size"}
-                          </span>
+                {/* Variants */}
+                {productDetails && (primarySelections.size || primarySelections.color) && (
+                  <div className="flex flex-wrap gap-3 text-sm text-gray-600">
+                    {primarySelections.size && (
+                      <span>
+                        Size:{" "}
+                        <span className="font-semibold">
+                          {primarySelections.size.value || "Select a size"}
                         </span>
-                      )}
-                      {primarySelections.color && (
-                        <span>
-                          Color:{" "}
-                          <span className="font-semibold">
-                            {primarySelections.color.value || "Select a color"}
-                          </span>
+                      </span>
+                    )}
+                    {primarySelections.color && (
+                      <span>
+                        Color:{" "}
+                        <span className="font-semibold">
+                          {primarySelections.color.value || "Select a color"}
                         </span>
-                      )}
-                    </div>
-                  )}
-
-                  {sortedVariants.map((variant) => (
-                    <div key={variant.title}>
-                      <h4 className="font-medium mb-3 text-lg">{variant.title}:</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {variant.items.map((item) => {
-                          const isAvailable = item.available !== false;
-                          const isSelected = selectedVariants[variant.title] === item.name;
-
-                          return (
-                            <button
-                              key={item.name}
-                              type="button"
-                              disabled={!isAvailable}
-                              onClick={() => {
-                                if (isAvailable) {
-                                  handleVariantSelection(variant.title, item.name);
-                                }
-                              }}
-                              aria-pressed={isSelected}
-                              className={`px-4 py-2 border rounded-lg transition-colors ${
-                                isSelected
-                                  ? "bg-[#44c57e] text-white border-[#44c57e]"
-                                  : isAvailable
-                                    ? "bg-white hover:bg-gray-50 border-gray-300"
-                                    : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
-                              }`}
-                            >
-                              {item.name}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
-
-                  <div className="pt-4 space-y-3">
-                    <button
-                      onClick={buyNow}
-                      disabled={loadingCheckout}
-                      className="w-full py-3 bg-[#44c57e] text-white rounded-lg font-semibold hover:bg-[#3aaa6a] disabled:opacity-50 transition-colors"
-                    >
-                      {loadingCheckout ? loadingMessage : "Add to Cart & Buy"}
-                    </button>
-
-                    {errorMessage && (
-                      <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                        <p className="text-sm text-red-700">{errorMessage}</p>
-                      </div>
+                      </span>
                     )}
                   </div>
+                )}
+
+                {sortedVariants.map((variant) => (
+                  <div key={variant.title}>
+                    <h4 className="font-medium mb-3 text-lg">{variant.title}:</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {variant.items.map((item) => {
+                        const isAvailable = item.available !== false;
+                        const isSelected = selectedVariants[variant.title] === item.name;
+
+                        return (
+                          <button
+                            key={item.name}
+                            type="button"
+                            disabled={!isAvailable}
+                            onClick={() => {
+                              if (isAvailable) {
+                                handleVariantSelection(variant.title, item.name);
+                              }
+                            }}
+                            aria-pressed={isSelected}
+                            className={`px-4 py-2 border rounded-lg transition-colors ${
+                              isSelected
+                                ? "bg-[#44c57e] text-white border-[#44c57e]"
+                                : isAvailable
+                                  ? "bg-white hover:bg-gray-50 border-gray-300"
+                                  : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                            }`}
+                          >
+                            {item.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+
+                <div className="pt-4 space-y-3">
+                  <button
+                    onClick={buyNow}
+                    disabled={loadingCheckout}
+                    className="w-full py-3 bg-[#44c57e] text-white rounded-lg font-semibold hover:bg-[#3aaa6a] disabled:opacity-50 transition-colors"
+                  >
+                    {loadingCheckout ? loadingMessage : "Add to Cart & Buy"}
+                  </button>
+
+                  {errorMessage && (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-sm text-red-700">{errorMessage}</p>
+                    </div>
+                  )}
                 </div>
               </div>
-            ) : (
-              <div className="text-center py-12 text-gray-500">Unable to load product details</div>
+            </div>
+
+            {!productDetails && !loading && (
+              <div className="text-center py-6 text-gray-500">Unable to load product details</div>
             )}
           </div>
         ) : (
