@@ -112,7 +112,7 @@ function CartPageContent() {
         throw new Error(data.message || data.error || "Failed to initiate checkout");
       }
 
-      window.open(data.data.checkout_url, "_blank", "noopener,noreferrer");
+      window.location.href = data.data.checkout_url;
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to initiate checkout";
       setError(message);

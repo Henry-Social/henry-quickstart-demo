@@ -403,8 +403,8 @@ function ProductPageContent() {
       const checkoutResult = await checkoutResponse.json();
 
       if (checkoutResult.success && checkoutResult.data?.checkout_url) {
-        // Keep the detail page open so users can continue browsing after checkout.
-        window.open(checkoutResult.data.checkout_url, "_blank", "noopener,noreferrer");
+        // Navigate directly to avoid popup blockers.
+        window.location.href = checkoutResult.data.checkout_url;
       } else {
         throw new Error(checkoutResult.message || "Failed to create checkout");
       }

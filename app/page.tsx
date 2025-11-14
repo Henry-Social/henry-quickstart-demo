@@ -112,7 +112,7 @@ function HomeContent() {
     return (
       <main className="min-h-screen bg-gray-50">
         <div className="min-h-screen flex flex-col">
-          <Header cartCount={cartCount} />
+          <Header cartCount={cartCount} showLogo={false} />
           <div className="flex-1 flex flex-col items-center justify-center px-4 -mt-32">
             <HenryWordmark className="h-16 text-[#44c57e] mb-4" />
             <div className="w-full max-w-2xl">

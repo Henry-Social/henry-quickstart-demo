@@ -29,14 +29,13 @@ export default function SearchPageShell({
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white sticky top-0 z-40 border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="grid items-center gap-4 grid-cols-1 md:grid-cols-[auto_minmax(0,1fr)_auto]">
-            <Link
-              href="/"
-              className="justify-self-start inline-flex items-center"
-              aria-label="Go to Henry home"
-            >
-              <HenryWordmark className="h-10 text-[#44c57e]" />
-            </Link>
+          <div className="flex flex-col gap-4 md:grid md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-center">
+            <div className="flex items-center justify-between md:justify-start">
+              <Link href="/" className="inline-flex items-center" aria-label="Go to Henry home">
+                <HenryWordmark className="h-10 text-[#44c57e]" />
+              </Link>
+              <CartButton count={cartCount} className="md:hidden" />
+            </div>
             <div className="w-full min-w-[200px] md:w-[60%] lg:w-1/2 md:justify-self-center md:mx-auto">
               <SearchBar
                 value={searchValue}
@@ -48,7 +47,9 @@ export default function SearchPageShell({
                 variant="header"
               />
             </div>
-            <CartButton count={cartCount} />
+            <div className="hidden md:block">
+              <CartButton count={cartCount} />
+            </div>
           </div>
         </div>
       </header>
