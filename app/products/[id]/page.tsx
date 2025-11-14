@@ -7,6 +7,8 @@ import ProductMediaSkeleton from "@/components/ProductMediaSkeleton";
 import SearchPageShell from "@/components/SearchPageShell";
 import type { ProductDetails } from "@/lib/types";
 import { getValidImageUrl } from "@/lib/utils";
+import { usePersistentUserId } from "@/lib/usePersistentUserId";
+import { useCartCount } from "@/lib/useCartCount";
 import {
   buildDefaultVariantSelections,
   findVariantSelection,
@@ -18,7 +20,8 @@ export default function ProductPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const productId = params.id as string;
+  const rawProductId = params.id as string;
+  const productId = decodeURIComponent(rawProductId);
 
   // Get product data from URL parameters (passed from mobile redirect)
   const urlImageUrl = searchParams.get("imageUrl") || "";
@@ -34,10 +37,13 @@ export default function ProductPage() {
   const [loadingCheckout, setLoadingCheckout] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("Processing...");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [showCheckoutIframe, setShowCheckoutIframe] = useState(false);
-  const [iframeLoading, setIframeLoading] = useState(true);
-  const [checkoutIframeUrl, setCheckoutIframeUrl] = useState<string | null>(null);
-  const [userId] = useState(`user_${Math.random().toString(36).substring(7)}`);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [cartFeedback, setCartFeedback] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+  const userId = usePersistentUserId();
+  const { cartCount, refreshCartCount } = useCartCount(userId);
   const [productPrice, setProductPrice] = useState<number>(urlPrice ? parseFloat(urlPrice) : 0);
   const [productName, setProductName] = useState<string>(urlName);
   const [productImage, setProductImage] = useState<string>(urlImageUrl);
@@ -136,7 +142,8 @@ export default function ProductPage() {
               <div className="flex gap-2 py-1 px-0.5 min-w-min">
                 {productDetails.productResults.thumbnails!.map((thumbnail, index) => (
                   <button
-                    key={`${thumbnail}-${index}`}
+                    key={thumbnail || `thumbnail-${index}`}
+                    type="button"
                     onClick={() => setSelectedThumbnailIndex(index)}
                     className={`relative flex-shrink-0 w-16 h-16 rounded-md border-2 transition-all bg-white ${
                       selectedThumbnailIndex === index
@@ -263,58 +270,119 @@ export default function ProductPage() {
     [fetchProductDetails, productDetails, selectedVariants],
   );
 
-  // Handle closing the iframe
-  const handleCloseIframe = useCallback(() => {
-    setShowCheckoutIframe(false);
-    setCheckoutIframeUrl(null);
-  }, []);
-
   // Fetch product details
   useEffect(() => {
     fetchProductDetails();
   }, [fetchProductDetails]);
 
+  const addCurrentSelectionToCart = useCallback(
+    async ({ silent = false }: { silent?: boolean } = {}) => {
+      if (!productDetails || !userId) {
+        if (!silent) {
+          setCartFeedback({
+            type: "error",
+            message: "Missing product details or user session.",
+          });
+        }
+        return false;
+      }
+
+      if (!silent) {
+        setAddingToCart(true);
+        setCartFeedback(null);
+      }
+
+      try {
+        const variantMetadata = getVariantMetadata();
+        const metadata = {
+          ...variantMetadata,
+          ...(primarySelections.size?.value ? { Size: primarySelections.size.value } : {}),
+          ...(primarySelections.color?.value ? { Color: primarySelections.color.value } : {}),
+        };
+
+        const response = await fetch("/api/henry/cart/add", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-user-id": userId,
+          },
+          body: JSON.stringify({
+            productsDetails: [
+              {
+                productId: activeProductId,
+                name: productDetails.productResults.title || productName,
+                price: productPrice.toString(),
+                quantity: 1,
+                productLink: productDetails.productResults.stores[0]?.link || productLink,
+                productImageLink: getValidImageUrl(productImage),
+                metadata,
+              },
+            ],
+          }),
+        });
+
+        const cartResult = await response.json();
+        if (!cartResult.success) {
+          throw new Error(cartResult.message || "Failed to add to cart");
+        }
+
+        if (!silent) {
+          setCartFeedback({
+            type: "success",
+            message: "Added to cart.",
+          });
+        }
+
+        await refreshCartCount();
+
+        return true;
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : "Failed to add to cart";
+        if (!silent) {
+          setCartFeedback({
+            type: "error",
+            message: errorMsg,
+          });
+        } else {
+          setErrorMessage(errorMsg);
+        }
+        return false;
+      } finally {
+        if (!silent) {
+          setAddingToCart(false);
+        }
+      }
+    },
+    [
+      productDetails,
+      userId,
+      getVariantMetadata,
+      primarySelections,
+      activeProductId,
+      productName,
+      productPrice,
+      productLink,
+      productImage,
+      refreshCartCount,
+    ],
+  );
+
+  const handleAddToCart = () => {
+    void addCurrentSelectionToCart();
+  };
+
   // Buy now flow (cart checkout)
   const buyNow = async () => {
-    if (!productDetails) return;
+    if (!productDetails || !userId) return;
 
+    setErrorMessage(null);
     setLoadingCheckout(true);
-    setLoadingMessage("Processing...");
+    setLoadingMessage("Adding to cart...");
 
     try {
-      const variantMetadata = getVariantMetadata();
-      const metadata = {
-        ...variantMetadata,
-        ...(primarySelections.size?.value ? { Size: primarySelections.size.value } : {}),
-        ...(primarySelections.color?.value ? { Color: primarySelections.color.value } : {}),
-      };
-
-      // Add to cart
-      const cartResponse = await fetch("/api/henry/cart/add", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user-id": userId,
-        },
-        body: JSON.stringify({
-          productsDetails: [
-            {
-              productId: activeProductId,
-              name: productDetails.productResults.title,
-              price: productPrice.toString(),
-              quantity: 1,
-              productLink: productDetails.productResults.stores[0]?.link || productLink,
-              productImageLink: getValidImageUrl(productImage),
-              metadata,
-            },
-          ],
-        }),
-      });
-
-      const cartResult = await cartResponse.json();
-
-      if (!cartResult.success) {
-        throw new Error(cartResult.message || "Failed to add to cart");
+      const added = await addCurrentSelectionToCart({ silent: true });
+      if (!added) {
+        throw new Error("Unable to add product to cart.");
       }
 
       setLoadingMessage("Fetching checkout link...");
@@ -330,8 +398,7 @@ export default function ProductPage() {
       const checkoutResult = await checkoutResponse.json();
 
       if (checkoutResult.success && checkoutResult.data?.checkout_url) {
-        // Open in same tab for mobile checkout
-        window.location.href = checkoutResult.data.checkout_url;
+        window.open(checkoutResult.data.checkout_url, "_blank", "noopener,noreferrer");
       } else {
         throw new Error(checkoutResult.message || "Failed to create checkout");
       }
@@ -352,180 +419,157 @@ export default function ProductPage() {
 
   return (
     <SearchPageShell
-      userId={userId}
       searchValue={searchQuery}
       onSearchChange={setSearchQuery}
       onSearchSubmit={handleSearchSubmit}
       loading={false}
       placeholder="Search for products"
       inputRef={searchInputRef}
+      cartCount={cartCount}
     >
       <div className="overflow-x-hidden">
-        {!showCheckoutIframe ? (
-          <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 overflow-x-hidden">
-            <div className="grid md:grid-cols-2 gap-8">
-              <div className="space-y-4 max-w-full overflow-hidden">{renderMediaSection()}</div>
+        <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 overflow-x-hidden">
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="space-y-4 max-w-full overflow-hidden">{renderMediaSection()}</div>
 
-              {/* Product Info */}
-              <div className="space-y-6">
-                <div>
-                  <h1 className="text-3xl font-bold mb-2">
-                    {productDetails?.productResults.title || productName}
-                  </h1>
-                  {productDetails?.productResults.brand && (
-                    <p className="text-gray-600 text-lg">
-                      by {productDetails.productResults.brand}
-                    </p>
-                  )}
-                </div>
-
-                {/* Price */}
-                <div className="text-4xl font-bold text-[#44c57e]">${productPrice.toFixed(2)}</div>
-
-                {/* Rating */}
-                {productDetails && (
-                  <div className="flex items-center gap-2">
-                    <div className="flex">
-                      {[...Array(5)].map((_, i) => (
-                        <span
-                          key={i}
-                          className={
-                            i < Math.floor(productDetails.productResults.rating)
-                              ? "text-yellow-500"
-                              : "text-gray-300"
-                          }
-                        >
-                          ★
-                        </span>
-                      ))}
-                    </div>
-                    <span className="text-gray-600">
-                      {productDetails.productResults.rating}/5 (
-                      {productDetails.productResults.reviews} reviews)
-                    </span>
-                  </div>
+            {/* Product Info */}
+            <div className="space-y-6">
+              <div>
+                <h1 className="text-3xl font-bold mb-2">
+                  {productDetails?.productResults.title || productName}
+                </h1>
+                {productDetails?.productResults.brand && (
+                  <p className="text-gray-600 text-lg">by {productDetails.productResults.brand}</p>
                 )}
-
-                {/* Variants */}
-                {productDetails && (primarySelections.size || primarySelections.color) && (
-                  <div className="flex flex-wrap gap-3 text-sm text-gray-600">
-                    {primarySelections.size && (
-                      <span>
-                        Size:{" "}
-                        <span className="font-semibold">
-                          {primarySelections.size.value || "Select a size"}
-                        </span>
-                      </span>
-                    )}
-                    {primarySelections.color && (
-                      <span>
-                        Color:{" "}
-                        <span className="font-semibold">
-                          {primarySelections.color.value || "Select a color"}
-                        </span>
-                      </span>
-                    )}
-                  </div>
-                )}
-
-                {sortedVariants.map((variant) => (
-                  <div key={variant.title}>
-                    <h4 className="font-medium mb-3 text-lg">{variant.title}:</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {variant.items.map((item) => {
-                        const isAvailable = item.available !== false;
-                        const isSelected = selectedVariants[variant.title] === item.name;
-
-                        return (
-                          <button
-                            key={item.name}
-                            type="button"
-                            disabled={!isAvailable}
-                            onClick={() => {
-                              if (isAvailable) {
-                                handleVariantSelection(variant.title, item.name);
-                              }
-                            }}
-                            aria-pressed={isSelected}
-                            className={`px-4 py-2 border rounded-lg transition-colors ${
-                              isSelected
-                                ? "bg-[#44c57e] text-white border-[#44c57e]"
-                                : isAvailable
-                                  ? "bg-white hover:bg-gray-50 border-gray-300"
-                                  : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
-                            }`}
-                          >
-                            {item.name}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-
-                <div className="pt-4 space-y-3">
-                  <button
-                    onClick={buyNow}
-                    disabled={loadingCheckout}
-                    className="w-full py-3 bg-[#44c57e] text-white rounded-lg font-semibold hover:bg-[#3aaa6a] disabled:opacity-50 transition-colors"
-                  >
-                    {loadingCheckout ? loadingMessage : "Add to Cart & Buy"}
-                  </button>
-
-                  {errorMessage && (
-                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                      <p className="text-sm text-red-700">{errorMessage}</p>
-                    </div>
-                  )}
-                </div>
               </div>
-            </div>
 
-            {!productDetails && !loading && (
-              <div className="text-center py-6 text-gray-500">Unable to load product details</div>
-            )}
-          </div>
-        ) : (
-          /* Checkout Iframe */
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden" style={{ height: "80vh" }}>
-            <div className="flex items-center justify-between p-4 border-b bg-gray-50">
-              <h3 className="text-lg font-semibold">{"Complete Your Purchase"}</h3>
-              <button
-                onClick={handleCloseIframe}
-                className="p-2 hover:bg-gray-200 rounded-full transition-colors"
-                aria-label="Close"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
+              {/* Price */}
+              <div className="text-4xl font-bold text-[#44c57e]">${productPrice.toFixed(2)}</div>
 
-            <div className="relative h-full">
-              {iframeLoading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-white z-10">
-                  <div className="flex flex-col items-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#44c57e]"></div>
-                    <p className="mt-4 text-gray-600">Loading checkout...</p>
+              {/* Rating */}
+              {productDetails && (
+                <div className="flex items-center gap-2">
+                  <div className="flex">
+                    {["one", "two", "three", "four", "five"].map((slot, index) => (
+                      <span
+                        key={slot}
+                        className={
+                          index < Math.floor(productDetails.productResults.rating)
+                            ? "text-yellow-500"
+                            : "text-gray-300"
+                        }
+                      >
+                        ★
+                      </span>
+                    ))}
                   </div>
+                  <span className="text-gray-600">
+                    {productDetails.productResults.rating}/5 (
+                    {productDetails.productResults.reviews} reviews)
+                  </span>
                 </div>
               )}
 
-              <iframe
-                src={checkoutIframeUrl ?? undefined}
-                className="w-full h-full"
-                title="Checkout"
-                allow="payment"
-                onLoad={() => setIframeLoading(false)}
-              />
+              {/* Variants */}
+              {productDetails && (primarySelections.size || primarySelections.color) && (
+                <div className="flex flex-wrap gap-3 text-sm text-gray-600">
+                  {primarySelections.size && (
+                    <span>
+                      Size:{" "}
+                      <span className="font-semibold">
+                        {primarySelections.size.value || "Select a size"}
+                      </span>
+                    </span>
+                  )}
+                  {primarySelections.color && (
+                    <span>
+                      Color:{" "}
+                      <span className="font-semibold">
+                        {primarySelections.color.value || "Select a color"}
+                      </span>
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {sortedVariants.map((variant) => (
+                <div key={variant.title}>
+                  <h4 className="font-medium mb-3 text-lg">{variant.title}:</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {variant.items.map((item) => {
+                      const isAvailable = item.available !== false;
+                      const isSelected = selectedVariants[variant.title] === item.name;
+
+                      return (
+                        <button
+                          key={item.name}
+                          type="button"
+                          disabled={!isAvailable}
+                          onClick={() => {
+                            if (isAvailable) {
+                              handleVariantSelection(variant.title, item.name);
+                            }
+                          }}
+                          aria-pressed={isSelected}
+                          className={`px-4 py-2 border rounded-lg transition-colors ${
+                            isSelected
+                              ? "bg-[#44c57e] text-white border-[#44c57e]"
+                              : isAvailable
+                                ? "bg-white hover:bg-gray-50 border-gray-300"
+                                : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                          }`}
+                        >
+                          {item.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+
+              <div className="pt-4 space-y-3">
+                <button
+                  type="button"
+                  onClick={handleAddToCart}
+                  disabled={addingToCart || !productDetails}
+                  className="w-full py-3 bg-[#44c57e] text-white rounded-lg font-semibold hover:bg-[#3aaa6a] disabled:opacity-50 transition-colors"
+                >
+                  {addingToCart ? "Adding..." : "Add to Cart"}
+                </button>
+                <button
+                  type="button"
+                  onClick={buyNow}
+                  disabled={loadingCheckout || !productDetails}
+                  className="w-full py-3 border border-[#44c57e] text-[#1b8451] rounded-lg font-semibold hover:bg-[#ebf8f1] disabled:opacity-50 transition-colors"
+                >
+                  {loadingCheckout ? loadingMessage : "Buy Now"}
+                </button>
+
+                {cartFeedback && (
+                  <div
+                    className={`p-3 rounded-lg border ${
+                      cartFeedback.type === "success"
+                        ? "bg-green-50 border-green-200 text-green-800"
+                        : "bg-red-50 border-red-200 text-red-700"
+                    }`}
+                  >
+                    <p className="text-sm">{cartFeedback.message}</p>
+                  </div>
+                )}
+
+                {errorMessage && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-700">{errorMessage}</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        )}
+
+          {!productDetails && !loading && (
+            <div className="text-center py-6 text-gray-500">Unable to load product details</div>
+          )}
+        </div>
       </div>
     </SearchPageShell>
   );

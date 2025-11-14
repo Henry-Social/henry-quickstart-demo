@@ -3,6 +3,8 @@
 import Image from "next/image";
 import type { Product as ProductCard } from "@/lib/types";
 
+const skeletonItemKeys = Array.from({ length: 15 }, (_, idx) => `product-skeleton-${idx}`);
+
 type Props = {
   products: ProductCard[];
   loading: boolean;
@@ -13,8 +15,8 @@ export default function ProductGrid({ products, loading, onSelect }: Props) {
   if (loading) {
     return (
       <div className="product-grid">
-        {[...Array(15)].map((_, index) => (
-          <div key={`skeleton-${index}`} className="bg-white rounded-xl shadow-sm overflow-hidden">
+        {skeletonItemKeys.map((key) => (
+          <div key={key} className="bg-white rounded-xl shadow-sm overflow-hidden">
             <div className="skeleton aspect-square" />
             <div className="p-4 space-y-3">
               <div className="skeleton h-3 w-16 rounded" />
@@ -41,6 +43,7 @@ export default function ProductGrid({ products, loading, onSelect }: Props) {
           viewBox="0 0 24 24"
           stroke="currentColor"
         >
+          <title>No products</title>
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -57,10 +60,12 @@ export default function ProductGrid({ products, loading, onSelect }: Props) {
   return (
     <div className="product-grid">
       {products.map((product) => (
-        <div
+        <button
           key={product.id}
           onClick={() => onSelect(product)}
-          className="bg-white rounded-lg shadow-sm hover:shadow-xl transition-all duration-200 cursor-pointer overflow-hidden group"
+          type="button"
+          className="w-full bg-white text-left rounded-lg shadow-sm hover:shadow-xl transition-all duration-200 cursor-pointer overflow-hidden group"
+          aria-label={`Open details for ${product.name}`}
         >
           {product.imageUrl && (
             <div className="relative aspect-square overflow-hidden bg-gray-100">
@@ -80,7 +85,7 @@ export default function ProductGrid({ products, loading, onSelect }: Props) {
               <p className="text-base font-bold text-black">${product.price.toFixed(2)}</p>
             </div>
           </div>
-        </div>
+        </button>
       ))}
     </div>
   );

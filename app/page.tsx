@@ -8,6 +8,8 @@ import ProductGrid from "@/components/ProductGrid";
 import SearchBar from "@/components/SearchBar";
 import SearchPageShell from "@/components/SearchPageShell";
 import type { Product } from "@/lib/types";
+import { usePersistentUserId } from "@/lib/usePersistentUserId";
+import { useCartCount } from "@/lib/useCartCount";
 
 const placeholders = [
   "Yoga mats with good grip",
@@ -24,7 +26,8 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
-  const [userId, setUserId] = useState("demo_user");
+  const userId = usePersistentUserId();
+  const { cartCount } = useCartCount(userId);
   const [heroView, setHeroView] = useState(true);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -79,10 +82,6 @@ export default function Home() {
   }, [currentQueryParam, router, searchProducts, searchQuery]);
 
   useEffect(() => {
-    setUserId(`user_${Math.random().toString(36).substring(7)}`);
-  }, []);
-
-  useEffect(() => {
     const interval = setInterval(() => {
       setPlaceholderIndex((prev) => (prev + 1) % placeholders.length);
     }, 3000);
@@ -101,7 +100,8 @@ export default function Home() {
 
   const handleProductSelect = useCallback(
     (product: Product) => {
-      router.push(`/products/${product.id}`);
+      const encodedId = encodeURIComponent(product.id);
+      router.push(`/products/${encodedId}`);
     },
     [router],
   );
@@ -110,7 +110,7 @@ export default function Home() {
     return (
       <main className="min-h-screen bg-gray-50">
         <div className="min-h-screen flex flex-col">
-          <Header userId={userId} />
+          <Header cartCount={cartCount} />
           <div className="flex-1 flex flex-col items-center justify-center px-4 -mt-32">
             <HenryWordmark className="h-16 text-[#44c57e] mb-4" />
             <div className="w-full max-w-2xl">
@@ -131,13 +131,13 @@ export default function Home() {
 
   return (
     <SearchPageShell
-      userId={userId}
       searchValue={searchQuery}
       onSearchChange={setSearchQuery}
       onSearchSubmit={handleSearchSubmit}
       loading={loading}
       placeholder={placeholders[placeholderIndex]}
       inputRef={searchInputRef}
+      cartCount={cartCount}
     >
       <ProductGrid products={products} loading={loading} onSelect={handleProductSelect} />
     </SearchPageShell>
