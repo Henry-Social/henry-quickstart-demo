@@ -22,6 +22,13 @@ export interface ProductDetails {
       shipping: string;
       total: string;
     }>;
+    userReviews?: Array<{
+      title?: string;
+      text?: string;
+      userName?: string;
+      source?: string;
+      rating?: number;
+    }>;
     variants: Array<{
       title: string;
       items: Array<{

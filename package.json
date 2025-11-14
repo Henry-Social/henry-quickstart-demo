@@ -6,13 +6,13 @@
   "packageManager": "bun@1.2.20",
   "scripts": {
     "build": "next build",
-    "dev": "next dev --port 3000",
+    "dev": "next dev",
     "lint": "biome lint .",
     "lint:eslint": "eslint",
     "format": "biome format --write .",
     "check": "biome check --write .",
     "ci": "biome ci .",
-    "start": "next start --port 3000",
+    "start": "next start",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

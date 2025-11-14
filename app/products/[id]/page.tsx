@@ -20,6 +20,22 @@ import {
 
 export const dynamic = "force-dynamic";
 
+type ProductStore = ProductDetails["productResults"]["stores"][number];
+
+const buildStoreKey = (store: ProductStore) => {
+  const namePart = store.name || "store";
+  const linkPart = store.link || "";
+  return `${namePart}::${linkPart}`;
+};
+
+const parsePriceValue = (rawPrice?: string) => {
+  if (!rawPrice) {
+    return 0;
+  }
+  const normalized = parseFloat(rawPrice.replace(/[^0-9.]/g, ""));
+  return Number.isFinite(normalized) ? normalized : 0;
+};
+
 function ProductPageContent() {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -48,6 +64,7 @@ function ProductPageContent() {
   const [productName, setProductName] = useState<string>(urlName);
   const [productImage, setProductImage] = useState<string>(urlImageUrl);
   const [productLink, setProductLink] = useState<string>(urlProductLink);
+  const [selectedStoreKey, setSelectedStoreKey] = useState<string | null>(null);
   const [selectedThumbnailIndex, setSelectedThumbnailIndex] = useState(0);
   const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
   const detailsRequestIdRef = useRef(0);
@@ -86,6 +103,36 @@ function ProductPageContent() {
       color: findVariantSelection(variants, selectedVariants, "color"),
     };
   }, [productDetails, selectedVariants]);
+
+  const selectedStore = useMemo(() => {
+    if (!productDetails?.productResults?.stores?.length) {
+      return null;
+    }
+
+    const stores = productDetails.productResults.stores;
+    if (selectedStoreKey) {
+      const match = stores.find((store) => buildStoreKey(store) === selectedStoreKey);
+      if (match) {
+        return match;
+      }
+    }
+
+    return stores[0];
+  }, [productDetails, selectedStoreKey]);
+
+  const displayedReviews = useMemo(() => {
+    return productDetails?.productResults?.userReviews?.slice(0, 5) ?? [];
+  }, [productDetails]);
+
+  useEffect(() => {
+    if (selectedStore?.price) {
+      setProductPrice(parsePriceValue(selectedStore.price));
+    }
+
+    if (selectedStore?.link) {
+      setProductLink(selectedStore.link);
+    }
+  }, [selectedStore]);
 
   const renderMediaSection = () => {
     if (!productDetails || showMediaSkeleton) {
@@ -184,10 +231,24 @@ function ProductPageContent() {
       if (productInfo) {
         setProductName(productInfo.title);
 
-        const firstStore = productInfo.stores?.[0];
+        const stores = productInfo.stores ?? [];
+        const firstStore = stores[0];
         if (firstStore?.price) {
-          const price = parseFloat(firstStore.price.replace(/[^0-9.]/g, ""));
-          setProductPrice(Number.isFinite(price) ? price : 0);
+          setProductPrice(parsePriceValue(firstStore.price));
+        }
+
+        if (stores.length) {
+          setSelectedStoreKey((prevKey) => {
+            if (preserveSelections && prevKey) {
+              const stillExists = stores.some((store) => buildStoreKey(store) === prevKey);
+              if (stillExists) {
+                return prevKey;
+              }
+            }
+            return buildStoreKey(stores[0]!);
+          });
+        } else {
+          setSelectedStoreKey(null);
         }
 
         const primaryImage = productInfo.thumbnails?.[0] || productInfo.image || urlImageUrl || "";
@@ -310,6 +371,9 @@ function ProductPageContent() {
           ...(primarySelections.color?.value ? { Color: primarySelections.color.value } : {}),
         };
 
+        const storePrice = selectedStore ? parsePriceValue(selectedStore.price) : productPrice;
+        const storeLink = selectedStore?.link || productLink;
+
         const response = await fetch("/api/henry/cart/add", {
           method: "POST",
           headers: {
@@ -321,11 +385,16 @@ function ProductPageContent() {
               {
                 productId: activeProductId,
                 name: productDetails.productResults.title || productName,
-                price: productPrice.toString(),
+                price: storePrice.toFixed(2),
                 quantity: 1,
-                productLink: productDetails.productResults.stores[0]?.link || productLink,
+                productLink: storeLink,
                 productImageLink: getValidImageUrl(productImage),
-                metadata,
+                metadata: {
+                  ...metadata,
+                  ...(selectedStore?.name ? { Merchant: selectedStore.name } : {}),
+                  ...(selectedStore?.shipping ? { Shipping: selectedStore.shipping } : {}),
+                  ...(selectedStore?.total ? { Total: selectedStore.total } : {}),
+                },
               },
             ],
           }),
@@ -368,6 +437,7 @@ function ProductPageContent() {
       productPrice,
       productLink,
       productImage,
+      selectedStore,
       refreshCartCount,
     ],
   );
@@ -445,11 +515,40 @@ function ProductPageContent() {
                     <h1 className="text-3xl font-bold mb-2">
                       {productDetails.productResults.title || productName}
                     </h1>
-                    {productDetails.productResults.brand && (
-                      <p className="text-gray-600 text-lg">
-                        by {productDetails.productResults.brand}
-                      </p>
-                    )}
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-6">
+                      {productDetails.productResults.stores?.length ? (
+                        productDetails.productResults.stores.length > 1 ? (
+                          <label className="text-gray-600 text-lg flex flex-col sm:flex-row sm:items-center gap-2">
+                            <span>Sold by</span>
+                            <select
+                              aria-label="Select merchant"
+                              className="border border-gray-300 rounded-md px-3 py-1.5 bg-white text-base focus:outline-none focus:ring-2 focus:ring-[#44c57e] focus:border-[#44c57e]"
+                              value={
+                                selectedStoreKey ??
+                                (selectedStore ? buildStoreKey(selectedStore) : "")
+                              }
+                              onChange={(event) => setSelectedStoreKey(event.target.value)}
+                            >
+                              {productDetails.productResults.stores.map((store) => {
+                                const optionKey = buildStoreKey(store);
+                                return (
+                                  <option key={optionKey} value={optionKey}>
+                                    {store.name}
+                                  </option>
+                                );
+                              })}
+                            </select>
+                          </label>
+                        ) : (
+                          <p className="text-gray-600 text-lg">
+                            Sold by
+                            <span className="ml-1 font-medium text-gray-900">
+                              {productDetails.productResults.stores[0]?.name}
+                            </span>
+                          </p>
+                        )
+                      ) : null}
+                    </div>
                   </>
                 ) : (
                   <>
@@ -461,33 +560,56 @@ function ProductPageContent() {
 
               {/* Price */}
               {productDetails ? (
-                <div className="text-4xl font-bold text-[#44c57e]">${productPrice.toFixed(2)}</div>
+                <div className="space-y-2">
+                  <div className="text-4xl font-bold text-[#44c57e]">
+                    {selectedStore?.price ||
+                      (productPrice ? `$${productPrice.toFixed(2)}` : "Price unavailable")}
+                  </div>
+                  {selectedStore && (
+                    <dl className="text-sm text-gray-600 space-y-1">
+                      <div className="flex justify-between">
+                        <dt>Shipping</dt>
+                        <dd className="font-medium text-gray-900">
+                          {selectedStore.shipping || "Varies"}
+                        </dd>
+                      </div>
+                      <div className="flex justify-between">
+                        <dt>Total</dt>
+                        <dd className="font-medium text-gray-900">
+                          {selectedStore.total || selectedStore.price || "See store"}
+                        </dd>
+                      </div>
+                    </dl>
+                  )}
+                </div>
               ) : (
                 <div className="h-10 w-40 bg-gray-200 rounded animate-pulse" />
               )}
 
               {/* Rating */}
               {productDetails ? (
-                <div className="flex items-center gap-2">
-                  <div className="flex">
-                    {["one", "two", "three", "four", "five"].map((slot, index) => (
-                      <span
-                        key={slot}
-                        className={
-                          index < Math.floor(productDetails.productResults.rating)
-                            ? "text-yellow-500"
-                            : "text-gray-300"
-                        }
-                      >
-                        ★
-                      </span>
-                    ))}
+                productDetails.productResults.reviews > 0 ? (
+                  <div className="flex items-center gap-2">
+                    <div className="flex">
+                      {["one", "two", "three", "four", "five"].map((slot, index) => (
+                        <span
+                          key={slot}
+                          className={
+                            index < Math.floor(productDetails.productResults.rating)
+                              ? "text-yellow-500"
+                              : "text-gray-300"
+                          }
+                        >
+                          ★
+                        </span>
+                      ))}
+                    </div>
+                    <span className="text-gray-600">
+                      {productDetails.productResults.rating}/5 (
+                      {productDetails.productResults.reviews} reviews)
+                    </span>
                   </div>
-                  <span className="text-gray-600">
-                    {productDetails.productResults.rating}/5 (
-                    {productDetails.productResults.reviews} reviews)
-                  </span>
-                </div>
+                ) : null
               ) : (
                 <div className="h-5 w-48 bg-gray-200 rounded animate-pulse" />
               )}
@@ -602,6 +724,62 @@ function ProductPageContent() {
             <div className="text-center py-6 text-gray-500">Unable to load product details</div>
           )}
         </div>
+
+        {displayedReviews.length > 0 && (
+          <div className="mt-6 bg-white rounded-lg shadow-sm p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+              <h2 className="text-2xl font-semibold">Customer Reviews</h2>
+              {productDetails && (
+                <div className="text-sm text-gray-600">
+                  <span className="font-semibold text-gray-900">
+                    {productDetails.productResults.rating}/5
+                  </span>
+                  <span className="ml-1">({productDetails.productResults.reviews} reviews)</span>
+                </div>
+              )}
+            </div>
+            <div className="divide-y divide-gray-100">
+              {displayedReviews.map((review, index) => (
+                <div
+                  key={`${review.userName || review.title || "review"}-${index}`}
+                  className="py-4 first:pt-0"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                    <div>
+                      {review.title && <p className="font-semibold text-lg">{review.title}</p>}
+                      <p className="text-sm text-gray-500">
+                        {review.userName || "Anonymous"}
+                        {review.source && <span className="ml-1">· {review.source}</span>}
+                      </p>
+                    </div>
+                    {typeof review.rating === "number" && (
+                      <div className="flex items-center gap-1 text-yellow-500">
+                        {Array.from({ length: 5 }).map((_, starIndex) => (
+                          <span
+                            key={`${review.title || "review"}-${starIndex}`}
+                            className={
+                              starIndex < Math.round(review.rating || 0)
+                                ? "text-yellow-500"
+                                : "text-gray-300"
+                            }
+                          >
+                            ★
+                          </span>
+                        ))}
+                        <span className="text-sm text-gray-600 ml-1">
+                          {review.rating.toFixed(1)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  {review.text && (
+                    <p className="mt-3 text-gray-700 text-sm leading-relaxed">{review.text}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </SearchPageShell>
   );
