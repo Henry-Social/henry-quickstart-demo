@@ -38,7 +38,7 @@ export default function ProductPage() {
   const [loadingMessage, setLoadingMessage] = useState("Processing...");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [addingToCart, setAddingToCart] = useState(false);
-  const [cartFeedback, setCartFeedback] = useState<{
+  const [_cartFeedback, setCartFeedback] = useState<{
     type: "success" | "error";
     message: string;
   } | null>(null);
@@ -52,7 +52,9 @@ export default function ProductPage() {
   const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
   const detailsRequestIdRef = useRef(0);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const addedToCartTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const showMediaSkeleton = !productDetails || detailsRefreshing;
+  const [addedToCartSuccess, setAddedToCartSuccess] = useState(false);
 
   const getVariantMetadata = useCallback(() => {
     const variants = productDetails?.productResults?.variants;
@@ -275,6 +277,14 @@ export default function ProductPage() {
     fetchProductDetails();
   }, [fetchProductDetails]);
 
+  useEffect(() => {
+    return () => {
+      if (addedToCartTimeoutRef.current) {
+        clearTimeout(addedToCartTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const addCurrentSelectionToCart = useCallback(
     async ({ silent = false }: { silent?: boolean } = {}) => {
       if (!productDetails || !userId) {
@@ -331,6 +341,13 @@ export default function ProductPage() {
             type: "success",
             message: "Added to cart.",
           });
+          if (addedToCartTimeoutRef.current) {
+            clearTimeout(addedToCartTimeoutRef.current);
+          }
+          setAddedToCartSuccess(true);
+          addedToCartTimeoutRef.current = setTimeout(() => {
+            setAddedToCartSuccess(false);
+          }, 3000);
         }
 
         await refreshCartCount();
@@ -343,6 +360,7 @@ export default function ProductPage() {
             type: "error",
             message: errorMsg,
           });
+          setAddedToCartSuccess(false);
         } else {
           setErrorMessage(errorMsg);
         }
@@ -435,19 +453,34 @@ export default function ProductPage() {
             {/* Product Info */}
             <div className="space-y-6">
               <div>
-                <h1 className="text-3xl font-bold mb-2">
-                  {productDetails?.productResults.title || productName}
-                </h1>
-                {productDetails?.productResults.brand && (
-                  <p className="text-gray-600 text-lg">by {productDetails.productResults.brand}</p>
+                {productDetails ? (
+                  <>
+                    <h1 className="text-3xl font-bold mb-2">
+                      {productDetails.productResults.title || productName}
+                    </h1>
+                    {productDetails.productResults.brand && (
+                      <p className="text-gray-600 text-lg">
+                        by {productDetails.productResults.brand}
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <div className="h-8 w-72 bg-gray-200 rounded animate-pulse mb-2" />
+                    <div className="h-5 w-40 bg-gray-200 rounded animate-pulse" />
+                  </>
                 )}
               </div>
 
               {/* Price */}
-              <div className="text-4xl font-bold text-[#44c57e]">${productPrice.toFixed(2)}</div>
+              {productDetails ? (
+                <div className="text-4xl font-bold text-[#44c57e]">${productPrice.toFixed(2)}</div>
+              ) : (
+                <div className="h-10 w-40 bg-gray-200 rounded animate-pulse" />
+              )}
 
               {/* Rating */}
-              {productDetails && (
+              {productDetails ? (
                 <div className="flex items-center gap-2">
                   <div className="flex">
                     {["one", "two", "three", "four", "five"].map((slot, index) => (
@@ -468,6 +501,8 @@ export default function ProductPage() {
                     {productDetails.productResults.reviews} reviews)
                   </span>
                 </div>
+              ) : (
+                <div className="h-5 w-48 bg-gray-200 rounded animate-pulse" />
               )}
 
               {/* Variants */}
@@ -534,7 +569,29 @@ export default function ProductPage() {
                   disabled={addingToCart || !productDetails}
                   className="w-full py-3 bg-[#44c57e] text-white rounded-lg font-semibold hover:bg-[#3aaa6a] disabled:opacity-50 transition-colors"
                 >
-                  {addingToCart ? "Adding..." : "Add to Cart"}
+                  {addingToCart ? (
+                    "Adding..."
+                  ) : addedToCartSuccess ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <svg
+                        className="w-5 h-5"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                      >
+                        <title>Added to cart</title>
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                      Added to Cart
+                    </span>
+                  ) : (
+                    "Add to Cart"
+                  )}
                 </button>
                 <button
                   type="button"
@@ -544,18 +601,6 @@ export default function ProductPage() {
                 >
                   {loadingCheckout ? loadingMessage : "Buy Now"}
                 </button>
-
-                {cartFeedback && (
-                  <div
-                    className={`p-3 rounded-lg border ${
-                      cartFeedback.type === "success"
-                        ? "bg-green-50 border-green-200 text-green-800"
-                        : "bg-red-50 border-red-200 text-red-700"
-                    }`}
-                  >
-                    <p className="text-sm">{cartFeedback.message}</p>
-                  </div>
-                )}
 
                 {errorMessage && (
                   <div className="p-3 bg-red-50 border border-red-200 rounded-lg">

@@ -1,10 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { henry } from "@/lib/henry";
 
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: { productId: string } },
-) {
+export async function DELETE(_request: NextRequest, { params }: { params: { productId: string } }) {
   try {
     const userId = _request.headers.get("x-user-id") || "demo_user_123";
     const productId = params.productId ? decodeURIComponent(params.productId) : null;
