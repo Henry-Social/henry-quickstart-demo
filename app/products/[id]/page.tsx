@@ -1,9 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ProductMediaSkeleton from "@/components/ProductMediaSkeleton";
+import SearchPageShell from "@/components/SearchPageShell";
 import type { ProductDetails } from "@/lib/types";
 import { getValidImageUrl } from "@/lib/utils";
 import {
@@ -16,6 +17,7 @@ import {
 export default function ProductPage() {
   const params = useParams();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const productId = params.id as string;
 
   // Get product data from URL parameters (passed from mobile redirect)
@@ -24,6 +26,7 @@ export default function ProductPage() {
   const urlName = searchParams.get("name") || "";
   const urlProductLink = searchParams.get("productLink") || "";
 
+  const [searchQuery, setSearchQuery] = useState(() => searchParams.get("q") ?? "");
   const [productDetails, setProductDetails] = useState<ProductDetails | null>(null);
   const [activeProductId, setActiveProductId] = useState(productId);
   const [loading, setLoading] = useState(true);
@@ -42,6 +45,7 @@ export default function ProductPage() {
   const [selectedThumbnailIndex, setSelectedThumbnailIndex] = useState(0);
   const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
   const detailsRequestIdRef = useRef(0);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const showMediaSkeleton = !productDetails || detailsRefreshing;
 
   const getVariantMetadata = useCallback(() => {
@@ -340,18 +344,23 @@ export default function ProductPage() {
     }
   };
 
-  return (
-    <main className="min-h-screen bg-gray-50 overflow-x-hidden">
-      {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="font-semibold text-[#44c57e]">Henry</div>
-          </div>
-        </div>
-      </header>
+  const handleSearchSubmit = useCallback(() => {
+    const trimmed = searchQuery.trim();
+    if (!trimmed) return;
+    router.push(`/?q=${encodeURIComponent(trimmed)}`);
+  }, [router, searchQuery]);
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 overflow-x-hidden">
+  return (
+    <SearchPageShell
+      userId={userId}
+      searchValue={searchQuery}
+      onSearchChange={setSearchQuery}
+      onSearchSubmit={handleSearchSubmit}
+      loading={false}
+      placeholder="Search for products"
+      inputRef={searchInputRef}
+    >
+      <div className="overflow-x-hidden">
         {!showCheckoutIframe ? (
           <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 overflow-x-hidden">
             <div className="grid md:grid-cols-2 gap-8">
@@ -518,6 +527,6 @@ export default function ProductPage() {
           </div>
         )}
       </div>
-    </main>
+    </SearchPageShell>
   );
 }
