@@ -7,6 +7,10 @@ export const metadata: Metadata = {
   description: "Complete buy-now flow with Henry API",
   manifest: "/manifest.webmanifest",
   themeColor: "#44c57e",
+  icons: {
+    icon: "/icon.png",
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export default function RootLayout({
