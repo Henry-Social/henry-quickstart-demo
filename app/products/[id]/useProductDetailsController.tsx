@@ -174,7 +174,6 @@ export function useProductDetailsController({
 
       try {
         const params = new URLSearchParams({ productId: targetProductId });
-        params.set("_", Date.now().toString());
 
         const response = await fetch(`/api/henry/products/details?${params.toString()}`, {
           cache: "no-store",
@@ -214,7 +213,13 @@ export function useProductDetailsController({
     [fetchProductDetails],
   );
 
+  const hasFetchedInitialDetails = useRef(false);
+
   useEffect(() => {
+    if (hasFetchedInitialDetails.current) {
+      return;
+    }
+    hasFetchedInitialDetails.current = true;
     fetchProductDetails();
   }, [fetchProductDetails]);
 

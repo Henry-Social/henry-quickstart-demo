@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useRef, useState } from "react";
+import { Suspense, useCallback, useMemo, useRef, useState } from "react";
 import SearchPageShell from "@/components/SearchPageShell";
 import { useCartCount } from "@/lib/useCartCount";
 import { usePersistentUserId } from "@/lib/usePersistentUserId";
@@ -37,14 +37,19 @@ function ProductPageContent() {
   const userId = usePersistentUserId();
   const { cartCount, refreshCartCount } = useCartCount(userId);
 
-  const controller = useProductDetailsController({
-    productId,
-    urlDefaults: {
+  const urlDefaults = useMemo(
+    () => ({
       imageUrl: urlImageUrl,
       price: urlPrice ? parseFloat(urlPrice) : 0,
       name: urlName,
       productLink: urlProductLink,
-    },
+    }),
+    [urlImageUrl, urlPrice, urlName, urlProductLink],
+  );
+
+  const controller = useProductDetailsController({
+    productId,
+    urlDefaults,
     userId,
     refreshCartCount,
   });
