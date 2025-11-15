@@ -17,12 +17,12 @@ export function MoreOptionsCarousel({ options, onSelect }: MoreOptionsCarouselPr
   }
 
   return (
-    <div className="mt-6 bg-white rounded-lg shadow-sm p-4 sm:p-6">
+    <div className="mt-6 bg-white rounded-2xl p-4 sm:p-6">
       <div className="mb-4">
-        <h2 className="text-2xl font-semibold">More Options</h2>
+        <h2 className="text-2xl font-semibold">Similar Products</h2>
         <p className="text-sm text-gray-600">Other listings you might like</p>
       </div>
-      <div className="overflow-x-auto pb-2">
+      <div className="overflow-x-auto pb-2 pr-1">
         <div className="flex gap-4 min-w-max">
           {options.map((option, index) => (
             <button

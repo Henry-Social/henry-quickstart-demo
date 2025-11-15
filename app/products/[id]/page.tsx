@@ -14,14 +14,13 @@ import {
   mergeVariantSelections,
 } from "@/lib/variants";
 import {
-  DiscussionsCarousel,
+  ImageLightbox,
   MoreOptionsCarousel,
   ProductDetailsPanel,
   ProductMediaSection,
   RelatedSearchesSection,
   ReviewInsightsCard,
   ReviewsModal,
-  VideosCarousel,
 } from "./components";
 import { buildStoreKey, parsePriceValue } from "./utils";
 
@@ -60,6 +59,7 @@ function ProductPageContent() {
   const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState(1);
   const [showReviewsModal, setShowReviewsModal] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const detailsRequestIdRef = useRef(0);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const addedToCartTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -135,6 +135,22 @@ function ProductPageContent() {
 
   const decrementQuantity = useCallback(() => {
     setQuantity((previous) => Math.max(1, previous - 1));
+  }, []);
+
+  const handleRelatedSearchSelect = useCallback(
+    (query: string) => {
+      setSearchQuery(query);
+      router.push(`/?q=${encodeURIComponent(query)}`);
+    },
+    [router],
+  );
+
+  const handleImageOpen = useCallback((src: string) => {
+    setLightboxImage(src);
+  }, []);
+
+  const handleLightboxClose = useCallback(() => {
+    setLightboxImage(null);
   }, []);
 
   useEffect(() => {
@@ -442,10 +458,10 @@ function ProductPageContent() {
       inputRef={searchInputRef}
       cartCount={cartCount}
     >
-      <div className="overflow-x-hidden">
-        <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 overflow-x-hidden">
-          <div className="grid md:grid-cols-2 gap-8">
-            <div className="space-y-4 max-w-full overflow-hidden">
+      <div className="overflow-visible">
+        <div className="bg-white rounded-3xl p-4 sm:p-6">
+          <div className="grid gap-8 md:grid-cols-[minmax(0,60%)_minmax(40%,1fr)]">
+            <div className="space-y-4 max-w-full overflow-visible min-w-0">
               <ProductMediaSection
                 productDetails={productDetails}
                 productName={productName}
@@ -453,41 +469,48 @@ function ProductPageContent() {
                 selectedThumbnailIndex={selectedThumbnailIndex}
                 onThumbnailSelect={setSelectedThumbnailIndex}
                 showSkeleton={showMediaSkeleton}
+                onImageClick={handleImageOpen}
               />
-              <ReviewInsightsCard
-                productDetails={productDetails}
-                ratingDistribution={ratingDistribution}
-                totalRatingsCount={totalRatingsCount}
-                highlightedUserReviews={highlightedUserReviews}
-                reviewImages={reviewImages}
-                allUserReviews={allUserReviews}
-                onOpenReviews={() => setShowReviewsModal(true)}
-              />
+              <div className="hidden md:block">
+                <ReviewInsightsCard
+                  productDetails={productDetails}
+                  ratingDistribution={ratingDistribution}
+                  totalRatingsCount={totalRatingsCount}
+                  highlightedUserReviews={highlightedUserReviews}
+                  reviewImages={reviewImages}
+                  allUserReviews={allUserReviews}
+                  onOpenReviews={() => setShowReviewsModal(true)}
+                  onImageClick={handleImageOpen}
+                />
+              </div>
             </div>
 
             {/* Product Info */}
-            <ProductDetailsPanel
-              productDetails={productDetails}
-              productName={productName}
-              productPrice={productPrice}
-              selectedStore={selectedStore}
-              selectedStoreKey={selectedStoreKey}
-              onStoreChange={setSelectedStoreKey}
-              sortedVariants={sortedVariants}
-              selectedVariants={selectedVariants}
-              onVariantSelect={handleVariantSelection}
-              quantity={quantity}
-              onIncrementQuantity={incrementQuantity}
-              onDecrementQuantity={decrementQuantity}
-              onAddToCart={handleAddToCart}
-              onBuyNow={buyNow}
-              addingToCart={addingToCart}
-              addedToCartSuccess={addedToCartSuccess}
-              loadingCheckout={loadingCheckout}
-              loadingMessage={loadingMessage}
-              errorMessage={errorMessage}
-              productId={activeProductId}
-            />
+            <div className="min-w-0">
+              <ProductDetailsPanel
+                productDetails={productDetails}
+                productName={productName}
+                productPrice={productPrice}
+                productLink={productLink}
+                selectedStore={selectedStore}
+                selectedStoreKey={selectedStoreKey}
+                onStoreChange={setSelectedStoreKey}
+                sortedVariants={sortedVariants}
+                selectedVariants={selectedVariants}
+                onVariantSelect={handleVariantSelection}
+                quantity={quantity}
+                onIncrementQuantity={incrementQuantity}
+                onDecrementQuantity={decrementQuantity}
+                onAddToCart={handleAddToCart}
+                onBuyNow={buyNow}
+                addingToCart={addingToCart}
+                addedToCartSuccess={addedToCartSuccess}
+                loadingCheckout={loadingCheckout}
+                loadingMessage={loadingMessage}
+                errorMessage={errorMessage}
+                productId={activeProductId}
+              />
+            </div>
           </div>
 
           {!productDetails && !loading && (
@@ -495,29 +518,47 @@ function ProductPageContent() {
           )}
         </div>
 
+        <div className="mt-6 md:hidden">
+          <ReviewInsightsCard
+            productDetails={productDetails}
+            ratingDistribution={ratingDistribution}
+            totalRatingsCount={totalRatingsCount}
+            highlightedUserReviews={highlightedUserReviews}
+            reviewImages={reviewImages}
+            allUserReviews={allUserReviews}
+            onOpenReviews={() => setShowReviewsModal(true)}
+            onImageClick={handleImageOpen}
+          />
+        </div>
+
         {moreOptions.length > 0 && (
           <MoreOptionsCarousel options={moreOptions} onSelect={handleMoreOptionSelect} />
         )}
 
-        {videos.length > 0 && <VideosCarousel videos={videos} />}
-
-        {discussions.length > 0 && <DiscussionsCarousel discussions={discussions} />}
-
-        {relatedSearches.length > 0 && <RelatedSearchesSection relatedSearches={relatedSearches} />}
+        {relatedSearches.length > 0 && (
+          <RelatedSearchesSection
+            relatedSearches={relatedSearches}
+            onSelect={handleRelatedSearchSelect}
+          />
+        )}
       </div>
 
       <ReviewsModal
         open={showReviewsModal}
         reviews={allUserReviews}
+        videos={videos}
+        discussions={discussions}
         onClose={() => setShowReviewsModal(false)}
+        onImageClick={handleImageOpen}
       />
+      <ImageLightbox imageSrc={lightboxImage} onClose={handleLightboxClose} />
     </SearchPageShell>
   );
 }
 
 export default function ProductPage() {
   return (
-    <Suspense fallback={<main className="min-h-screen bg-gray-50" />}>
+    <Suspense fallback={<main className="min-h-screen bg-white" />}>
       <ProductPageContent />
     </Suspense>
   );

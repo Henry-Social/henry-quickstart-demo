@@ -46,7 +46,16 @@ export interface ProductDetails {
       displayedLink?: string;
       icon?: string;
       description?: string;
-      features?: string[];
+      features?: Array<
+        | string
+        | {
+            title?: string;
+            label?: string;
+            name?: string;
+            value?: string;
+            description?: string;
+          }
+      >;
       logo?: string;
     };
     ratings?: Array<{

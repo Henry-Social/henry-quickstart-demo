@@ -14,6 +14,7 @@ interface ReviewInsightsCardProps {
   reviewImages: string[];
   allUserReviews: UserReviews;
   onOpenReviews: () => void;
+  onImageClick?: (src: string) => void;
 }
 
 export function ReviewInsightsCard({
@@ -24,6 +25,7 @@ export function ReviewInsightsCard({
   reviewImages,
   allUserReviews,
   onOpenReviews,
+  onImageClick,
 }: ReviewInsightsCardProps) {
   if (!productDetails) {
     return null;
@@ -38,6 +40,29 @@ export function ReviewInsightsCard({
 
   const roundedAverage = productDetails.productResults.rating.toFixed(1);
   const totalReviewCount = totalRatingsCount || productDetails.productResults.reviews || 0;
+  const renderHighlightedReview = (review: UserReviews[number]) => (
+    <>
+      {typeof review.rating === "number" && (
+        <div className="flex items-center gap-1 text-yellow-500 text-lg">
+          {Array.from({ length: 5 }).map((_, starIndex) => (
+            <span
+              key={`${review.title || "highlighted"}-${starIndex}`}
+              className={starIndex < Math.round(review.rating || 0) ? "" : "text-gray-300"}
+            >
+              ★
+            </span>
+          ))}
+        </div>
+      )}
+      <div className="mt-2">
+        <p className="text-sm font-semibold text-gray-900">{review.userName || "Verified buyer"}</p>
+        <p className="text-xs text-gray-500">
+          {[review.date, review.source].filter(Boolean).join(" · ")}
+        </p>
+      </div>
+      {review.text && <p className="text-sm text-gray-700 mt-2 line-clamp-4">{review.text}</p>}
+    </>
+  );
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-4 space-y-4">
@@ -84,49 +109,45 @@ export function ReviewInsightsCard({
       {reviewImages.length > 0 && (
         <div className="flex gap-2 overflow-x-auto pb-1">
           {reviewImages.map((src, index) => (
-            <div
+            <button
+              type="button"
               key={src || `review-image-${index}`}
-              className="relative w-20 h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0"
+              onClick={() => {
+                if (src) {
+                  onImageClick?.(src);
+                }
+              }}
+              className="relative w-20 h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#44c57e]/40"
             >
               <Image src={src} alt="Customer photo" fill className="object-cover" unoptimized />
-            </div>
+            </button>
           ))}
         </div>
       )}
 
       {highlightedUserReviews.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {highlightedUserReviews.map((review, index) => (
-            <div
-              key={`${review.userName || review.title || "highlighted"}-${index}`}
-              className="border border-gray-100 rounded-2xl p-4 bg-gray-50"
-            >
-              {typeof review.rating === "number" && (
-                <div className="flex items-center gap-1 text-yellow-500 text-lg">
-                  {Array.from({ length: 5 }).map((_, starIndex) => (
-                    <span
-                      key={`${review.title || "highlighted"}-${starIndex}`}
-                      className={starIndex < Math.round(review.rating || 0) ? "" : "text-gray-300"}
-                    >
-                      ★
-                    </span>
-                  ))}
-                </div>
-              )}
-              <div className="mt-2">
-                <p className="text-sm font-semibold text-gray-900">
-                  {review.userName || "Verified buyer"}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {[review.date, review.source].filter(Boolean).join(" · ")}
-                </p>
+        <>
+          <div className="flex gap-4 overflow-x-auto sm:hidden pb-2 -mx-1 px-1">
+            {highlightedUserReviews.map((review, index) => (
+              <div
+                key={`${review.userName || review.title || "highlighted"}-mobile-${index}`}
+                className="min-w-[70%] flex-1 border border-gray-100 rounded-2xl p-4 bg-gray-50 flex-shrink-0"
+              >
+                {renderHighlightedReview(review)}
               </div>
-              {review.text && (
-                <p className="text-sm text-gray-700 mt-2 line-clamp-4">{review.text}</p>
-              )}
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+          <div className="hidden sm:grid sm:grid-cols-2 gap-4">
+            {highlightedUserReviews.map((review, index) => (
+              <div
+                key={`${review.userName || review.title || "highlighted"}-${index}`}
+                className="border border-gray-100 rounded-2xl p-4 bg-gray-50"
+              >
+                {renderHighlightedReview(review)}
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       {allUserReviews.length > 0 && (

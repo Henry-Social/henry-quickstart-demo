@@ -110,7 +110,7 @@ function HomeContent() {
 
   if (heroView) {
     return (
-      <main className="min-h-screen bg-gray-50">
+      <main className="min-h-screen bg-white">
         <div className="min-h-screen flex flex-col">
           <Header cartCount={cartCount} showLogo={false} />
           <div className="flex-1 flex flex-col items-center justify-center px-4 -mt-32">
@@ -146,7 +146,7 @@ function HomeContent() {
 
 export default function Home() {
   return (
-    <Suspense fallback={<main className="min-h-screen bg-gray-50" />}>
+    <Suspense fallback={<main className="min-h-screen bg-white" />}>
       <HomeContent />
     </Suspense>
   );

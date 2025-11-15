@@ -16,6 +16,7 @@ interface ProductDetailsPanelProps {
   productDetails: ProductDetails | null;
   productName: string;
   productPrice: number;
+  productLink: string;
   selectedStore: ProductStore | null;
   selectedStoreKey: string | null;
   onStoreChange: (storeKey: string) => void;
@@ -39,6 +40,7 @@ export function ProductDetailsPanel({
   productDetails,
   productName,
   productPrice,
+  productLink,
   selectedStore,
   selectedStoreKey,
   onStoreChange,
@@ -121,7 +123,12 @@ export function ProductDetailsPanel({
       />
 
       {aboutInfo && (
-        <ProductDescriptionCard key={`description-${productId}`} aboutInfo={aboutInfo} />
+        <ProductDescriptionCard
+          key={`description-${productId}`}
+          aboutInfo={aboutInfo}
+          merchantName={selectedStore?.name}
+          merchantLink={selectedStore?.link || productLink}
+        />
       )}
     </div>
   );
@@ -146,10 +153,10 @@ function MerchantHeader({
   if (stores.length > 1 && selectedStore) {
     return (
       <div className="mb-3">
-        <div className="relative inline-flex w-full max-w-sm items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+        <label className="relative inline-flex w-full max-w-sm items-center justify-between gap-4 rounded-full px-3 py-2 cursor-pointer transition-colors hover:bg-gray-50">
+          <div className="flex items-center gap-3 pointer-events-none">
             {selectedStore.logo || aboutInfo?.icon ? (
-              <span className="w-10 h-10 rounded-full border-[3px] border-[#44c57e] overflow-hidden flex items-center justify-center bg-white">
+              <span className="w-10 h-10 rounded-full border border-gray-300 overflow-hidden flex items-center justify-center bg-white">
                 <Image
                   src={selectedStore.logo || aboutInfo?.icon || ""}
                   alt={selectedStore.name || "Merchant logo"}
@@ -169,7 +176,7 @@ function MerchantHeader({
               <span className="text-lg font-semibold text-gray-900">{selectedStore.name}</span>
             </div>
           </div>
-          <div className="flex items-center gap-1 text-gray-700">
+          <div className="flex items-center gap-1 text-gray-700 pointer-events-none">
             <svg
               className="w-5 h-5"
               viewBox="0 0 24 24"
@@ -183,7 +190,7 @@ function MerchantHeader({
           </div>
           <select
             aria-label="Select merchant"
-            className="absolute right-0 top-0 h-full w-12 opacity-0 cursor-pointer"
+            className="absolute inset-0 h-full w-full opacity-0 cursor-pointer"
             value={selectedStoreKey ?? buildStoreKey(selectedStore)}
             onChange={(event) => onStoreChange(event.target.value)}
           >
@@ -196,7 +203,7 @@ function MerchantHeader({
               );
             })}
           </select>
-        </div>
+        </label>
       </div>
     );
   }
@@ -211,7 +218,7 @@ function MerchantHeader({
             alt={store.name || "Merchant"}
             width={40}
             height={40}
-            className="rounded-full object-cover border-[3px] border-[#44c57e] p-0.5"
+            className="rounded-full object-cover border border-gray-300 p-0.5 bg-white"
             unoptimized
           />
         ) : (
@@ -304,6 +311,7 @@ function VariantSelectorList({
   selectedVariants,
   onVariantSelect,
 }: VariantSelectorListProps) {
+  const MAX_VISIBLE_ROWS = 3;
   const [expandedVariants, setExpandedVariants] = useState<Record<string, boolean>>({});
   const [variantLayout, setVariantLayout] = useState<
     Record<string, { hiddenCount: number; collapseHeight: number }>
@@ -347,12 +355,13 @@ function VariantSelectorList({
           rowTops.push(top);
         }
         rowBottoms[rowIndex] = Math.max(rowBottoms[rowIndex] ?? 0, top + height);
-        if (rowIndex >= 2) {
+        if (rowIndex >= MAX_VISIBLE_ROWS) {
           hiddenCount += 1;
         }
       });
 
-      const baseHeight = rowBottoms[1] ?? rowBottoms[0] ?? 0;
+      const visibleRowIndex = Math.min(MAX_VISIBLE_ROWS - 1, rowBottoms.length - 1);
+      const baseHeight = visibleRowIndex >= 0 ? rowBottoms[visibleRowIndex] : 0;
       const collapseHeight = baseHeight > 0 ? baseHeight + 8 : 0;
 
       nextLayout[variant.title] = { hiddenCount, collapseHeight };
@@ -580,13 +589,44 @@ function ActionButtons({
 
 interface ProductDescriptionCardProps {
   aboutInfo: NonNullable<ProductDetails["productResults"]["aboutTheProduct"]>;
+  merchantName?: string | null;
+  merchantLink?: string | null;
 }
 
-function ProductDescriptionCard({ aboutInfo }: ProductDescriptionCardProps) {
+function ProductDescriptionCard({
+  aboutInfo,
+  merchantLink,
+  merchantName,
+}: ProductDescriptionCardProps) {
   const [showFullDescription, setShowFullDescription] = useState(false);
 
+  const extractFeatureParts = useCallback((value: unknown): string[] => {
+    if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+      const text = String(value).trim();
+      return text.length ? [text] : [];
+    }
+    if (Array.isArray(value)) {
+      return value.flatMap(extractFeatureParts);
+    }
+    if (value && typeof value === "object") {
+      return Object.values(value).flatMap(extractFeatureParts);
+    }
+    return [];
+  }, []);
+
   const descriptionText = aboutInfo.description?.trim();
-  const aboutFeatures = aboutInfo.features ?? [];
+  const aboutFeatures = Array.isArray(aboutInfo.features)
+    ? aboutInfo.features
+        .map((feature) => {
+          const parts = extractFeatureParts(feature);
+          if (!parts.length) {
+            return null;
+          }
+          const [first, ...rest] = parts;
+          return rest.length ? `${first}: ${rest.join(" ")}` : first;
+        })
+        .filter((feature): feature is string => Boolean(feature))
+    : [];
   const hasContent = Boolean(descriptionText || aboutFeatures.length);
   if (!hasContent) {
     return null;
@@ -623,6 +663,17 @@ function ProductDescriptionCard({ aboutInfo }: ProductDescriptionCardProps) {
         >
           {showFullDescription ? "View less" : "View more"}
         </button>
+      )}
+      {merchantLink && (
+        <a
+          href={merchantLink}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-4 flex items-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-semibold text-gray-900 shadow-sm transition-colors hover:bg-gray-50"
+        >
+          <span aria-hidden="true">🔗</span>
+          <span>More details at {merchantName || "this merchant"}</span>
+        </a>
       )}
     </div>
   );

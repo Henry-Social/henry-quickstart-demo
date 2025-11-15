@@ -269,7 +269,7 @@ function CartPageContent() {
 
 export default function CartPage() {
   return (
-    <Suspense fallback={<main className="min-h-screen bg-gray-50" />}>
+    <Suspense fallback={<main className="min-h-screen bg-white" />}>
       <CartPageContent />
     </Suspense>
   );

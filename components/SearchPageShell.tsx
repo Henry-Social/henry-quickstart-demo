@@ -26,7 +26,7 @@ export default function SearchPageShell({
   cartCount = 0,
 }: Props) {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <header className="bg-white sticky top-0 z-40 border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col gap-4 md:grid md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-center">
@@ -53,7 +53,7 @@ export default function SearchPageShell({
           </div>
         </div>
       </header>
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">{children}</main>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-white">{children}</main>
     </div>
   );
 }

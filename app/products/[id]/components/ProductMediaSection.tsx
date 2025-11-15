@@ -11,6 +11,7 @@ interface ProductMediaSectionProps {
   selectedThumbnailIndex: number;
   onThumbnailSelect: (index: number) => void;
   showSkeleton: boolean;
+  onImageClick?: (src: string) => void;
 }
 
 export function ProductMediaSection({
@@ -20,6 +21,7 @@ export function ProductMediaSection({
   selectedThumbnailIndex,
   onThumbnailSelect,
   showSkeleton,
+  onImageClick,
 }: ProductMediaSectionProps) {
   if (!productDetails || showSkeleton) {
     return <ProductMediaSkeleton className="max-w-full" />;
@@ -31,7 +33,16 @@ export function ProductMediaSection({
 
   return (
     <>
-      <div className="relative h-80 rounded-lg overflow-hidden bg-white shadow-inner">
+      <button
+        type="button"
+        onClick={() => {
+          if (activeImage) {
+            onImageClick?.(activeImage);
+          }
+        }}
+        className="relative h-80 w-full rounded-lg overflow-hidden bg-white shadow-inner focus:outline-none focus-visible:ring-2 focus-visible:ring-[#44c57e]/40"
+        aria-label="Expand product image"
+      >
         {activeImage ? (
           <>
             <div className="absolute inset-0 image-gradient-overlay z-10 pointer-events-none" />
@@ -61,7 +72,7 @@ export function ProductMediaSection({
             </svg>
           </div>
         )}
-      </div>
+      </button>
 
       {thumbnails.length > 1 && (
         <div className="overflow-x-auto pb-2 max-w-full [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-gray-100">
@@ -70,7 +81,9 @@ export function ProductMediaSection({
               <button
                 key={thumbnail || `thumbnail-${index}`}
                 type="button"
-                onClick={() => onThumbnailSelect(index)}
+                onClick={() => {
+                  onThumbnailSelect(index);
+                }}
                 className={`relative flex-shrink-0 w-16 h-16 rounded-md border-2 transition-all bg-white ${
                   selectedThumbnailIndex === index
                     ? "border-[#44c57e] opacity-100 shadow-md"
