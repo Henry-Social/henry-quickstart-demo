@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: "Henry Quickstart Demo",
   description: "Complete buy-now flow with Henry API",
   manifest: "/manifest.webmanifest",
-  themeColor: "#44c57e",
+  themeColor: "#ffffff",
   icons: {
     icon: "/icon.png",
     apple: "/apple-touch-icon.png",

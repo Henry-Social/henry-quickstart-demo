@@ -69,7 +69,7 @@ export function ReviewsModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
+      className="fixed inset-0 z-50 flex items-stretch md:items-center justify-center bg-black/60 px-0 md:px-4"
       role="dialog"
       aria-modal="true"
       tabIndex={-1}
@@ -84,41 +84,43 @@ export function ReviewsModal({
         }
       }}
     >
-      <div className="bg-white rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden">
-        <div className="flex items-center justify-between p-4 border-b border-gray-100">
-          <div>
-            <h3 className="text-xl font-semibold text-gray-900">All Reviews</h3>
-            <p className="text-sm text-gray-500">
-              {reviews.length} site review{reviews.length === 1 ? "" : "s"}
-            </p>
+      <div className="bg-white rounded-none md:rounded-3xl w-full h-full md:h-auto md:max-h-[90vh] max-w-4xl shadow-2xl overflow-hidden flex flex-col md:my-8">
+        <div className="sticky top-0 z-10 bg-white border-b border-gray-100">
+          <div className="flex items-center justify-between p-4">
+            <div>
+              <h3 className="text-xl font-semibold text-gray-900">All Reviews</h3>
+              <p className="text-sm text-gray-500">
+                {reviews.length} site review{reviews.length === 1 ? "" : "s"}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200"
+            >
+              ✕
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200"
-          >
-            ✕
-          </button>
-        </div>
-        <div className="px-4 pt-4">
-          <div className="inline-flex rounded-full border border-gray-200 bg-gray-50 p-1 text-sm font-semibold text-gray-600">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-1.5 rounded-full transition-colors ${
-                  activeTab === tab.id
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-500 hover:text-gray-900"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+          <div className="px-4 pb-4">
+            <div className="inline-flex rounded-full border border-gray-200 bg-gray-50 p-1 text-sm font-semibold text-gray-600">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-4 py-1.5 rounded-full transition-colors ${
+                    activeTab === tab.id
+                      ? "bg-white text-gray-900 shadow-sm"
+                      : "text-gray-500 hover:text-gray-900"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-        <div className="max-h-[80vh] overflow-y-auto divide-y divide-gray-100">
+        <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
           {(activeTab === "all" || activeTab === "sites") && (
             <SitesSection reviews={reviews} onImageClick={onImageClick} />
           )}
