@@ -6,10 +6,10 @@ A minimal Next.js app demonstrating the complete Henry API quickstart flow.
 
 This demo showcases:
 
-- 🔍 **Product Search** - Search for products from supported merchants
-- 📋 **Product Details** - Get detailed information including variants and pricing
-- 🛒 **Add to Cart** - Add products with selected variants to cart
-- 💳 **Checkout** - Create checkout session and redirect to Henry's hosted checkout
+- Product Search – Search for products from supported merchants
+- Product Details – Get detailed information including variants and pricing
+- Add to Cart – Add products with selected variants to cart
+- Checkout – Create checkout session and redirect to Henry's hosted checkout
 
 ## Setup
 
@@ -81,4 +81,3 @@ The app generates a random user ID for each session to simulate user authenticat
 2. Click on any product to see details
 3. Click "Buy Now with Henry" to complete the flow
 4. You'll be redirected to Henry's checkout page in a new tab
-

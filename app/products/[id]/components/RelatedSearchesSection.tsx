@@ -16,7 +16,7 @@ export function RelatedSearchesSection({ relatedSearches, onSelect }: RelatedSea
   }
 
   return (
-    <div className="mt-6 bg-white rounded-lg shadow-sm p-4 sm:p-6">
+    <div className="mt-6 bg-white rounded-lg p-4 sm:p-6">
       <div className="mb-4">
         <h2 className="text-2xl font-semibold">Related Searches</h2>
         <p className="text-sm text-gray-600">Explore similar styles</p>

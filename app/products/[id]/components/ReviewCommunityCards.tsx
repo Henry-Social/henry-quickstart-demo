@@ -84,7 +84,21 @@ export function DiscussionCardContent({ discussion }: { discussion: DiscussionIt
           />
         ) : (
           <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm text-gray-500">
-            💬
+            <svg
+              className="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.5}
+            >
+              <title>Discussion icon</title>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4 5h16a2 2 0 012 2v7a2 2 0 01-2 2h-5l-4 4v-4H4a2 2 0 01-2-2V7a2 2 0 012-2z"
+              />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h8M8 14h5" />
+            </svg>
           </div>
         )}
         <div className="flex flex-col">

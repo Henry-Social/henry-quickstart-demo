@@ -29,7 +29,7 @@ export default function CartButton({ count = 0, className = "" }: Props) {
       </svg>
       <span>Cart</span>
       {count > 0 && (
-        <span className="absolute -top-1 -right-1 translate-x-1/2 -translate-y-1/2 inline-flex items-center justify-center rounded-full bg-[#44c57e] text-white text-xs font-semibold h-5 min-w-[1.5rem] px-1.5 border-2 border-white shadow-sm">
+        <span className="absolute -top-1 -right-1 translate-x-1/2 -translate-y-1/2 inline-flex items-center justify-center rounded-full bg-[#44c57e] text-white text-xs font-semibold h-5 min-w-[1.5rem] px-1.5 border-2 border-white">
           {count > 99 ? "99+" : count}
         </span>
       )}

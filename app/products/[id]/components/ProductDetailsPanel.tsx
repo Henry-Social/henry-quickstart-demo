@@ -1,14 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import {
-  type CSSProperties,
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { ProductDetails } from "@/lib/types";
 import { buildStoreKey, type ProductStore } from "../utils";
 
@@ -93,6 +86,8 @@ export function ProductDetailsPanel({
             selectedStore?.price ||
             (productPrice ? `$${productPrice.toFixed(2)}` : "Price unavailable")
           }
+          originalPrice={selectedStore?.originalPrice}
+          discount={selectedStore?.discount}
           priceRange={productDetails.productResults.priceRange}
         />
       ) : (
@@ -272,11 +267,41 @@ function SkeletonHeader() {
   );
 }
 
-function PriceDisplay({ priceLabel, priceRange }: { priceLabel: string; priceRange?: string }) {
+function PriceDisplay({
+  priceLabel,
+  priceRange,
+  originalPrice,
+  discount,
+}: {
+  priceLabel: string;
+  priceRange?: string;
+  originalPrice?: string | null;
+  discount?: string | null;
+}) {
+  const formattedTypicalPrice = (() => {
+    if (!priceRange) return null;
+    const normalized = priceRange.trim();
+    const [low, high] = normalized.split("-").map((value) => value.trim());
+    if (low && high && low.replace(/\s+/g, "") === high.replace(/\s+/g, "")) {
+      return `~${low}`;
+    }
+    return normalized;
+  })();
+
   return (
-    <div className="space-y-2">
-      <div className="text-4xl font-bold text-[#44c57e]">{priceLabel}</div>
-      {priceRange && (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-baseline gap-3">
+        <span className="text-4xl font-bold text-[#44c57e]">{priceLabel}</span>
+        {originalPrice && originalPrice !== priceLabel && (
+          <span className="text-xl font-semibold text-gray-400 line-through">{originalPrice}</span>
+        )}
+        {discount && (
+          <span className="inline-flex items-center rounded-full bg-[#ebf8f1] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[#1b8451]">
+            {discount}
+          </span>
+        )}
+      </div>
+      {formattedTypicalPrice && (
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#ebf8f1] text-[#1b8451]">
             <svg
@@ -292,7 +317,8 @@ function PriceDisplay({ priceLabel, priceRange }: { priceLabel: string; priceRan
             </svg>
           </span>
           <span>
-            <span className="font-semibold text-gray-900">Typical Price:</span> {priceRange}
+            <span className="font-semibold text-gray-900">Typical Price:</span>{" "}
+            {formattedTypicalPrice}
           </span>
         </div>
       )}
@@ -311,81 +337,8 @@ function VariantSelectorList({
   selectedVariants,
   onVariantSelect,
 }: VariantSelectorListProps) {
-  const MAX_VISIBLE_ROWS = 3;
+  const MAX_VISIBLE_OPTIONS = 12;
   const [expandedVariants, setExpandedVariants] = useState<Record<string, boolean>>({});
-  const [variantLayout, setVariantLayout] = useState<
-    Record<string, { hiddenCount: number; collapseHeight: number }>
-  >({});
-  const variantOptionRefs = useRef<Record<string, Record<string, HTMLButtonElement | null>>>({});
-
-  const recalcVariantLayout = useCallback(() => {
-    if (!variants.length) {
-      setVariantLayout({});
-      return;
-    }
-
-    const nextLayout: Record<string, { hiddenCount: number; collapseHeight: number }> = {};
-
-    variants.forEach((variant) => {
-      const optionRefs = variantOptionRefs.current[variant.title];
-      if (!optionRefs) {
-        nextLayout[variant.title] = { hiddenCount: 0, collapseHeight: 0 };
-        return;
-      }
-
-      const buttons = Object.values(optionRefs).filter((button): button is HTMLButtonElement =>
-        Boolean(button),
-      );
-
-      if (!buttons.length) {
-        nextLayout[variant.title] = { hiddenCount: 0, collapseHeight: 0 };
-        return;
-      }
-
-      const rowTops: number[] = [];
-      const rowBottoms: number[] = [];
-      let hiddenCount = 0;
-
-      buttons.forEach((button) => {
-        const top = button.offsetTop;
-        const height = button.offsetHeight;
-        let rowIndex = rowTops.findIndex((value) => Math.abs(value - top) < 4);
-        if (rowIndex === -1) {
-          rowIndex = rowTops.length;
-          rowTops.push(top);
-        }
-        rowBottoms[rowIndex] = Math.max(rowBottoms[rowIndex] ?? 0, top + height);
-        if (rowIndex >= MAX_VISIBLE_ROWS) {
-          hiddenCount += 1;
-        }
-      });
-
-      const visibleRowIndex = Math.min(MAX_VISIBLE_ROWS - 1, rowBottoms.length - 1);
-      const baseHeight = visibleRowIndex >= 0 ? rowBottoms[visibleRowIndex] : 0;
-      const collapseHeight = baseHeight > 0 ? baseHeight + 8 : 0;
-
-      nextLayout[variant.title] = { hiddenCount, collapseHeight };
-    });
-
-    setVariantLayout(nextLayout);
-  }, [variants]);
-
-  useLayoutEffect(() => {
-    recalcVariantLayout();
-  }, [recalcVariantLayout]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-    const handleResize = () => {
-      recalcVariantLayout();
-    };
-    window.addEventListener("resize", handleResize);
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, [recalcVariantLayout]);
 
   useEffect(() => {
     setExpandedVariants((previous) => {
@@ -407,21 +360,30 @@ function VariantSelectorList({
   return (
     <>
       {variants.map((variant) => {
-        const layoutInfo = variantLayout[variant.title];
-        const isCollapsed = !expandedVariants[variant.title] && (layoutInfo?.hiddenCount ?? 0) > 0;
-        const collapseStyles: CSSProperties | undefined =
-          isCollapsed && layoutInfo?.collapseHeight
-            ? {
-                maxHeight: `${layoutInfo.collapseHeight}px`,
-                overflow: "hidden",
-              }
-            : undefined;
+        const selectedOption = selectedVariants[variant.title];
+        const isExpanded = Boolean(expandedVariants[variant.title]);
+        const baseVisibleItems = variant.items.slice(0, MAX_VISIBLE_OPTIONS);
+        let hiddenCount = Math.max(0, variant.items.length - baseVisibleItems.length);
+
+        if (!isExpanded && hiddenCount > 0 && selectedOption) {
+          const selectedItem = variant.items.find((item) => item.name === selectedOption);
+          if (
+            selectedItem &&
+            !baseVisibleItems.some((item) => item.name === selectedOption)
+          ) {
+            baseVisibleItems.push(selectedItem);
+            hiddenCount = Math.max(0, hiddenCount - 1);
+          }
+        }
+
+        const isCollapsed = !isExpanded && hiddenCount > 0;
+        const visibleItems = isCollapsed ? baseVisibleItems : variant.items;
 
         return (
           <div key={variant.title}>
             <h4 className="font-medium mb-3 text-lg">{variant.title}:</h4>
-            <div className="flex flex-wrap gap-2" style={collapseStyles}>
-              {variant.items.map((item) => {
+            <div className="flex flex-wrap gap-2">
+              {visibleItems.map((item) => {
                 const isAvailable = item.available !== false;
                 const isSelected = selectedVariants[variant.title] === item.name;
                 const optionLabel = item.name?.trim() ?? "";
@@ -438,16 +400,6 @@ function VariantSelectorList({
                 return (
                   <button
                     key={item.name}
-                    ref={(element) => {
-                      if (!variantOptionRefs.current[variant.title]) {
-                        variantOptionRefs.current[variant.title] = {};
-                      }
-                      if (element) {
-                        variantOptionRefs.current[variant.title]![item.name] = element;
-                      } else {
-                        delete variantOptionRefs.current[variant.title]![item.name];
-                      }
-                    }}
                     type="button"
                     disabled={!isAvailable}
                     onClick={() => {
@@ -463,7 +415,7 @@ function VariantSelectorList({
                 );
               })}
             </div>
-            {isCollapsed && layoutInfo?.hiddenCount ? (
+            {isCollapsed && hiddenCount > 0 ? (
               <button
                 type="button"
                 onClick={() =>
@@ -474,7 +426,7 @@ function VariantSelectorList({
                 }
                 className="mt-2 inline-flex items-center px-4 py-2 rounded-full border border-dashed border-gray-300 text-sm font-medium text-gray-600 hover:bg-gray-50"
               >
-                +{layoutInfo.hiddenCount} more
+                +{hiddenCount} more
               </button>
             ) : null}
           </div>
@@ -494,7 +446,7 @@ function QuantitySelector({ quantity, onDecrement, onIncrement }: QuantitySelect
   return (
     <div>
       <p className="font-medium text-lg mb-2">Quantity</p>
-      <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-full shadow-sm">
+      <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-full">
         <button
           type="button"
           onClick={onDecrement}
@@ -669,9 +621,22 @@ function ProductDescriptionCard({
           href={merchantLink}
           target="_blank"
           rel="noreferrer"
-          className="mt-4 flex items-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-semibold text-gray-900 shadow-sm transition-colors hover:bg-gray-50"
+          className="mt-4 flex items-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-semibold text-gray-900 transition-colors hover:bg-gray-50"
         >
-          <span aria-hidden="true">🔗</span>
+          <svg
+            className="h-4 w-4 text-[#1b8451]"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.6}
+          >
+            <title>Open link</title>
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M10 14l-1.5 1.5a4 4 0 105.657 5.657L15.5 19M14 10l1.5-1.5a4 4 0 10-5.657-5.657L8.5 6M9 15l6-6"
+            />
+          </svg>
           <span>More details at {merchantName || "this merchant"}</span>
         </a>
       )}

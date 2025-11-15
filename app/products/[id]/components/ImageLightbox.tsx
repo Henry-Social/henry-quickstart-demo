@@ -45,7 +45,7 @@ export function ImageLightbox({ imageSrc, onClose }: ImageLightboxProps) {
         }
       }}
     >
-      <div className="relative w-full max-w-3xl aspect-[4/3] bg-white rounded-2xl overflow-hidden shadow-2xl">
+      <div className="relative w-full max-w-3xl aspect-[4/3] bg-white rounded-2xl overflow-hidden">
         <Image
           src={imageSrc}
           alt="Expanded view"

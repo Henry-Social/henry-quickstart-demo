@@ -65,7 +65,7 @@ export function ReviewInsightsCard({
   );
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-4 space-y-4">
+    <div className="bg-white rounded-lg p-4 space-y-4">
       <div className="flex flex-col gap-2">
         <div>
           <p className="text-sm text-gray-500">Ratings &amp; Reviews</p>

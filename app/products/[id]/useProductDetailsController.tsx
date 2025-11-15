@@ -50,6 +50,8 @@ export function useProductDetailsController({
   const [quantity, setQuantity] = useState(1);
   const detailsRequestIdRef = useRef(0);
   const addedToCartTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const urlDefaultsRef = useRef(urlDefaults);
+  const previousProductIdRef = useRef<string | null>(null);
 
   const showMediaSkeleton = !productDetails || detailsRefreshing;
 
@@ -97,6 +99,10 @@ export function useProductDetailsController({
   const relatedSearches = productDetails?.relatedSearches ?? [];
   const allUserReviews = productDetails?.productResults?.userReviews ?? [];
   const highlightedUserReviews = useMemo(() => allUserReviews.slice(0, 2), [allUserReviews]);
+
+  useEffect(() => {
+    urlDefaultsRef.current = urlDefaults;
+  }, [urlDefaults]);
 
   useEffect(() => {
     if (selectedStore?.price) {
@@ -213,15 +219,26 @@ export function useProductDetailsController({
     [fetchProductDetails],
   );
 
-  const hasFetchedInitialDetails = useRef(false);
-
   useEffect(() => {
-    if (hasFetchedInitialDetails.current) {
+    if (previousProductIdRef.current === productId) {
       return;
     }
-    hasFetchedInitialDetails.current = true;
-    fetchProductDetails();
-  }, [fetchProductDetails]);
+    previousProductIdRef.current = productId;
+    const defaults = urlDefaultsRef.current;
+    setProductDetails(null);
+    setActiveProductId(productId);
+    setSelectedVariants({});
+    setSelectedStoreKey(null);
+    setSelectedThumbnailIndex(0);
+    setQuantity(1);
+    setAddedToCartSuccess(false);
+    setErrorMessage(null);
+    setProductPrice(defaults.price);
+    setProductName(defaults.name);
+    setProductImage(defaults.imageUrl);
+    setProductLink(defaults.productLink);
+    void fetchProductDetails();
+  }, [fetchProductDetails, productId]);
 
   useEffect(() => {
     return () => {

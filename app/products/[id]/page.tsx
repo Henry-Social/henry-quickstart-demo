@@ -7,6 +7,7 @@ import { useCartCount } from "@/lib/useCartCount";
 import { usePersistentUserId } from "@/lib/usePersistentUserId";
 import {
   ImageLightbox,
+  MoreOptionsCarousel,
   ProductDetailsPanel,
   ProductMediaSection,
   RelatedSearchesSection,
@@ -81,6 +82,7 @@ function ProductPageContent() {
     loadingCheckout,
     loadingMessage,
     errorMessage,
+    handleMoreOptionSelect,
     relatedData,
   } = controller;
 
@@ -185,6 +187,13 @@ function ProductPageContent() {
             <div className="text-center py-6 text-gray-500">Unable to load product details</div>
           )}
         </div>
+
+        {relatedData.moreOptions.length > 0 && (
+          <MoreOptionsCarousel
+            options={relatedData.moreOptions}
+            onSelect={handleMoreOptionSelect}
+          />
+        )}
 
         <div className="mt-6 md:hidden">
           <ReviewInsightsCard

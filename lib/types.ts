@@ -94,6 +94,7 @@ export interface ProductDetails {
       extractedPrice?: number;
       originalPrice?: string;
       extractedOriginalPrice?: number;
+      discount?: string;
       reviews?: number;
       rating?: number;
       link?: string;

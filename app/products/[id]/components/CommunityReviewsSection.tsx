@@ -23,7 +23,7 @@ export function CommunityReviewsSection({ videos, discussions }: CommunityReview
   }
 
   return (
-    <div className="mt-6 bg-white rounded-lg shadow-sm p-4 sm:p-6 space-y-6">
+    <div className="mt-6 bg-white rounded-lg p-4 sm:p-6 space-y-6">
       <div>
         <h2 className="text-2xl font-semibold">Community Reviews</h2>
         <p className="text-sm text-gray-600">See how creators and shoppers feel about this item</p>

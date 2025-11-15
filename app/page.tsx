@@ -10,6 +10,7 @@ import SearchPageShell from "@/components/SearchPageShell";
 import type { Product } from "@/lib/types";
 import { useCartCount } from "@/lib/useCartCount";
 import { usePersistentUserId } from "@/lib/usePersistentUserId";
+import { useProductSearch } from "@/lib/useProductSearch";
 
 export const dynamic = "force-dynamic";
 
@@ -25,63 +26,42 @@ const placeholders = [
 function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(false);
   const userId = usePersistentUserId();
   const { cartCount } = useCartCount(userId);
-  const [heroView, setHeroView] = useState(true);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const currentQueryParam = searchParams.get("q") ?? "";
-
-  const searchProducts = useCallback(async (query: string) => {
-    const trimmedQuery = query.trim();
-    if (!trimmedQuery) return;
-
-    setHeroView(false);
-    setLoading(true);
-
-    try {
-      const response = await fetch("/api/henry/products/search", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          query: trimmedQuery,
-        }),
-      });
-
-      const result = await response.json();
-      if (result.success && Array.isArray(result.data)) {
-        setProducts(result.data);
-      } else {
-        setProducts([]);
-      }
-    } catch (_error) {
-      setProducts([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const loadSentinelRef = useRef<HTMLDivElement | null>(null);
+  const {
+    searchQuery,
+    setSearchQuery,
+    products,
+    heroView,
+    executedQuery,
+    loading,
+    loadingMore,
+    nextCursor,
+    error,
+    runSearch,
+    loadMore,
+    resetSearch,
+  } = useProductSearch(currentQueryParam);
 
   const handleSearchSubmit = useCallback(() => {
     const trimmed = searchQuery.trim();
 
     if (!trimmed) {
       router.replace("/");
-      setHeroView(true);
-      setProducts([]);
+      resetSearch();
       return;
     }
 
     if (trimmed === currentQueryParam) {
-      searchProducts(trimmed);
+      void runSearch(trimmed);
     } else {
       router.push(`/?q=${encodeURIComponent(trimmed)}`);
     }
-  }, [currentQueryParam, router, searchProducts, searchQuery]);
+  }, [currentQueryParam, resetSearch, router, runSearch, searchQuery]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -91,21 +71,47 @@ function HomeContent() {
   }, []);
 
   useEffect(() => {
-    if (currentQueryParam) {
-      setSearchQuery(currentQueryParam);
-      searchProducts(currentQueryParam);
-    } else if (!currentQueryParam && !heroView) {
-      setHeroView(true);
-      setProducts([]);
+    if (!loadSentinelRef.current) {
+      return undefined;
     }
-  }, [currentQueryParam, heroView, searchProducts]);
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry?.isIntersecting) {
+          loadMore();
+        }
+      },
+      { rootMargin: "200px" },
+    );
+
+    observer.observe(loadSentinelRef.current);
+    return () => {
+      observer.disconnect();
+    };
+  }, [loadMore]);
 
   const handleProductSelect = useCallback(
     (product: Product) => {
       const encodedId = encodeURIComponent(product.id);
-      router.push(`/products/${encodedId}`);
+      const params = new URLSearchParams();
+      if (executedQuery) {
+        params.set("q", executedQuery);
+      }
+      if (product.imageUrl) {
+        params.set("imageUrl", product.imageUrl);
+      }
+      if (product.name) {
+        params.set("name", product.name);
+      }
+      params.set("price", product.price.toString());
+      if (product.productLink) {
+        params.set("productLink", product.productLink);
+      }
+      const query = params.toString();
+      router.push(`/products/${encodedId}${query ? `?${query}` : ""}`);
     },
-    [router],
+    [executedQuery, router],
   );
 
   if (heroView) {
@@ -140,6 +146,23 @@ function HomeContent() {
       cartCount={cartCount}
     >
       <ProductGrid products={products} loading={loading} onSelect={handleProductSelect} />
+      <div ref={loadSentinelRef} className="h-10 w-full" aria-hidden="true" />
+      {error && (
+        <p className="mt-4 text-center text-sm text-red-600" aria-live="polite">
+          {error}
+        </p>
+      )}
+      {loadingMore && (
+        <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+          <span className="inline-flex h-2 w-2 rounded-full bg-gray-300 animate-pulse" />
+          <span className="inline-flex h-2 w-2 rounded-full bg-gray-300 animate-pulse delay-150" />
+          <span className="inline-flex h-2 w-2 rounded-full bg-gray-300 animate-pulse delay-300" />
+          <span>Loading more results...</span>
+        </div>
+      )}
+      {!nextCursor && !loadingMore && products.length > 0 && (
+        <p className="text-center text-xs text-gray-400">No more results to load.</p>
+      )}
     </SearchPageShell>
   );
 }

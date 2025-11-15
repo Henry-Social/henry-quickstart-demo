@@ -16,7 +16,7 @@ export default function ProductGrid({ products, loading, onSelect }: Props) {
     return (
       <div className="product-grid">
         {skeletonItemKeys.map((key) => (
-          <div key={key} className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div key={key} className="bg-white rounded-xl overflow-hidden">
             <div className="skeleton aspect-square" />
             <div className="p-4 space-y-3">
               <div className="skeleton h-3 w-16 rounded" />

@@ -84,7 +84,7 @@ export function ReviewsModal({
         }
       }}
     >
-      <div className="bg-white rounded-none md:rounded-3xl w-full h-full md:h-auto md:max-h-[90vh] max-w-4xl shadow-2xl overflow-hidden flex flex-col md:my-8">
+      <div className="bg-white rounded-none md:rounded-3xl w-full h-full md:h-auto md:max-h-[90vh] max-w-4xl overflow-hidden flex flex-col md:my-8">
         <div className="sticky top-0 z-10 bg-white border-b border-gray-100">
           <div className="flex items-center justify-between p-4">
             <div>

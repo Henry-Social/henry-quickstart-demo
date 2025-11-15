@@ -158,13 +158,16 @@ function CartPageContent() {
       cartCount={cartCount}
     >
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-gray-900">Your Cart</h1>
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm uppercase tracking-wide text-gray-500">Cart</p>
+            <h1 className="text-3xl font-bold text-gray-900">Your Items</h1>
+          </div>
           <button
             type="button"
             onClick={fetchItems}
             disabled={loading}
-            className="text-sm text-[#1b8451] hover:text-[#126539] disabled:opacity-40"
+            className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-sm font-semibold text-[#1b8451] hover:border-[#1b8451] hover:text-[#126539] disabled:opacity-40"
           >
             {loading ? "Refreshing..." : "Refresh"}
           </button>
@@ -177,62 +180,131 @@ function CartPageContent() {
         )}
 
         {items.length === 0 && !loading ? (
-          <div className="rounded-lg border border-dashed border-gray-300 p-10 text-center text-gray-500">
-            <p className="text-lg font-medium">Your cart is empty.</p>
+          <div className="rounded-2xl border border-dashed border-gray-200 p-10 text-center text-gray-500 bg-white">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#ebf8f1] text-[#1b8451]">
+              <svg
+                className="h-8 w-8"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.8}
+              >
+                <title>Cart</title>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3 3h2l.4 2M7 13h10l3-8H6.4M7 13l-1.3 5.3a1 1 0 00.97 1.2H19M7 13l-2-8H3"
+                />
+                <circle cx="9" cy="20" r="1" />
+                <circle cx="17" cy="20" r="1" />
+              </svg>
+            </div>
+            <p className="text-lg font-semibold text-gray-900">Your cart is empty</p>
             <p className="text-sm mt-2">Search for products to start adding items.</p>
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow-sm divide-y">
+          <div className="bg-white rounded-2xl border border-gray-100 divide-y">
             {loading ? (
               <div className="p-6 text-gray-500 text-center">Loading cart items...</div>
             ) : (
               items.map((item) => (
-                <div key={`${item.productId}-${item.name}`} className="p-6 flex gap-4">
-                  <div className="relative w-20 h-20 rounded-lg bg-gray-50 flex-shrink-0 overflow-hidden">
+                <div
+                  key={`${item.productId}-${item.name}`}
+                  className="p-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6"
+                >
+                  <div className="relative w-full sm:w-24 h-40 sm:h-24 rounded-2xl bg-gray-50 flex-shrink-0 overflow-hidden">
                     {item.productImageLink ? (
                       <Image
                         src={getValidImageUrl(item.productImageLink)}
                         alt={item.name}
                         fill
-                        className="object-contain p-2"
+                        className="object-contain p-6"
                         unoptimized
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-300">
-                        <span className="text-xs">No image</span>
+                      <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-gray-400">
+                        <svg
+                          className="w-8 h-8"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                        >
+                          <title>Product placeholder</title>
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d="M3 7h18M3 7l2 12h14l2-12M5 7l1.5-4.5h11L19 7"
+                          />
+                        </svg>
+                        <span className="text-xs font-semibold">No image</span>
                       </div>
                     )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                      <div>
-                        <p className="font-semibold text-gray-900">{item.name}</p>
-                        {item.metadata && Object.keys(item.metadata).length > 0 && (
-                          <p className="text-sm text-gray-500">
-                            {Object.entries(item.metadata)
-                              .map(([key, value]) => `${key}: ${value}`)
-                              .join(" • ")}
-                          </p>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-gray-900">
+                  <div className="flex-1 min-w-0 space-y-3">
+                    <div className="flex flex-col gap-2">
+                      <p className="font-semibold text-gray-900 text-lg">{item.name}</p>
+                      {item.metadata && Object.keys(item.metadata).length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {Object.entries(item.metadata).map(([key, value]) => (
+                            <span
+                              key={`${item.productId}-${key}`}
+                              className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600"
+                            >
+                              <span className="text-gray-400">{key}:</span> {value}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="text-sm text-gray-500">
+                        <span className="font-medium text-gray-900">
                           {normalizePrice(item.price).toLocaleString("en-US", {
                             style: "currency",
                             currency: "USD",
                           })}
-                        </p>
-                        <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
+                        </span>
+                        <span className="mx-2 text-gray-300" aria-hidden="true">
+                          •
+                        </span>
+                        Qty {item.quantity}
+                      </div>
+                      <div className="flex items-center gap-3">
+                        {item.productLink && (
+                          <a
+                            href={item.productLink}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-sm font-semibold text-[#1b8451] hover:underline"
+                          >
+                            View item
+                          </a>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveItem(item.productId)}
+                          disabled={removingId === item.productId}
+                          className="inline-flex items-center gap-1 rounded-full border border-red-100 px-3 py-1.5 text-sm font-semibold text-red-600 hover:border-red-300 disabled:opacity-50"
+                        >
+                          <svg
+                            className="h-4 w-4"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                          >
+                            <title>Remove item</title>
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={1.5}
+                              d="M6 6h12M9 6v12m6-12v12M5 6l1 12a2 2 0 002 2h8a2 2 0 002-2l1-12M9 6V4h6v2"
+                            />
+                          </svg>
+                          {removingId === item.productId ? "Removing..." : "Remove"}
+                        </button>
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveItem(item.productId)}
-                      disabled={removingId === item.productId}
-                      className="mt-3 text-sm text-red-600 hover:text-red-700 disabled:opacity-50"
-                    >
-                      {removingId === item.productId ? "Removing..." : "Remove"}
-                    </button>
                   </div>
                 </div>
               ))
@@ -240,7 +312,7 @@ function CartPageContent() {
           </div>
         )}
 
-        <div className="bg-white rounded-lg shadow-sm p-6 space-y-4">
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
           <div className="flex items-center justify-between text-lg font-semibold text-gray-900">
             <span>Subtotal</span>
             <span>
@@ -250,14 +322,14 @@ function CartPageContent() {
               })}
             </span>
           </div>
-          <p className="text-sm text-gray-500">
-            Taxes and shipping will be calculated during checkout.
+          <p className="text-sm text-gray-500 flex items-center gap-2">
+            Taxes and shipping calculated during checkout.
           </p>
           <button
             type="button"
             onClick={handleCheckout}
             disabled={checkoutLoading || items.length === 0}
-            className="w-full py-3 bg-[#44c57e] text-white rounded-lg font-semibold hover:bg-[#3aaa6a] disabled:opacity-50 transition-colors"
+            className="w-full py-4 bg-[#44c57e] text-white rounded-full text-lg font-semibold hover:bg-[#3aaa6a] disabled:opacity-50 transition-colors"
           >
             {checkoutLoading ? "Preparing checkout..." : "Continue to Checkout"}
           </button>
