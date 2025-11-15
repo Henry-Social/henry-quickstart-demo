@@ -1,9 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import ProductMediaSkeleton from "@/components/ProductMediaSkeleton";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import SearchPageShell from "@/components/SearchPageShell";
 import type { ProductDetails } from "@/lib/types";
 import { useCartCount } from "@/lib/useCartCount";
@@ -15,24 +13,19 @@ import {
   getVariantPriority,
   mergeVariantSelections,
 } from "@/lib/variants";
+import {
+  DiscussionsCarousel,
+  MoreOptionsCarousel,
+  ProductDetailsPanel,
+  ProductMediaSection,
+  RelatedSearchesSection,
+  ReviewInsightsCard,
+  ReviewsModal,
+  VideosCarousel,
+} from "./components";
+import { buildStoreKey, parsePriceValue } from "./utils";
 
 export const dynamic = "force-dynamic";
-
-type ProductStore = ProductDetails["productResults"]["stores"][number];
-
-const buildStoreKey = (store: ProductStore) => {
-  const namePart = store.name || "store";
-  const linkPart = store.link || "";
-  return `${namePart}::${linkPart}`;
-};
-
-const parsePriceValue = (rawPrice?: string) => {
-  if (!rawPrice) {
-    return 0;
-  }
-  const normalized = parseFloat(rawPrice.replace(/[^0-9.]/g, ""));
-  return Number.isFinite(normalized) ? normalized : 0;
-};
 
 function ProductPageContent() {
   const params = useParams();
@@ -66,11 +59,7 @@ function ProductPageContent() {
   const [selectedThumbnailIndex, setSelectedThumbnailIndex] = useState(0);
   const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState(1);
-  const [expandedVariants, setExpandedVariants] = useState<Record<string, boolean>>({});
-  const [variantLayout, setVariantLayout] = useState<
-    Record<string, { hiddenCount: number; collapseHeight: number }>
-  >({});
-  const variantOptionRefs = useRef<Record<string, Record<string, HTMLButtonElement | null>>>({});
+  const [showReviewsModal, setShowReviewsModal] = useState(false);
   const detailsRequestIdRef = useRef(0);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const addedToCartTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -100,88 +89,6 @@ function ProductPageContent() {
     return [...variants].sort((a, b) => getVariantPriority(b.title) - getVariantPriority(a.title));
   }, [productDetails]);
 
-  const recalcVariantLayout = useCallback(() => {
-    if (!sortedVariants.length) {
-      setVariantLayout({});
-      return;
-    }
-
-    const nextLayout: Record<string, { hiddenCount: number; collapseHeight: number }> = {};
-
-    sortedVariants.forEach((variant) => {
-      const optionRefs = variantOptionRefs.current[variant.title];
-      if (!optionRefs) {
-        nextLayout[variant.title] = { hiddenCount: 0, collapseHeight: 0 };
-        return;
-      }
-
-      const buttons = Object.values(optionRefs).filter(
-        (button): button is HTMLButtonElement => Boolean(button),
-      );
-      if (buttons.length === 0) {
-        nextLayout[variant.title] = { hiddenCount: 0, collapseHeight: 0 };
-        return;
-      }
-
-      const rowTops: number[] = [];
-      const rowBottoms: number[] = [];
-      let hiddenCount = 0;
-
-      buttons.forEach((button) => {
-        const top = button.offsetTop;
-        const height = button.offsetHeight;
-        let rowIndex = rowTops.findIndex((value) => Math.abs(value - top) < 4);
-        if (rowIndex === -1) {
-          rowIndex = rowTops.length;
-          rowTops.push(top);
-        }
-        rowBottoms[rowIndex] = Math.max(rowBottoms[rowIndex] ?? 0, top + height);
-        if (rowIndex >= 2) {
-          hiddenCount += 1;
-        }
-      });
-
-      const baseHeight = (rowBottoms[1] ?? rowBottoms[0] ?? 0);
-      const collapseHeight = baseHeight > 0 ? baseHeight + 8 : 0;
-
-      nextLayout[variant.title] = { hiddenCount, collapseHeight };
-    });
-
-    setVariantLayout(nextLayout);
-  }, [sortedVariants]);
-
-  useLayoutEffect(() => {
-    recalcVariantLayout();
-  }, [recalcVariantLayout]);
-
-  useEffect(() => {
-    const handleResize = () => {
-      recalcVariantLayout();
-    };
-
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    window.addEventListener("resize", handleResize);
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, [recalcVariantLayout]);
-
-  useEffect(() => {
-    setExpandedVariants((previous) => {
-      const next = { ...previous };
-      const validTitles = new Set(sortedVariants.map((variant) => variant.title));
-      Object.keys(next).forEach((title) => {
-        if (!validTitles.has(title)) {
-          delete next[title];
-        }
-      });
-      return next;
-    });
-  }, [sortedVariants]);
-
   const primarySelections = useMemo(() => {
     const variants = productDetails?.productResults?.variants ?? [];
     return {
@@ -206,17 +113,22 @@ function ProductPageContent() {
     return stores[0];
   }, [productDetails, selectedStoreKey]);
 
-  const displayedReviews = useMemo(() => {
-    return productDetails?.productResults?.userReviews?.slice(0, 5) ?? [];
-  }, [productDetails]);
+  const allUserReviews = useMemo(
+    () => productDetails?.productResults?.userReviews ?? [],
+    [productDetails],
+  );
+  const highlightedUserReviews = useMemo(() => allUserReviews.slice(0, 2), [allUserReviews]);
 
-  const handleExpandVariant = useCallback((variantTitle: string) => {
-    setExpandedVariants((previous) => ({
-      ...previous,
-      [variantTitle]: true,
-    }));
-  }, []);
-
+  const ratingDistribution = productDetails?.productResults?.ratings ?? [];
+  const totalRatingsCount = ratingDistribution.reduce(
+    (sum, entry) => sum + (entry?.amount ?? 0),
+    0,
+  );
+  const reviewImages = productDetails?.productResults?.reviewsImages ?? [];
+  const moreOptions = productDetails?.productResults?.moreOptions ?? [];
+  const videos = productDetails?.productResults?.videos ?? [];
+  const discussions = productDetails?.productResults?.discussionsAndForums ?? [];
+  const relatedSearches = productDetails?.relatedSearches ?? [];
   const incrementQuantity = useCallback(() => {
     setQuantity((previous) => Math.min(previous + 1, 99));
   }, []);
@@ -234,88 +146,6 @@ function ProductPageContent() {
       setProductLink(selectedStore.link);
     }
   }, [selectedStore]);
-
-  const renderMediaSection = () => {
-    if (!productDetails || showMediaSkeleton) {
-      return <ProductMediaSkeleton className="max-w-full" />;
-    }
-
-    return (
-      <>
-        <div className="relative h-80 rounded-lg overflow-hidden bg-white shadow-inner">
-          {productDetails.productResults.thumbnails &&
-          productDetails.productResults.thumbnails.length > 0 ? (
-            <>
-              <div className="absolute inset-0 image-gradient-overlay z-10 pointer-events-none" />
-              <Image
-                src={productDetails.productResults.thumbnails![selectedThumbnailIndex]}
-                alt={productDetails.productResults.title || productName}
-                fill
-                className="object-contain p-4"
-                unoptimized
-              />
-            </>
-          ) : productDetails.productResults.image || productImage ? (
-            <>
-              <div className="absolute inset-0 image-gradient-overlay z-10 pointer-events-none" />
-              <Image
-                src={productDetails.productResults.image || productImage}
-                alt={productDetails.productResults.title || productName}
-                fill
-                className="object-contain p-4"
-                unoptimized
-              />
-            </>
-          ) : (
-            <div className="flex items-center justify-center h-full bg-gray-50">
-              <svg
-                className="w-24 h-24 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <title>No Image</title>
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1}
-                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
-              </svg>
-            </div>
-          )}
-        </div>
-
-        {productDetails.productResults.thumbnails &&
-          productDetails.productResults.thumbnails.length > 1 && (
-            <div className="overflow-x-auto pb-2 max-w-full [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-gray-100">
-              <div className="flex gap-2 py-1 px-0.5 min-w-min">
-                {productDetails.productResults.thumbnails!.map((thumbnail, index) => (
-                  <button
-                    key={thumbnail || `thumbnail-${index}`}
-                    type="button"
-                    onClick={() => setSelectedThumbnailIndex(index)}
-                    className={`relative flex-shrink-0 w-16 h-16 rounded-md border-2 transition-all bg-white ${
-                      selectedThumbnailIndex === index
-                        ? "border-[#44c57e] opacity-100 shadow-md"
-                        : "border-gray-300 opacity-80 hover:opacity-100 hover:border-gray-400"
-                    }`}
-                  >
-                    <Image
-                      src={thumbnail}
-                      alt={`${productDetails.productResults.title || productName} - View ${index + 1}`}
-                      fill
-                      className="object-contain p-1.5 rounded-sm"
-                      unoptimized
-                    />
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-      </>
-    );
-  };
 
   // Applies API detail data to UI state while preserving any viable variant selections.
   const applyProductDetails = useCallback(
@@ -411,6 +241,16 @@ function ProductPageContent() {
       }
     },
     [applyProductDetails, productId],
+  );
+
+  const handleMoreOptionSelect = useCallback(
+    (optionId?: string) => {
+      if (!optionId) {
+        return;
+      }
+      void fetchProductDetails({ productIdOverride: optionId, preserveSelections: false });
+    },
+    [fetchProductDetails],
   );
 
   const handleVariantSelection = useCallback(
@@ -605,257 +445,49 @@ function ProductPageContent() {
       <div className="overflow-x-hidden">
         <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 overflow-x-hidden">
           <div className="grid md:grid-cols-2 gap-8">
-            <div className="space-y-4 max-w-full overflow-hidden">{renderMediaSection()}</div>
+            <div className="space-y-4 max-w-full overflow-hidden">
+              <ProductMediaSection
+                productDetails={productDetails}
+                productName={productName}
+                fallbackImage={productImage}
+                selectedThumbnailIndex={selectedThumbnailIndex}
+                onThumbnailSelect={setSelectedThumbnailIndex}
+                showSkeleton={showMediaSkeleton}
+              />
+              <ReviewInsightsCard
+                productDetails={productDetails}
+                ratingDistribution={ratingDistribution}
+                totalRatingsCount={totalRatingsCount}
+                highlightedUserReviews={highlightedUserReviews}
+                reviewImages={reviewImages}
+                allUserReviews={allUserReviews}
+                onOpenReviews={() => setShowReviewsModal(true)}
+              />
+            </div>
 
             {/* Product Info */}
-            <div className="space-y-6">
-              <div>
-                {productDetails ? (
-                  <>
-                    <div className="mb-3">
-                      {productDetails.productResults.stores?.length ? (
-                        productDetails.productResults.stores.length > 1 ? (
-                          <div className="inline-block w-full max-w-sm">
-                            <div className="relative">
-                              <select
-                                aria-label="Select merchant"
-                                className="w-full appearance-none border border-gray-200 rounded-full px-4 py-2 pr-12 bg-white text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#44c57e] focus:border-[#44c57e]"
-                                value={
-                                  selectedStoreKey ??
-                                  (selectedStore ? buildStoreKey(selectedStore) : "")
-                                }
-                                onChange={(event) => setSelectedStoreKey(event.target.value)}
-                              >
-                                {productDetails.productResults.stores.map((store) => {
-                                  const optionKey = buildStoreKey(store);
-                                  return (
-                                    <option key={optionKey} value={optionKey}>
-                                      {store.name}
-                                    </option>
-                                  );
-                                })}
-                              </select>
-                              <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-gray-500">
-                                <svg
-                                  className="w-4 h-4"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <title>Toggle merchant select</title>
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                </svg>
-                              </span>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="text-lg font-semibold text-gray-900">
-                            {productDetails.productResults.stores[0]?.name}
-                          </div>
-                        )
-                      ) : productDetails.productResults.brand ? (
-                        <div className="text-lg font-semibold text-gray-900">
-                          {productDetails.productResults.brand}
-                        </div>
-                      ) : null}
-                    </div>
-                    <h1 className="text-3xl font-bold mb-1">
-                      {productDetails.productResults.title || productName}
-                    </h1>
-                    {productDetails.productResults.reviews > 0 ? (
-                      <div className="flex items-center gap-2">
-                        <div className="flex text-lg">
-                          {["one", "two", "three", "four", "five"].map((slot, index) => (
-                            <span
-                              key={slot}
-                              className={
-                                index < Math.floor(productDetails.productResults.rating)
-                                  ? "text-yellow-500"
-                                  : "text-gray-300"
-                              }
-                            >
-                              ★
-                            </span>
-                          ))}
-                        </div>
-                        <span className="text-gray-600 text-sm sm:text-base">
-                          {productDetails.productResults.rating}/5 (
-                          {productDetails.productResults.reviews} reviews)
-                        </span>
-                      </div>
-                    ) : null}
-                  </>
-                ) : (
-                  <>
-                    <div className="h-4 w-32 bg-gray-200 rounded animate-pulse mb-3" />
-                    <div className="h-8 w-72 bg-gray-200 rounded animate-pulse mb-2" />
-                    <div className="h-5 w-40 bg-gray-200 rounded animate-pulse" />
-                  </>
-                )}
-              </div>
-
-              {/* Price */}
-              {productDetails ? (
-                <div className="space-y-2">
-                  <div className="text-4xl font-bold text-[#44c57e]">
-                    {selectedStore?.price ||
-                      (productPrice ? `$${productPrice.toFixed(2)}` : "Price unavailable")}
-                  </div>
-                </div>
-              ) : (
-                <div className="h-10 w-40 bg-gray-200 rounded animate-pulse" />
-              )}
-
-              {sortedVariants.map((variant) => (
-                <div key={variant.title}>
-                  <h4 className="font-medium mb-3 text-lg">{variant.title}:</h4>
-                  {(() => {
-                    const layoutInfo = variantLayout[variant.title];
-                    const isCollapsed =
-                      !expandedVariants[variant.title] && (layoutInfo?.hiddenCount ?? 0) > 0;
-                    const collapseStyles =
-                      isCollapsed && layoutInfo?.collapseHeight
-                        ? {
-                            maxHeight: `${layoutInfo.collapseHeight}px`,
-                            overflow: "hidden",
-                          }
-                        : undefined;
-
-                    return (
-                      <>
-                        <div className="flex flex-wrap gap-2" style={collapseStyles}>
-                          {variant.items.map((item) => {
-                            const isAvailable = item.available !== false;
-                            const isSelected = selectedVariants[variant.title] === item.name;
-                            const optionLabel = item.name?.trim() ?? "";
-                            const isCompactOption = optionLabel.length <= 2;
-                            const shapeClasses = isCompactOption
-                              ? "w-12 h-12 rounded-full"
-                              : "px-5 py-2 rounded-full";
-                            const stateClasses = isSelected
-                              ? "bg-[#44c57e] text-white border-[#44c57e] shadow-sm"
-                              : isAvailable
-                                ? "bg-white hover:bg-gray-50 border-gray-300 text-gray-800"
-                                : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed";
-
-                            return (
-                              <button
-                                key={item.name}
-                                ref={(element) => {
-                                  if (!variantOptionRefs.current[variant.title]) {
-                                    variantOptionRefs.current[variant.title] = {};
-                                  }
-                                  if (element) {
-                                    variantOptionRefs.current[variant.title]![item.name] = element;
-                                  } else {
-                                    delete variantOptionRefs.current[variant.title]![item.name];
-                                  }
-                                }}
-                                type="button"
-                                disabled={!isAvailable}
-                                onClick={() => {
-                                  if (isAvailable) {
-                                    handleVariantSelection(variant.title, item.name);
-                                  }
-                                }}
-                                aria-pressed={isSelected}
-                                className={`flex items-center justify-center border text-sm font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#44c57e]/40 ${shapeClasses} ${stateClasses}`}
-                              >
-                                {item.name}
-                              </button>
-                            );
-                          })}
-                        </div>
-                        {isCollapsed && layoutInfo?.hiddenCount ? (
-                          <button
-                            type="button"
-                            onClick={() => handleExpandVariant(variant.title)}
-                            className="mt-2 inline-flex items-center px-4 py-2 rounded-full border border-dashed border-gray-300 text-sm font-medium text-gray-600 hover:bg-gray-50"
-                          >
-                            +{layoutInfo.hiddenCount} more
-                          </button>
-                        ) : null}
-                      </>
-                    );
-                  })()}
-                </div>
-              ))}
-
-              {/* Quantity */}
-              <div>
-                <p className="font-medium text-lg mb-2">Quantity</p>
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-full shadow-sm">
-                  <button
-                    type="button"
-                    onClick={decrementQuantity}
-                    aria-label="Decrease quantity"
-                    disabled={quantity <= 1}
-                    className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-xl leading-none text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    -
-                  </button>
-                  <span className="text-xl font-semibold tabular-nums min-w-[2ch] text-center text-gray-900">
-                    {quantity}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={incrementQuantity}
-                    aria-label="Increase quantity"
-                    disabled={quantity >= 99}
-                    className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-xl leading-none text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-
-              <div className="pt-4 space-y-3">
-                <button
-                  type="button"
-                  onClick={handleAddToCart}
-                  disabled={addingToCart || !productDetails}
-                  className="w-full py-4 bg-[#44c57e] text-white rounded-full text-lg font-semibold shadow-lg hover:bg-[#3aaa6a] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                >
-                  {addingToCart ? (
-                    "Adding..."
-                  ) : addedToCartSuccess ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <svg
-                        className="w-5 h-5"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                      >
-                        <title>Added to cart</title>
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                      Added to Cart
-                    </span>
-                  ) : (
-                    "Add to Cart"
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={buyNow}
-                  disabled={loadingCheckout || !productDetails}
-                  className="w-full py-4 border border-[#1b8451] text-[#1b8451] rounded-full text-lg font-semibold shadow-md hover:bg-[#ebf8f1] disabled:opacity-50 disabled:cursor-not-allowed transition-all bg-white"
-                >
-                  {loadingCheckout ? loadingMessage : "Buy Now"}
-                </button>
-
-                {errorMessage && (
-                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-sm text-red-700">{errorMessage}</p>
-                  </div>
-                )}
-              </div>
-            </div>
+            <ProductDetailsPanel
+              productDetails={productDetails}
+              productName={productName}
+              productPrice={productPrice}
+              selectedStore={selectedStore}
+              selectedStoreKey={selectedStoreKey}
+              onStoreChange={setSelectedStoreKey}
+              sortedVariants={sortedVariants}
+              selectedVariants={selectedVariants}
+              onVariantSelect={handleVariantSelection}
+              quantity={quantity}
+              onIncrementQuantity={incrementQuantity}
+              onDecrementQuantity={decrementQuantity}
+              onAddToCart={handleAddToCart}
+              onBuyNow={buyNow}
+              addingToCart={addingToCart}
+              addedToCartSuccess={addedToCartSuccess}
+              loadingCheckout={loadingCheckout}
+              loadingMessage={loadingMessage}
+              errorMessage={errorMessage}
+              productId={activeProductId}
+            />
           </div>
 
           {!productDetails && !loading && (
@@ -863,62 +495,22 @@ function ProductPageContent() {
           )}
         </div>
 
-        {displayedReviews.length > 0 && (
-          <div className="mt-6 bg-white rounded-lg shadow-sm p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
-              <h2 className="text-2xl font-semibold">Customer Reviews</h2>
-              {productDetails && (
-                <div className="text-sm text-gray-600">
-                  <span className="font-semibold text-gray-900">
-                    {productDetails.productResults.rating}/5
-                  </span>
-                  <span className="ml-1">({productDetails.productResults.reviews} reviews)</span>
-                </div>
-              )}
-            </div>
-            <div className="divide-y divide-gray-100">
-              {displayedReviews.map((review, index) => (
-                <div
-                  key={`${review.userName || review.title || "review"}-${index}`}
-                  className="py-4 first:pt-0"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                    <div>
-                      {review.title && <p className="font-semibold text-lg">{review.title}</p>}
-                      <p className="text-sm text-gray-500">
-                        {review.userName || "Anonymous"}
-                        {review.source && <span className="ml-1">· {review.source}</span>}
-                      </p>
-                    </div>
-                    {typeof review.rating === "number" && (
-                      <div className="flex items-center gap-1 text-yellow-500">
-                        {Array.from({ length: 5 }).map((_, starIndex) => (
-                          <span
-                            key={`${review.title || "review"}-${starIndex}`}
-                            className={
-                              starIndex < Math.round(review.rating || 0)
-                                ? "text-yellow-500"
-                                : "text-gray-300"
-                            }
-                          >
-                            ★
-                          </span>
-                        ))}
-                        <span className="text-sm text-gray-600 ml-1">
-                          {review.rating.toFixed(1)}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  {review.text && (
-                    <p className="mt-3 text-gray-700 text-sm leading-relaxed">{review.text}</p>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
+        {moreOptions.length > 0 && (
+          <MoreOptionsCarousel options={moreOptions} onSelect={handleMoreOptionSelect} />
         )}
+
+        {videos.length > 0 && <VideosCarousel videos={videos} />}
+
+        {discussions.length > 0 && <DiscussionsCarousel discussions={discussions} />}
+
+        {relatedSearches.length > 0 && <RelatedSearchesSection relatedSearches={relatedSearches} />}
       </div>
+
+      <ReviewsModal
+        open={showReviewsModal}
+        reviews={allUserReviews}
+        onClose={() => setShowReviewsModal(false)}
+      />
     </SearchPageShell>
   );
 }
