@@ -1,15 +1,15 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import HenryWordmark from "@/assets/henry-wordmark";
 import Header from "@/components/Header";
 import ProductGrid from "@/components/ProductGrid";
 import SearchBar from "@/components/SearchBar";
 import SearchPageShell from "@/components/SearchPageShell";
 import type { Product } from "@/lib/types";
-import { usePersistentUserId } from "@/lib/usePersistentUserId";
 import { useCartCount } from "@/lib/useCartCount";
+import { usePersistentUserId } from "@/lib/usePersistentUserId";
 
 export const dynamic = "force-dynamic";
 

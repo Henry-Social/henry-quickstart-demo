@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import type { RefObject, ReactNode } from "react";
+import type { ReactNode, RefObject } from "react";
 import HenryWordmark from "@/assets/henry-wordmark";
-import SearchBar from "@/components/SearchBar";
 import CartButton from "@/components/CartButton";
+import SearchBar from "@/components/SearchBar";
 
 type Props = {
   searchValue: string;

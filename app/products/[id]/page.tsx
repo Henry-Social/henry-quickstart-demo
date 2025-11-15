@@ -8,9 +8,9 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "rea
 import ProductMediaSkeleton from "@/components/ProductMediaSkeleton";
 import SearchPageShell from "@/components/SearchPageShell";
 import type { ProductDetails } from "@/lib/types";
-import { getValidImageUrl } from "@/lib/utils";
-import { usePersistentUserId } from "@/lib/usePersistentUserId";
 import { useCartCount } from "@/lib/useCartCount";
+import { usePersistentUserId } from "@/lib/usePersistentUserId";
+import { getValidImageUrl } from "@/lib/utils";
 import {
   buildDefaultVariantSelections,
   findVariantSelection,

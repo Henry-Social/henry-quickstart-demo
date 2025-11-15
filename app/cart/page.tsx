@@ -4,9 +4,9 @@ import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import SearchPageShell from "@/components/SearchPageShell";
+import { useCartCount } from "@/lib/useCartCount";
 import { usePersistentUserId } from "@/lib/usePersistentUserId";
 import { getValidImageUrl } from "@/lib/utils";
-import { useCartCount } from "@/lib/useCartCount";
 
 export const dynamic = "force-dynamic";
 
