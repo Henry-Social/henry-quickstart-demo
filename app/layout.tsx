@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Henry Quickstart Demo",
   description: "Complete buy-now flow with Henry API",
+  manifest: "/manifest.webmanifest",
+  themeColor: "#44c57e",
 };
 
 export default function RootLayout({
@@ -13,7 +16,23 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="bg-white">{children}</body>
+      <body className="bg-white">
+        {children}
+        <Script strategy="afterInteractive">
+          {`if ("serviceWorker" in navigator) {
+            const registerServiceWorker = () => {
+              navigator.serviceWorker
+                .register("/sw.js")
+                .catch((error) => console.error("SW registration failed:", error));
+            };
+            if (document.readyState === "complete") {
+              registerServiceWorker();
+            } else {
+              window.addEventListener("load", registerServiceWorker, { once: true });
+            }
+          }`}
+        </Script>
+      </body>
     </html>
   );
 }
