@@ -188,13 +188,6 @@ function ProductPageContent() {
           )}
         </div>
 
-        {relatedData.moreOptions.length > 0 && (
-          <MoreOptionsCarousel
-            options={relatedData.moreOptions}
-            onSelect={handleMoreOptionSelect}
-          />
-        )}
-
         <div className="mt-6 md:hidden">
           <ReviewInsightsCard
             productDetails={productDetails}
@@ -207,6 +200,13 @@ function ProductPageContent() {
             onImageClick={handleImageOpen}
           />
         </div>
+
+        {relatedData.moreOptions.length > 0 && (
+          <MoreOptionsCarousel
+            options={relatedData.moreOptions}
+            onSelect={handleMoreOptionSelect}
+          />
+        )}
 
         {relatedSearches.length > 0 && (
           <RelatedSearchesSection
