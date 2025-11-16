@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ProductDetails } from "@/lib/types";
 import {
   buildDiscussionKey,
@@ -41,10 +41,13 @@ export function ReviewsModal({
   ];
   type TabId = (typeof tabs)[number]["id"];
   const [activeTab, setActiveTab] = useState<TabId>("all");
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const previousBodyOverflow = useRef<string | null>(null);
 
   useEffect(() => {
     if (open) {
       setActiveTab("all");
+      scrollContainerRef.current?.scrollTo({ top: 0 });
     }
   }, [open]);
 
@@ -62,6 +65,25 @@ export function ReviewsModal({
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [open, onClose]);
+
+  useEffect(() => {
+    if (!open) {
+      if (previousBodyOverflow.current !== null) {
+        document.body.style.overflow = previousBodyOverflow.current;
+        previousBodyOverflow.current = null;
+      }
+      return;
+    }
+    previousBodyOverflow.current = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      if (previousBodyOverflow.current !== null) {
+        document.body.style.overflow = previousBodyOverflow.current;
+        previousBodyOverflow.current = null;
+      }
+    };
+  }, [open]);
 
   if (!open) {
     return null;
@@ -120,7 +142,7 @@ export function ReviewsModal({
             </div>
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto divide-y divide-gray-100">
           {(activeTab === "all" || activeTab === "sites") && (
             <SitesSection reviews={reviews} onImageClick={onImageClick} />
           )}
