@@ -367,10 +367,7 @@ function VariantSelectorList({
 
         if (!isExpanded && hiddenCount > 0 && selectedOption) {
           const selectedItem = variant.items.find((item) => item.name === selectedOption);
-          if (
-            selectedItem &&
-            !baseVisibleItems.some((item) => item.name === selectedOption)
-          ) {
+          if (selectedItem && !baseVisibleItems.some((item) => item.name === selectedOption)) {
             baseVisibleItems.push(selectedItem);
             hiddenCount = Math.max(0, hiddenCount - 1);
           }
