@@ -214,7 +214,10 @@ export function useProductDetailsController({
       if (!optionId) {
         return;
       }
-      void fetchProductDetails({ productIdOverride: optionId, preserveSelections: false });
+      void fetchProductDetails({
+        productIdOverride: optionId,
+        preserveSelections: false,
+      });
     },
     [fetchProductDetails],
   );
@@ -279,7 +282,10 @@ export function useProductDetailsController({
         ?.items.find((item) => item.name === optionName)?.id;
 
       if (variantProductId) {
-        fetchProductDetails({ productIdOverride: variantProductId, preserveSelections: true });
+        fetchProductDetails({
+          productIdOverride: variantProductId,
+          preserveSelections: true,
+        });
       }
     },
     [fetchProductDetails, productDetails, selectedVariants],
@@ -414,7 +420,12 @@ export function useProductDetailsController({
       const checkoutResult = await checkoutResponse.json();
 
       if (checkoutResult.success && checkoutResult.data?.checkout_url) {
-        window.location.href = checkoutResult.data.checkout_url;
+        const returnURL = window.location.origin;
+
+        const checkoutUrl = new URL(checkoutResult.data.checkout_url);
+        checkoutUrl.searchParams.set("returnUrl", returnURL);
+
+        window.location.href = checkoutUrl.toString();
       } else {
         throw new Error(checkoutResult.message || "Failed to create checkout");
       }
