@@ -31,9 +31,7 @@ export function useProductDetailsController({
   userId,
   refreshCartCount,
 }: ControllerArgs) {
-  const [productDetails, setProductDetails] = useState<ProductDetails | null>(
-    null
-  );
+  const [productDetails, setProductDetails] = useState<ProductDetails | null>(null);
   const [activeProductId, setActiveProductId] = useState(productId);
   const [loading, setLoading] = useState(true);
   const [detailsRefreshing, setDetailsRefreshing] = useState(false);
@@ -44,17 +42,11 @@ export function useProductDetailsController({
   const [addedToCartSuccess, setAddedToCartSuccess] = useState(false);
   const [productPrice, setProductPrice] = useState<number>(urlDefaults.price);
   const [productName, setProductName] = useState<string>(urlDefaults.name);
-  const [productImage, setProductImage] = useState<string>(
-    urlDefaults.imageUrl
-  );
-  const [productLink, setProductLink] = useState<string>(
-    urlDefaults.productLink
-  );
+  const [productImage, setProductImage] = useState<string>(urlDefaults.imageUrl);
+  const [productLink, setProductLink] = useState<string>(urlDefaults.productLink);
   const [selectedStoreKey, setSelectedStoreKey] = useState<string | null>(null);
   const [selectedThumbnailIndex, setSelectedThumbnailIndex] = useState(0);
-  const [selectedVariants, setSelectedVariants] = useState<
-    Record<string, string>
-  >({});
+  const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState(1);
   const detailsRequestIdRef = useRef(0);
   const addedToCartTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -68,9 +60,7 @@ export function useProductDetailsController({
     if (!variants || variants.length === 0) {
       return [];
     }
-    return [...variants].sort(
-      (a, b) => getVariantPriority(b.title) - getVariantPriority(a.title)
-    );
+    return [...variants].sort((a, b) => getVariantPriority(b.title) - getVariantPriority(a.title));
   }, [productDetails]);
 
   const primarySelections = useMemo(() => {
@@ -88,9 +78,7 @@ export function useProductDetailsController({
 
     const stores = productDetails.productResults.stores;
     if (selectedStoreKey) {
-      const match = stores.find(
-        (store) => buildStoreKey(store) === selectedStoreKey
-      );
+      const match = stores.find((store) => buildStoreKey(store) === selectedStoreKey);
       if (match) {
         return match;
       }
@@ -102,19 +90,15 @@ export function useProductDetailsController({
   const ratingDistribution = productDetails?.productResults?.ratings ?? [];
   const totalRatingsCount = ratingDistribution.reduce(
     (sum, entry) => sum + (entry?.amount ?? 0),
-    0
+    0,
   );
   const reviewImages = productDetails?.productResults?.reviewsImages ?? [];
   const moreOptions = productDetails?.productResults?.moreOptions ?? [];
   const videos = productDetails?.productResults?.videos ?? [];
-  const discussions =
-    productDetails?.productResults?.discussionsAndForums ?? [];
+  const discussions = productDetails?.productResults?.discussionsAndForums ?? [];
   const relatedSearches = productDetails?.relatedSearches ?? [];
   const allUserReviews = productDetails?.productResults?.userReviews ?? [];
-  const highlightedUserReviews = useMemo(
-    () => allUserReviews.slice(0, 2),
-    [allUserReviews]
-  );
+  const highlightedUserReviews = useMemo(() => allUserReviews.slice(0, 2), [allUserReviews]);
 
   useEffect(() => {
     urlDefaultsRef.current = urlDefaults;
@@ -137,7 +121,7 @@ export function useProductDetailsController({
       setSelectedVariants((prev) =>
         preserveSelections
           ? mergeVariantSelections(details, prev)
-          : buildDefaultVariantSelections(details)
+          : buildDefaultVariantSelections(details),
       );
 
       const productInfo = details.productResults;
@@ -153,9 +137,7 @@ export function useProductDetailsController({
         if (stores.length) {
           setSelectedStoreKey((prevKey) => {
             if (preserveSelections && prevKey) {
-              const stillExists = stores.some(
-                (store) => buildStoreKey(store) === prevKey
-              );
+              const stillExists = stores.some((store) => buildStoreKey(store) === prevKey);
               if (stillExists) {
                 return prevKey;
               }
@@ -167,10 +149,7 @@ export function useProductDetailsController({
         }
 
         const primaryImage =
-          productInfo.thumbnails?.[0] ||
-          productInfo.image ||
-          urlDefaults.imageUrl ||
-          "";
+          productInfo.thumbnails?.[0] || productInfo.image || urlDefaults.imageUrl || "";
         setProductImage(primaryImage);
 
         if (firstStore?.link) {
@@ -180,7 +159,7 @@ export function useProductDetailsController({
         }
       }
     },
-    [urlDefaults]
+    [urlDefaults],
   );
 
   const fetchProductDetails = useCallback(
@@ -202,12 +181,9 @@ export function useProductDetailsController({
       try {
         const params = new URLSearchParams({ productId: targetProductId });
 
-        const response = await fetch(
-          `/api/henry/products/details?${params.toString()}`,
-          {
-            cache: "no-store",
-          }
-        );
+        const response = await fetch(`/api/henry/products/details?${params.toString()}`, {
+          cache: "no-store",
+        });
         const productResult = await response.json();
 
         if (requestId !== detailsRequestIdRef.current) {
@@ -230,7 +206,7 @@ export function useProductDetailsController({
         }
       }
     },
-    [applyProductDetails, productId]
+    [applyProductDetails, productId],
   );
 
   const handleMoreOptionSelect = useCallback(
@@ -243,7 +219,7 @@ export function useProductDetailsController({
         preserveSelections: false,
       });
     },
-    [fetchProductDetails]
+    [fetchProductDetails],
   );
 
   useEffect(() => {
@@ -312,7 +288,7 @@ export function useProductDetailsController({
         });
       }
     },
-    [fetchProductDetails, productDetails, selectedVariants]
+    [fetchProductDetails, productDetails, selectedVariants],
   );
 
   const incrementQuantity = useCallback(() => {
@@ -341,17 +317,11 @@ export function useProductDetailsController({
         const variantMetadata = getVariantMetadata();
         const metadata = {
           ...variantMetadata,
-          ...(primarySelections.size?.value
-            ? { Size: primarySelections.size.value }
-            : {}),
-          ...(primarySelections.color?.value
-            ? { Color: primarySelections.color.value }
-            : {}),
+          ...(primarySelections.size?.value ? { Size: primarySelections.size.value } : {}),
+          ...(primarySelections.color?.value ? { Color: primarySelections.color.value } : {}),
         };
 
-        const storePrice = selectedStore
-          ? parsePriceValue(selectedStore.price)
-          : productPrice;
+        const storePrice = selectedStore ? parsePriceValue(selectedStore.price) : productPrice;
         const storeLink = selectedStore?.link || productLink;
 
         const response = await fetch("/api/henry/cart/add", {
@@ -371,9 +341,7 @@ export function useProductDetailsController({
                 productImageLink: getValidImageUrl(productImage),
                 metadata: {
                   ...metadata,
-                  ...(selectedStore?.name
-                    ? { Merchant: selectedStore.name }
-                    : {}),
+                  ...(selectedStore?.name ? { Merchant: selectedStore.name } : {}),
                 },
               },
             ],
@@ -397,8 +365,7 @@ export function useProductDetailsController({
 
         return true;
       } catch (error) {
-        const errorMsg =
-          error instanceof Error ? error.message : "Failed to add to cart";
+        const errorMsg = error instanceof Error ? error.message : "Failed to add to cart";
         setErrorMessage(errorMsg);
         setAddedToCartSuccess(false);
         return false;
@@ -421,7 +388,7 @@ export function useProductDetailsController({
       selectedStore,
       refreshCartCount,
       quantity,
-    ]
+    ],
   );
 
   const handleAddToCart = useCallback(() => {
@@ -464,10 +431,7 @@ export function useProductDetailsController({
       }
     } catch (error) {
       console.error("Cart checkout error:", error);
-      const errorMsg =
-        error instanceof Error
-          ? error.message
-          : "An error occurred during checkout";
+      const errorMsg = error instanceof Error ? error.message : "An error occurred during checkout";
       setErrorMessage(errorMsg);
     } finally {
       setLoadingCheckout(false);

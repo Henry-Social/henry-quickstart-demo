@@ -23,9 +23,7 @@ type CartItem = {
 function CartPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [searchQuery, setSearchQuery] = useState(
-    () => searchParams.get("q") ?? ""
-  );
+  const [searchQuery, setSearchQuery] = useState(() => searchParams.get("q") ?? "");
   const userId = usePersistentUserId();
   const { cartCount, setCartCountValue } = useCartCount(userId);
   const [items, setItems] = useState<CartItem[]>([]);
@@ -55,8 +53,7 @@ function CartPageContent() {
       setItems(products);
       setCartCountValue(products.length);
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to load cart";
+      const message = err instanceof Error ? err.message : "Failed to load cart";
       setError(message);
       setItems([]);
     } finally {
@@ -93,10 +90,7 @@ function CartPageContent() {
   }, []);
 
   const subtotal = useMemo(() => {
-    return items.reduce(
-      (sum, item) => sum + normalizePrice(item.price) * (item.quantity ?? 1),
-      0
-    );
+    return items.reduce((sum, item) => sum + normalizePrice(item.price) * (item.quantity ?? 1), 0);
   }, [items, normalizePrice]);
 
   const handleCheckout = async () => {
@@ -115,9 +109,7 @@ function CartPageContent() {
       const data = await response.json();
 
       if (!response.ok || !data.success || !data.data?.checkout_url) {
-        throw new Error(
-          data.message || data.error || "Failed to initiate checkout"
-        );
+        throw new Error(data.message || data.error || "Failed to initiate checkout");
       }
 
       const returnURL = window.location.origin;
@@ -127,8 +119,7 @@ function CartPageContent() {
 
       window.location.href = checkoutUrl.toString();
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to initiate checkout";
+      const message = err instanceof Error ? err.message : "Failed to initiate checkout";
       setError(message);
     } finally {
       setCheckoutLoading(false);
@@ -141,15 +132,12 @@ function CartPageContent() {
     setRemovingId(productId);
     setError(null);
     try {
-      const response = await fetch(
-        `/api/henry/cart/items/${encodeURIComponent(productId)}`,
-        {
-          method: "DELETE",
-          headers: {
-            "x-user-id": userId,
-          },
-        }
-      );
+      const response = await fetch(`/api/henry/cart/items/${encodeURIComponent(productId)}`, {
+        method: "DELETE",
+        headers: {
+          "x-user-id": userId,
+        },
+      });
 
       const data = await response.json();
       if (!response.ok || !data.success) {
@@ -159,8 +147,7 @@ function CartPageContent() {
       setItems((prev) => prev.filter((item) => item.productId !== productId));
       setCartCountValue((prev) => Math.max(prev - 1, 0));
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to remove item";
+      const message = err instanceof Error ? err.message : "Failed to remove item";
       setError(message);
     } finally {
       setRemovingId(null);
@@ -178,9 +165,7 @@ function CartPageContent() {
       <div className="space-y-6">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-sm uppercase tracking-wide text-gray-500">
-              Cart
-            </p>
+            <p className="text-sm uppercase tracking-wide text-gray-500">Cart</p>
             <h1 className="text-3xl font-bold text-gray-900">Your Items</h1>
           </div>
           <button
@@ -219,19 +204,13 @@ function CartPageContent() {
                 <circle cx="17" cy="20" r="1" />
               </svg>
             </div>
-            <p className="text-lg font-semibold text-gray-900">
-              Your cart is empty
-            </p>
-            <p className="text-sm mt-2">
-              Search for products to start adding items.
-            </p>
+            <p className="text-lg font-semibold text-gray-900">Your cart is empty</p>
+            <p className="text-sm mt-2">Search for products to start adding items.</p>
           </div>
         ) : (
           <div className="bg-white rounded-2xl border border-gray-100 divide-y">
             {loading ? (
-              <div className="p-6 text-gray-500 text-center">
-                Loading cart items...
-              </div>
+              <div className="p-6 text-gray-500 text-center">Loading cart items...</div>
             ) : (
               items.map((item) => (
                 <div
@@ -269,25 +248,19 @@ function CartPageContent() {
                   </div>
                   <div className="flex-1 min-w-0 space-y-3">
                     <div className="flex flex-col gap-2">
-                      <p className="font-semibold text-gray-900 text-lg">
-                        {item.name}
-                      </p>
-                      {item.metadata &&
-                        Object.keys(item.metadata).length > 0 && (
-                          <div className="flex flex-wrap gap-2">
-                            {Object.entries(item.metadata).map(
-                              ([key, value]) => (
-                                <span
-                                  key={`${item.productId}-${key}`}
-                                  className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600"
-                                >
-                                  <span className="text-gray-400">{key}:</span>{" "}
-                                  {value}
-                                </span>
-                              )
-                            )}
-                          </div>
-                        )}
+                      <p className="font-semibold text-gray-900 text-lg">{item.name}</p>
+                      {item.metadata && Object.keys(item.metadata).length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {Object.entries(item.metadata).map(([key, value]) => (
+                            <span
+                              key={`${item.productId}-${key}`}
+                              className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600"
+                            >
+                              <span className="text-gray-400">{key}:</span> {value}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div className="text-sm text-gray-500">
@@ -333,9 +306,7 @@ function CartPageContent() {
                               d="M6 6h12M9 6v12m6-12v12M5 6l1 12a2 2 0 002 2h8a2 2 0 002-2l1-12M9 6V4h6v2"
                             />
                           </svg>
-                          {removingId === item.productId
-                            ? "Removing..."
-                            : "Remove"}
+                          {removingId === item.productId ? "Removing..." : "Remove"}
                         </button>
                       </div>
                     </div>
