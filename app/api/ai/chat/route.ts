@@ -1,5 +1,5 @@
 import { anthropic } from "@ai-sdk/anthropic";
-import { streamText, stepCountIs, convertToModelMessages } from "ai";
+import { convertToModelMessages, stepCountIs, streamText } from "ai";
 import { createHenryMCPClient } from "@/lib/mcp";
 
 export const maxDuration = 60;

@@ -1,12 +1,12 @@
 "use client";
 
-import { DefaultChatTransport } from "ai";
 import { useChat } from "@ai-sdk/react";
-import { useEffect, useRef, useState, useMemo } from "react";
+import { DefaultChatTransport } from "ai";
+import { useEffect, useMemo, useRef, useState } from "react";
 import HenryWordmark from "@/assets/henry-wordmark";
+import ChatMessage from "@/components/chat/ChatMessage";
 import Header from "@/components/Header";
 import SearchBar from "@/components/SearchBar";
-import ChatMessage from "@/components/chat/ChatMessage";
 import { useCartCount } from "@/lib/useCartCount";
 import { usePersistentUserId } from "@/lib/usePersistentUserId";
 
@@ -67,7 +67,7 @@ export default function AIChat() {
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, []);
 
   // Focus input on mount
   useEffect(() => {

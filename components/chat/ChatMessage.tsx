@@ -2,9 +2,9 @@
 
 import {
   isToolOrDynamicToolUIPart,
+  type UIDataTypes,
   type UIMessage,
   type UIMessagePart,
-  type UIDataTypes,
   type UITools,
 } from "ai";
 import ReactMarkdown from "react-markdown";
