@@ -17,8 +17,7 @@ const baseURL = process.env.HENRY_SDK_BASE_URL ?? undefined;
 
 export const henry = new HenrySDK({
   apiKey,
-  ...(environment ? { environment } : {}),
-  ...(baseURL ? { baseURL } : {}),
+  ...(baseURL ? { baseURL } : environment ? { environment, baseURL: null } : {}),
 });
 
 export type HenryClient = typeof henry;
