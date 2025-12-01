@@ -6,6 +6,15 @@ import HenryWordmark from "@/assets/henry-wordmark";
 import CartButton from "@/components/CartButton";
 import SearchBar from "@/components/SearchBar";
 
+function StarIcon() {
+  return (
+    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+      <title>AI</title>
+      <path d="M12 1L9 9L1 12L9 15L12 23L15 15L23 12L15 9L12 1Z" />
+    </svg>
+  );
+}
+
 type Props = {
   searchValue: string;
   onSearchChange: (value: string) => void;
@@ -34,7 +43,16 @@ export default function SearchPageShell({
               <Link href="/" className="inline-flex items-center" aria-label="Go to Henry home">
                 <HenryWordmark className="h-10 text-[#44c57e]" />
               </Link>
-              <CartButton count={cartCount} className="md:hidden" />
+              <div className="flex items-center gap-2 md:hidden">
+                <CartButton count={cartCount} />
+                <Link
+                  href="/ai"
+                  className="inline-flex items-center justify-center rounded-full border border-gray-200 p-2.5 text-gray-700 hover:border-[#44c57e] hover:text-[#1b8451] transition-colors"
+                  aria-label="Go to AI chat"
+                >
+                  <StarIcon />
+                </Link>
+              </div>
             </div>
             <div className="w-full min-w-[200px] md:w-[60%] lg:w-1/2 md:justify-self-center md:mx-auto">
               <SearchBar
@@ -47,8 +65,15 @@ export default function SearchPageShell({
                 variant="header"
               />
             </div>
-            <div className="hidden md:block">
+            <div className="hidden md:flex md:items-center md:gap-2">
               <CartButton count={cartCount} />
+              <Link
+                href="/ai"
+                className="inline-flex items-center justify-center rounded-full border border-gray-200 p-2.5 text-gray-700 hover:border-[#44c57e] hover:text-[#1b8451] transition-colors"
+                aria-label="Go to AI chat"
+              >
+                <StarIcon />
+              </Link>
             </div>
           </div>
         </div>
