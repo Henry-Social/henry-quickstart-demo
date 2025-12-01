@@ -34,7 +34,7 @@ bun dev
 ```
 
 4. **Open the app:**
-   Navigate to [http://localhost:3001](http://localhost:3001)
+   Navigate to [http://localhost:3000](http://localhost:3000)
 
 ## How It Works
 
