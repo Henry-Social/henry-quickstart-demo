@@ -121,11 +121,31 @@ export default function ChatMessage({ message }: Props) {
             );
           }
 
-          // Tool part with products
-          if (isToolOrDynamicToolUIPart(part) && part.state === "output-available") {
-            const products = extractProductsFromToolOutput(part.output);
-            if (products.length > 0) {
-              return <ProductCardsInline key={index} products={products} />;
+          // Tool part - show loading or products
+          if (isToolOrDynamicToolUIPart(part)) {
+            // Tool is still running - show loading animation
+            if (part.state === "input-streaming" || part.state === "input-available") {
+              return (
+                <div
+                  key={index}
+                  className="w-fit bg-gray-100 px-4 py-3 rounded-2xl rounded-bl-md"
+                >
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <span className="inline-flex h-2 w-2 rounded-full bg-brand-primary animate-pulse" />
+                    <span className="inline-flex h-2 w-2 rounded-full bg-brand-primary animate-pulse [animation-delay:150ms]" />
+                    <span className="inline-flex h-2 w-2 rounded-full bg-brand-primary animate-pulse [animation-delay:300ms]" />
+                    <span className="ml-1">Searching for products...</span>
+                  </div>
+                </div>
+              );
+            }
+
+            // Tool has output - show products if available
+            if (part.state === "output-available") {
+              const products = extractProductsFromToolOutput(part.output);
+              if (products.length > 0) {
+                return <ProductCardsInline key={index} products={products} />;
+              }
             }
           }
 

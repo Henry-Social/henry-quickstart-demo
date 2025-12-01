@@ -47,7 +47,7 @@ export default function SearchBar({
   className = "",
   variant = "default",
   icon = "search",
-  showSubmitButton = false,
+  showSubmitButton = true,
   disabled = false,
 }: Props) {
   const isHeaderVariant = variant === "header";
