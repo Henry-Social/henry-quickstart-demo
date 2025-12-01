@@ -79,7 +79,7 @@ export function ReviewInsightsCard({
         <button
           type="button"
           onClick={onOpenReviews}
-          className="text-left text-sm font-medium text-[#1b8451] hover:underline"
+          className="text-left text-sm font-medium text-brand-dark hover:underline"
         >
           {totalReviewCount.toLocaleString()} ratings
         </button>
@@ -97,7 +97,7 @@ export function ReviewInsightsCard({
               <div key={star} className="flex items-center gap-2 text-sm text-gray-600">
                 <span className="w-4">{star}</span>
                 <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-[#44c57e]" style={{ width: `${percentage}%` }} />
+                  <div className="h-full bg-brand-primary" style={{ width: `${percentage}%` }} />
                 </div>
                 <span className="text-xs text-gray-500 w-10 text-right">{amount}</span>
               </div>
@@ -117,7 +117,7 @@ export function ReviewInsightsCard({
                   onImageClick?.(src);
                 }
               }}
-              className="relative w-20 h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#44c57e]/40"
+              className="relative w-20 h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40"
             >
               <Image src={src} alt="Customer photo" fill className="object-cover" unoptimized />
             </button>

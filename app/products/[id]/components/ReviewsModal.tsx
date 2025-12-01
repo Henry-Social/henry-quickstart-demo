@@ -205,7 +205,7 @@ function SitesSection({
                     <button
                       type="button"
                       key={imageKey}
-                      className="relative w-20 h-20 rounded-lg overflow-hidden bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#44c57e]/40"
+                      className="relative w-20 h-20 rounded-lg overflow-hidden bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40"
                       onClick={() => {
                         if (image) {
                           onImageClick?.(image);
@@ -246,7 +246,7 @@ function YouTubeSection({ videos }: { videos: Videos }) {
               href={video.link}
               target="_blank"
               rel="noreferrer"
-              className="border border-gray-200 rounded-2xl p-3 hover:border-[#44c57e] transition-colors"
+              className="border border-gray-200 rounded-2xl p-3 hover:border-brand-primary transition-colors"
             >
               {content}
             </a>
@@ -286,7 +286,7 @@ function ForumSection({ discussions }: { discussions: Discussions }) {
               href={discussion.link}
               target="_blank"
               rel="noreferrer"
-              className="block rounded-2xl border border-gray-200 p-4 hover:border-[#44c57e] transition-colors"
+              className="block rounded-2xl border border-gray-200 p-4 hover:border-brand-primary transition-colors"
             >
               {content}
             </a>

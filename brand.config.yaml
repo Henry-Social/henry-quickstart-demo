@@ -1,0 +1,40 @@
+# Brand Configuration
+# This file controls all brand-specific visual customization.
+# To white-label for a new customer, update these values and redeploy.
+
+brand:
+  # Brand name displayed throughout the app
+  name: "Henry"
+
+  # Short name for PWA and places with limited space
+  shortName: "Henry"
+
+  # App description for metadata
+  description: "Complete buy-now flow with Henry API"
+
+# Visual identity - URLs should point to CDN-hosted assets
+# Leave blank/omit to use built-in Henry defaults
+assets:
+  # Primary logo (displayed in header, hero sections)
+  # Recommended: SVG or PNG, transparent background, 200px+ width
+  logoUrl: ""
+
+  # Square icon for favicon and PWA (minimum 512x512 recommended)
+  iconUrl: ""
+
+  # Apple touch icon (180x180)
+  appleTouchIconUrl: ""
+
+# Color palette - hex values WITHOUT the # prefix
+colors:
+  # Primary brand color - buttons, links, highlights
+  primary: "44c57e"
+
+  # Darker shade - hover states, text on light backgrounds
+  primaryDark: "1b8451"
+
+  # Light tint - badges, subtle backgrounds
+  primaryLight: "ebf8f1"
+
+  # Button hover state
+  primaryHover: "3bb36e"

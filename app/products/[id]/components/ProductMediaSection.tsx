@@ -40,7 +40,7 @@ export function ProductMediaSection({
             onImageClick?.(activeImage);
           }
         }}
-        className="relative h-80 w-full rounded-lg overflow-hidden bg-white shadow-inner focus:outline-none focus-visible:ring-2 focus-visible:ring-[#44c57e]/40"
+        className="relative h-80 w-full rounded-lg overflow-hidden bg-white shadow-inner focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40"
         aria-label="Expand product image"
       >
         {activeImage ? (
@@ -86,7 +86,7 @@ export function ProductMediaSection({
                 }}
                 className={`relative flex-shrink-0 w-16 h-16 rounded-md border-2 transition-all bg-white ${
                   selectedThumbnailIndex === index
-                    ? "border-[#44c57e] opacity-100 shadow-md"
+                    ? "border-brand-primary opacity-100 shadow-md"
                     : "border-gray-300 opacity-80 hover:opacity-100 hover:border-gray-400"
                 }`}
               >

@@ -1,15 +1,23 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import "./globals.css";
+import {
+  generateBrandCSS,
+  getBrandConfig,
+  getClientBrandConfig,
+} from "@/lib/brand-config";
+import { BrandProvider } from "@/lib/brand-context";
+
+const brandConfig = getBrandConfig();
 
 export const metadata: Metadata = {
-  title: "Henry Quickstart Demo",
-  description: "Complete buy-now flow with Henry API",
+  title: `${brandConfig.brand.name} Quickstart Demo`,
+  description: brandConfig.brand.description,
   manifest: "/manifest.webmanifest",
   themeColor: "#ffffff",
   icons: {
-    icon: "/icon.png",
-    apple: "/apple-touch-icon.png",
+    icon: brandConfig.assets.iconUrl || "/icon.png",
+    apple: brandConfig.assets.appleTouchIconUrl || "/apple-touch-icon.png",
   },
 };
 
@@ -20,8 +28,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <style dangerouslySetInnerHTML={{ __html: generateBrandCSS() }} />
+      </head>
       <body className="bg-white">
-        {children}
+        <BrandProvider config={getClientBrandConfig()}>
+          {children}
+        </BrandProvider>
         <Script strategy="afterInteractive">
           {`if ("serviceWorker" in navigator) {
             const registerServiceWorker = () => {

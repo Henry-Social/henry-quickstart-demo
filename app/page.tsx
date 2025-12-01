@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
-import HenryWordmark from "@/assets/henry-wordmark";
+import BrandLogoClient from "@/components/BrandLogoClient";
 import Header from "@/components/Header";
 import ProductGrid from "@/components/ProductGrid";
 import SearchBar from "@/components/SearchBar";
@@ -120,7 +120,7 @@ function HomeContent() {
         <div className="min-h-screen flex flex-col">
           <Header cartCount={cartCount} showLogo={false} />
           <div className="flex-1 flex flex-col items-center justify-center px-4 -mt-32">
-            <HenryWordmark className="h-16 text-[#44c57e] mb-4" />
+            <BrandLogoClient className="h-16 text-brand-primary mb-4" height={64} />
             <div className="w-full max-w-2xl">
               <SearchBar
                 value={searchQuery}

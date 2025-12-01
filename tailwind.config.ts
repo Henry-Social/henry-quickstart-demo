@@ -8,7 +8,16 @@ const config: Config = {
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        brand: {
+          primary: "var(--color-primary)",
+          dark: "var(--color-primary-dark)",
+          light: "var(--color-primary-light)",
+          hover: "var(--color-primary-hover)",
+        },
+      },
+    },
   },
   plugins: [typography],
 };

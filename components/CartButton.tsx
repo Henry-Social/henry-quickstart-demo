@@ -14,7 +14,7 @@ export default function CartButton({ count = 0, className = "" }: Props) {
   return (
     <Link
       href="/cart"
-      className={`relative inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:border-[#44c57e] hover:text-[#1b8451] transition-colors ${className}`}
+      className={`relative inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:border-brand-primary hover:text-brand-dark transition-colors ${className}`}
     >
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <title>Cart</title>
@@ -29,7 +29,7 @@ export default function CartButton({ count = 0, className = "" }: Props) {
       </svg>
       <span>Cart</span>
       {count > 0 && (
-        <span className="absolute -top-1 -right-1 translate-x-1/2 -translate-y-1/2 inline-flex items-center justify-center rounded-full bg-[#44c57e] text-white text-xs font-semibold h-5 min-w-[1.5rem] px-1.5 border-2 border-white">
+        <span className="absolute -top-1 -right-1 translate-x-1/2 -translate-y-1/2 inline-flex items-center justify-center rounded-full bg-brand-primary text-white text-xs font-semibold h-5 min-w-[1.5rem] px-1.5 border-2 border-white">
           {count > 99 ? "99+" : count}
         </span>
       )}

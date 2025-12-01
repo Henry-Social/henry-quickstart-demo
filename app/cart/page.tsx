@@ -172,7 +172,7 @@ function CartPageContent() {
             type="button"
             onClick={fetchItems}
             disabled={loading}
-            className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-sm font-semibold text-[#1b8451] hover:border-[#1b8451] hover:text-[#126539] disabled:opacity-40"
+            className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-sm font-semibold text-brand-dark hover:border-brand-dark hover:text-brand-dark disabled:opacity-40"
           >
             {loading ? "Refreshing..." : "Refresh"}
           </button>
@@ -186,7 +186,7 @@ function CartPageContent() {
 
         {items.length === 0 && !loading ? (
           <div className="rounded-2xl border border-dashed border-gray-200 p-10 text-center text-gray-500 bg-white">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#ebf8f1] text-[#1b8451]">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-brand-light text-brand-dark">
               <svg
                 className="h-8 w-8"
                 viewBox="0 0 24 24"
@@ -281,7 +281,7 @@ function CartPageContent() {
                             href={item.productLink}
                             target="_blank"
                             rel="noreferrer"
-                            className="text-sm font-semibold text-[#1b8451] hover:underline"
+                            className="text-sm font-semibold text-brand-dark hover:underline"
                           >
                             View item
                           </a>
@@ -334,7 +334,7 @@ function CartPageContent() {
             type="button"
             onClick={handleCheckout}
             disabled={checkoutLoading || items.length === 0}
-            className="w-full py-4 bg-[#44c57e] text-white rounded-full text-lg font-semibold hover:bg-[#3aaa6a] disabled:opacity-50 transition-colors"
+            className="w-full py-4 bg-brand-primary text-white rounded-full text-lg font-semibold hover:bg-brand-hover disabled:opacity-50 transition-colors"
           >
             {checkoutLoading ? "Preparing checkout..." : "Continue to Checkout"}
           </button>

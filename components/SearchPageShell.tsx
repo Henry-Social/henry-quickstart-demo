@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { ReactNode, RefObject } from "react";
-import HenryWordmark from "@/assets/henry-wordmark";
+import BrandLogoClient from "@/components/BrandLogoClient";
 import CartButton from "@/components/CartButton";
 import SearchBar from "@/components/SearchBar";
 
@@ -41,13 +41,13 @@ export default function SearchPageShell({
           <div className="flex flex-col gap-4 md:grid md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-center">
             <div className="flex items-center justify-between md:justify-start">
               <Link href="/" className="inline-flex items-center" aria-label="Go to Henry home">
-                <HenryWordmark className="h-10 text-[#44c57e]" />
+                <BrandLogoClient className="h-10 text-brand-primary" height={40} />
               </Link>
               <div className="flex items-center gap-2 md:hidden">
                 <CartButton count={cartCount} />
                 <Link
                   href="/ai"
-                  className="inline-flex items-center justify-center rounded-full border border-gray-200 p-2.5 text-gray-700 hover:border-[#44c57e] hover:text-[#1b8451] transition-colors"
+                  className="inline-flex items-center justify-center rounded-full border border-gray-200 p-2.5 text-gray-700 hover:border-brand-primary hover:text-brand-dark transition-colors"
                   aria-label="Go to AI chat"
                 >
                   <StarIcon />
@@ -69,7 +69,7 @@ export default function SearchPageShell({
               <CartButton count={cartCount} />
               <Link
                 href="/ai"
-                className="inline-flex items-center justify-center rounded-full border border-gray-200 p-2.5 text-gray-700 hover:border-[#44c57e] hover:text-[#1b8451] transition-colors"
+                className="inline-flex items-center justify-center rounded-full border border-gray-200 p-2.5 text-gray-700 hover:border-brand-primary hover:text-brand-dark transition-colors"
                 aria-label="Go to AI chat"
               >
                 <StarIcon />

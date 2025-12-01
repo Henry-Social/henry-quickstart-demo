@@ -291,19 +291,19 @@ function PriceDisplay({
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-baseline gap-3">
-        <span className="text-4xl font-bold text-[#44c57e]">{priceLabel}</span>
+        <span className="text-4xl font-bold text-brand-primary">{priceLabel}</span>
         {originalPrice && originalPrice !== priceLabel && (
           <span className="text-xl font-semibold text-gray-400 line-through">{originalPrice}</span>
         )}
         {discount && (
-          <span className="inline-flex items-center rounded-full bg-[#ebf8f1] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[#1b8451]">
+          <span className="inline-flex items-center rounded-full bg-brand-light px-3 py-1 text-xs font-semibold uppercase tracking-wide text-brand-dark">
             {discount}
           </span>
         )}
       </div>
       {formattedTypicalPrice && (
         <div className="flex items-center gap-2 text-sm text-gray-600">
-          <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#ebf8f1] text-[#1b8451]">
+          <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-brand-light text-brand-dark">
             <svg
               className="w-4 h-4"
               viewBox="0 0 24 24"
@@ -389,7 +389,7 @@ function VariantSelectorList({
                   ? "w-12 h-12 rounded-full"
                   : "px-5 py-2 rounded-full";
                 const stateClasses = isSelected
-                  ? "bg-[#44c57e] text-white border-[#44c57e] shadow-sm"
+                  ? "bg-brand-primary text-white border-brand-primary shadow-sm"
                   : isAvailable
                     ? "bg-white hover:bg-gray-50 border-gray-300 text-gray-800"
                     : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed";
@@ -405,7 +405,7 @@ function VariantSelectorList({
                       }
                     }}
                     aria-pressed={isSelected}
-                    className={`flex items-center justify-center border text-sm font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#44c57e]/40 ${shapeClasses} ${stateClasses}`}
+                    className={`flex items-center justify-center border text-sm font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40 ${shapeClasses} ${stateClasses}`}
                   >
                     {item.name}
                   </button>
@@ -497,7 +497,7 @@ function ActionButtons({
         type="button"
         onClick={onAddToCart}
         disabled={addingToCart || !canSubmit}
-        className="w-full py-4 bg-[#44c57e] text-white rounded-full text-lg font-semibold shadow-lg hover:bg-[#3aaa6a] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+        className="w-full py-4 bg-brand-primary text-white rounded-full text-lg font-semibold shadow-lg hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed transition-all"
       >
         {addingToCart ? (
           "Adding..."
@@ -522,7 +522,7 @@ function ActionButtons({
         type="button"
         onClick={onBuyNow}
         disabled={loadingCheckout || !canSubmit}
-        className="w-full py-4 border border-[#1b8451] text-[#1b8451] rounded-full text-lg font-semibold shadow-md hover:bg-[#ebf8f1] disabled:opacity-50 disabled:cursor-not-allowed transition-all bg-white"
+        className="w-full py-4 border border-brand-dark text-brand-dark rounded-full text-lg font-semibold shadow-md hover:bg-brand-light disabled:opacity-50 disabled:cursor-not-allowed transition-all bg-white"
       >
         {loadingCheckout ? loadingMessage : "Buy Now"}
       </button>
@@ -608,7 +608,7 @@ function ProductDescriptionCard({
         <button
           type="button"
           onClick={() => setShowFullDescription((prev) => !prev)}
-          className="mt-3 text-sm font-semibold text-[#1b8451]"
+          className="mt-3 text-sm font-semibold text-brand-dark"
         >
           {showFullDescription ? "View less" : "View more"}
         </button>
@@ -621,7 +621,7 @@ function ProductDescriptionCard({
           className="mt-4 flex items-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-semibold text-gray-900 transition-colors hover:bg-gray-50"
         >
           <svg
-            className="h-4 w-4 text-[#1b8451]"
+            className="h-4 w-4 text-brand-dark"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"

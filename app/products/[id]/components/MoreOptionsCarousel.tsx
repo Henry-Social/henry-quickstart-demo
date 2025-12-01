@@ -82,7 +82,7 @@ export function MoreOptionsCarousel({ options, onSelect }: MoreOptionsCarouselPr
                             </span>
                           )}
                           {option.discount && (
-                            <span className="inline-flex items-center rounded-full bg-[#ebf8f1] px-2 py-0.5 font-semibold text-[#1b8451]">
+                            <span className="inline-flex items-center rounded-full bg-brand-light px-2 py-0.5 font-semibold text-brand-dark">
                               {option.discount}
                             </span>
                           )}
@@ -106,7 +106,7 @@ export function MoreOptionsCarousel({ options, onSelect }: MoreOptionsCarouselPr
                     href={option.link}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-sm font-semibold text-[#1b8451] hover:underline"
+                    className="text-sm font-semibold text-brand-dark hover:underline"
                     onClick={(event) => event.stopPropagation()}
                   >
                     Open listing

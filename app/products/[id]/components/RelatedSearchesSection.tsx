@@ -37,7 +37,7 @@ export function RelatedSearchesSection({ relatedSearches, onSelect }: RelatedSea
               type="button"
               key={search.query || index}
               onClick={handleClick}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 hover:border-[#44c57e] hover:text-[#1b8451] transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 hover:border-brand-primary hover:text-brand-dark transition-colors"
             >
               {search.image && (
                 <Image

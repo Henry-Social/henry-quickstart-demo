@@ -1,10 +1,13 @@
 import type { MetadataRoute } from "next";
+import { getBrandConfig } from "@/lib/brand-config";
 
 export default function manifest(): MetadataRoute.Manifest {
+  const config = getBrandConfig();
+
   return {
-    name: "Henry Quickstart Demo",
-    short_name: "Henry",
-    description: "Complete buy-now flow with Henry API",
+    name: `${config.brand.name} Quickstart Demo`,
+    short_name: config.brand.shortName,
+    description: config.brand.description,
     start_url: "/",
     scope: "/",
     display: "standalone",
@@ -12,13 +15,13 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#ffffff",
     icons: [
       {
-        src: "/icon.png",
+        src: config.assets.iconUrl || "/icon.png",
         sizes: "128x128",
         type: "image/png",
         purpose: "maskable",
       },
       {
-        src: "/apple-touch-icon.png",
+        src: config.assets.appleTouchIconUrl || "/apple-touch-icon.png",
         sizes: "180x180",
         type: "image/png",
         purpose: "any",

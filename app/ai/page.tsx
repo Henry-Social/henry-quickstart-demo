@@ -3,7 +3,7 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useEffect, useMemo, useRef, useState } from "react";
-import HenryWordmark from "@/assets/henry-wordmark";
+import BrandLogoClient from "@/components/BrandLogoClient";
 import ChatMessage from "@/components/chat/ChatMessage";
 import Header from "@/components/Header";
 import SearchBar from "@/components/SearchBar";
@@ -91,7 +91,7 @@ export default function AIChat() {
         <div className="min-h-screen flex flex-col">
           <Header cartCount={cartCount} showLogo={false} mode="ai" />
           <div className="flex-1 flex flex-col items-center justify-center px-4 -mt-32">
-            <HenryWordmark className="h-16 text-[#44c57e] mb-4" />
+            <BrandLogoClient className="h-16 text-brand-primary mb-4" height={64} />
             <div className="w-full max-w-2xl">
               <SearchBar
                 value={input}
@@ -163,12 +163,12 @@ export default function AIChat() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask about products..."
-                className="w-full pl-11 pr-14 py-3 text-base bg-gray-50 border border-gray-200 rounded-full focus:outline-none focus:border-[#44c57e] focus:ring-2 focus:ring-[#44c57e]/20 focus:bg-white transition-all duration-200"
+                className="w-full pl-11 pr-14 py-3 text-base bg-gray-50 border border-gray-200 rounded-full focus:outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 focus:bg-white transition-all duration-200"
               />
               <button
                 type="submit"
                 disabled={!input.trim() || isLoading}
-                className="absolute right-2 top-1/2 -translate-y-1/2 bg-[#44c57e] text-white p-2 rounded-full hover:bg-[#3bb36e] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-brand-primary text-white p-2 rounded-full hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 aria-label="Send message"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

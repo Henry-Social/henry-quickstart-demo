@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import HenryWordmark from "@/assets/henry-wordmark";
+import BrandLogoClient from "@/components/BrandLogoClient";
 import CartButton from "@/components/CartButton";
 
 type Props = {
@@ -48,11 +48,11 @@ const Header = ({ cartCount = 0, showLogo = true, mode = "search", onNewChat }: 
                 className="inline-flex items-center"
                 aria-label="Start new AI chat"
               >
-                <HenryWordmark className="h-8 text-[#44c57e]" />
+                <BrandLogoClient className="h-8 text-brand-primary" height={32} />
               </button>
             ) : (
               <Link href="/" className="inline-flex items-center" aria-label="Go to Henry home">
-                <HenryWordmark className="h-8 text-[#44c57e]" />
+                <BrandLogoClient className="h-8 text-brand-primary" height={32} />
               </Link>
             )
           ) : (
@@ -64,7 +64,7 @@ const Header = ({ cartCount = 0, showLogo = true, mode = "search", onNewChat }: 
             {isAiMode ? (
               <Link
                 href="/"
-                className="inline-flex items-center justify-center rounded-full border border-gray-200 p-2.5 text-gray-700 hover:border-[#44c57e] hover:text-[#1b8451] transition-colors"
+                className="inline-flex items-center justify-center rounded-full border border-gray-200 p-2.5 text-gray-700 hover:border-brand-primary hover:text-brand-dark transition-colors"
                 aria-label="Go to product search"
               >
                 <SearchIcon />
@@ -72,7 +72,7 @@ const Header = ({ cartCount = 0, showLogo = true, mode = "search", onNewChat }: 
             ) : (
               <Link
                 href="/ai"
-                className="inline-flex items-center justify-center rounded-full border border-gray-200 p-2.5 text-gray-700 hover:border-[#44c57e] hover:text-[#1b8451] transition-colors"
+                className="inline-flex items-center justify-center rounded-full border border-gray-200 p-2.5 text-gray-700 hover:border-brand-primary hover:text-brand-dark transition-colors"
                 aria-label="Go to AI chat"
               >
                 <StarIcon />

@@ -62,9 +62,9 @@ export default function SearchBar({
     "border-gray-200",
     "rounded-full",
     "focus:outline-none",
-    "focus:border-[#44c57e]",
+    "focus:border-brand-primary",
     isHeaderVariant ? "focus:ring-2" : "focus:ring-2",
-    "focus:ring-[#44c57e]/20",
+    "focus:ring-brand-primary/20",
     "transition-all",
     "duration-200",
     "shadow-none",
@@ -99,7 +99,7 @@ export default function SearchBar({
         <button
           type="submit"
           disabled={!value.trim() || disabled}
-          className="absolute right-2 top-1/2 -translate-y-1/2 bg-[#44c57e] text-white p-2 rounded-full hover:bg-[#3bb36e] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="absolute right-2 top-1/2 -translate-y-1/2 bg-brand-primary text-white p-2 rounded-full hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           aria-label="Send message"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
