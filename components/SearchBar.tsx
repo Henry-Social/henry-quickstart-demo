@@ -53,17 +53,17 @@ export default function SearchBar({
   const isHeaderVariant = variant === "header";
   const inputClasses = [
     "w-full",
-    "pl-12",
+    "pl-11",
     showSubmitButton ? "pr-14" : "pr-4",
-    "py-4",
-    "text-lg",
+    "py-3",
+    "text-base",
     "bg-white",
-    "border-2",
+    "border",
     "border-gray-200",
     "rounded-full",
     "focus:outline-none",
     "focus:border-[#44c57e]",
-    isHeaderVariant ? "focus:ring-2" : "focus:ring-4",
+    isHeaderVariant ? "focus:ring-2" : "focus:ring-2",
     "focus:ring-[#44c57e]/20",
     "transition-all",
     "duration-200",
@@ -77,7 +77,7 @@ export default function SearchBar({
 
   return (
     <form onSubmit={handleSubmit} className={`relative ${className}`}>
-      <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
         {icon === "star" ? <StarIcon /> : <SearchIcon />}
       </div>
       <input
@@ -99,7 +99,7 @@ export default function SearchBar({
         <button
           type="submit"
           disabled={!value.trim() || disabled}
-          className="absolute right-2 top-1/2 -translate-y-1/2 bg-[#44c57e] text-white p-2.5 rounded-full hover:bg-[#3bb36e] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="absolute right-2 top-1/2 -translate-y-1/2 bg-[#44c57e] text-white p-2 rounded-full hover:bg-[#3bb36e] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           aria-label="Send message"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

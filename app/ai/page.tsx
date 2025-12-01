@@ -89,7 +89,7 @@ export default function AIChat() {
     return (
       <main className="min-h-screen bg-white">
         <div className="min-h-screen flex flex-col">
-          <Header cartCount={cartCount} showLogo={false} />
+          <Header cartCount={cartCount} showLogo={false} mode="ai" />
           <div className="flex-1 flex flex-col items-center justify-center px-4 -mt-32">
             <HenryWordmark className="h-16 text-[#44c57e] mb-4" />
             <div className="w-full max-w-2xl">
@@ -113,7 +113,7 @@ export default function AIChat() {
   // Chat View - messages above, input at bottom
   return (
     <main className="min-h-screen bg-white flex flex-col">
-      <Header cartCount={cartCount} showLogo={true} onNewChat={clearChat} />
+      <Header cartCount={cartCount} showLogo={true} mode="ai" onNewChat={clearChat} />
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto px-4 py-6">
