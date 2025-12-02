@@ -5,7 +5,8 @@
   "type": "module",
   "packageManager": "bun@1.2.20",
   "scripts": {
-    "build": "next build",
+    "clean": "rm -rf .next",
+    "build": "rm -rf .next && next build",
     "dev": "next dev",
     "lint": "biome lint .",
     "lint:eslint": "eslint",
