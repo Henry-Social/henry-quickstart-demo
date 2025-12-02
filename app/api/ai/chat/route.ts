@@ -18,7 +18,7 @@ IMPORTANT: Always format your responses using Markdown for better readability:
 - Use headings (##) to organize longer responses
 - Use \`code\` formatting for specific values like prices or specs when appropriate`;
 
-const modelId = process.env.CLAUDE_MODEL || "claude-sonnet-4-5-20250929";
+const modelId = process.env.CLAUDE_MODEL || "claude-sonnet-4-5";
 
 export async function POST(req: Request) {
   const { messages } = await req.json();
