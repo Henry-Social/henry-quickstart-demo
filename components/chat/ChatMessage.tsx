@@ -97,7 +97,7 @@ export default function ChatMessage({ message }: Props) {
     return (
       <div className="flex justify-end mb-4">
         <div className="max-w-[80%] bg-brand-primary text-white px-4 py-2 rounded-2xl rounded-br-md">
-          <p className="text-sm whitespace-pre-wrap">{textContent}</p>
+          <p className="text-base whitespace-pre-wrap">{textContent}</p>
         </div>
       </div>
     );
@@ -114,7 +114,7 @@ export default function ChatMessage({ message }: Props) {
             return (
               <div
                 key={index}
-                className="prose prose-sm prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-headings:my-2 prose-strong:text-gray-800 text-gray-700"
+                className="prose prose-base prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-headings:my-2 prose-strong:text-gray-800 text-gray-700"
               >
                 <ReactMarkdown>{part.text}</ReactMarkdown>
               </div>
