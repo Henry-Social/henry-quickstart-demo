@@ -26,7 +26,7 @@ export default function ProductCardsInline({ products }: Props) {
   }
 
   return (
-    <div className="my-3 -mx-2 px-2 overflow-x-auto">
+    <div className="my-3 -mx-2 px-2 overflow-x-auto scrollbar-none hover:scrollbar-thin hover:scrollbar-thumb-gray-300 hover:scrollbar-track-transparent">
       <div className="flex gap-3 pb-2">
         {products.map((product) => (
           <button
