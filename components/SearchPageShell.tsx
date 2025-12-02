@@ -63,6 +63,7 @@ export default function SearchPageShell({
                 inputRef={inputRef}
                 className="w-full"
                 variant="header"
+                showSubmitButton={false}
               />
             </div>
             <div className="hidden md:flex md:items-center md:gap-2">
