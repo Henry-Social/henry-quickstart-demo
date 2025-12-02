@@ -11,14 +11,6 @@ import { useBrand } from "@/lib/brand-context";
 import { useCartCount } from "@/lib/useCartCount";
 import { usePersistentUserId } from "@/lib/usePersistentUserId";
 
-const placeholders = [
-  "Find me running shoes under $100",
-  "What's a good yoga mat?",
-  "Show me wireless headphones",
-  "I need a summer dress",
-  "Best organic skincare products",
-];
-
 // Fisher-Yates shuffle
 function shuffleArray<T>(array: T[]): T[] {
   const shuffled = [...array];
@@ -32,10 +24,12 @@ function shuffleArray<T>(array: T[]): T[] {
 export default function AIChat() {
   const userId = usePersistentUserId();
   const { cartCount } = useCartCount(userId);
-  const { suggestedQueries } = useBrand();
+  const { placeholders, suggestedQueries } = useBrand();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [input, setInput] = useState("");
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  const [placeholderVisible, setPlaceholderVisible] = useState(true);
 
   // Shuffle and sample up to 10 suggested queries once on mount
   const shuffledQueries = useMemo(
@@ -92,7 +86,23 @@ export default function AIChat() {
     inputRef.current?.focus();
   }, []);
 
-  const placeholderIndex = Math.floor(Date.now() / 3000) % placeholders.length;
+  // Cycle through placeholders every 3 seconds with fade animation
+  useEffect(() => {
+    if (placeholders.length <= 1) return;
+
+    const interval = setInterval(() => {
+      // Fade out
+      setPlaceholderVisible(false);
+
+      // After fade out completes, change text and fade in
+      setTimeout(() => {
+        setPlaceholderIndex((prev) => (prev + 1) % placeholders.length);
+        setPlaceholderVisible(true);
+      }, 300); // Match the CSS transition duration
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [placeholders.length]);
 
   const handleSubmit = (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -120,11 +130,19 @@ export default function AIChat() {
                 value={input}
                 onChange={setInput}
                 onSubmit={handleSubmit}
-                placeholder={placeholders[placeholderIndex]}
                 inputRef={inputRef}
                 icon="star"
                 showSubmitButton
                 disabled={isLoading}
+                placeholder={placeholders.length === 0 ? "Ask about products..." : undefined}
+                animatedPlaceholder={
+                  placeholders.length > 0
+                    ? {
+                        text: placeholders[placeholderIndex],
+                        isVisible: placeholderVisible,
+                      }
+                    : undefined
+                }
               />
               {shuffledQueries.length > 0 && (
                 <div className="flex flex-wrap justify-center gap-2 mt-6">

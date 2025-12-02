@@ -39,6 +39,14 @@ colors:
   # Button hover state
   primaryHover: "ef4444"
 
+# Placeholder text that cycles in the search input on the /ai page
+placeholders:
+  - "Find me running shoes under $100"
+  - "What's a good yoga mat?"
+  - "Show me wireless headphones"
+  - "I need a summer dress"
+  - "Best organic skincare products"
+
 # Suggested queries - displayed as clickable bubbles on the /ai page
 # If more than 10 are provided, 10 will be randomly sampled each page load.
 suggestedQueries:

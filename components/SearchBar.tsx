@@ -13,6 +13,10 @@ type Props = {
   icon?: "search" | "star";
   showSubmitButton?: boolean;
   disabled?: boolean;
+  animatedPlaceholder?: {
+    text: string;
+    isVisible: boolean;
+  };
 };
 
 function SearchIcon() {
@@ -49,6 +53,7 @@ export default function SearchBar({
   icon = "search",
   showSubmitButton = true,
   disabled = false,
+  animatedPlaceholder,
 }: Props) {
   const isHeaderVariant = variant === "header";
   const inputClasses = [
@@ -75,6 +80,8 @@ export default function SearchBar({
     if (!disabled) onSubmit();
   };
 
+  const showAnimatedPlaceholder = animatedPlaceholder && !value;
+
   return (
     <form onSubmit={handleSubmit} className={`relative ${className}`}>
       <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -91,10 +98,19 @@ export default function SearchBar({
             if (!disabled) onSubmit();
           }
         }}
-        placeholder={placeholder}
+        placeholder={showAnimatedPlaceholder ? undefined : placeholder}
         className={inputClasses}
         disabled={disabled}
       />
+      {showAnimatedPlaceholder && (
+        <div
+          className={`absolute inset-y-0 left-11 flex items-center pointer-events-none transition-opacity duration-300 ${
+            animatedPlaceholder.isVisible ? "opacity-100" : "opacity-0"
+          }`}
+        >
+          <span className="text-gray-400">{animatedPlaceholder.text}</span>
+        </div>
+      )}
       {showSubmitButton && (
         <button
           type="submit"

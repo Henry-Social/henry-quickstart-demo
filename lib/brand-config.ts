@@ -19,6 +19,7 @@ export interface BrandConfig {
     primaryLight: string;
     primaryHover: string;
   };
+  placeholders?: string[];
   suggestedQueries?: string[];
 }
 
@@ -46,6 +47,7 @@ export function getClientBrandConfig() {
     brandName: config.brand.name,
     logoUrl: config.assets.logoUrl || null,
     iconUrl: config.assets.iconUrl || null,
+    placeholders: config.placeholders || [],
     suggestedQueries: config.suggestedQueries || [],
   };
 }
