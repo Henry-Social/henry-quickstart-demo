@@ -4,13 +4,13 @@
 
 brand:
   # Brand name displayed throughout the app
-  name: "Price"
+  name: "Price.com AI"
 
   # Short name for PWA and places with limited space
-  shortName: "Price"
+  shortName: "Price.com AI"
 
   # App description for metadata
-  description: "Shop smarter with Price"
+  description: "Shop smarter with Price.com AI"
 
 # Visual identity - URLs should point to CDN-hosted assets
 # Leave blank/omit to use built-in Henry defaults
