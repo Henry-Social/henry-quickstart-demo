@@ -8,10 +8,7 @@ interface BrandLogoProps {
 }
 
 // Server component - reads config at build time
-export default function BrandLogo({
-  className = "",
-  height = 32,
-}: BrandLogoProps) {
+export default function BrandLogo({ className = "", height = 32 }: BrandLogoProps) {
   const config = getBrandConfig();
   const logoUrl = config.assets.logoUrl;
   const brandName = config.brand.name;

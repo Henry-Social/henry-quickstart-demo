@@ -18,9 +18,7 @@ export function BrandProvider({
   config: ClientBrandConfig;
   children: ReactNode;
 }) {
-  return (
-    <BrandContext.Provider value={config}>{children}</BrandContext.Provider>
-  );
+  return <BrandContext.Provider value={config}>{children}</BrandContext.Provider>;
 }
 
 export function useBrand() {

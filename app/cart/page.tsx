@@ -172,9 +172,42 @@ function CartPageContent() {
             type="button"
             onClick={fetchItems}
             disabled={loading}
-            className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-sm font-semibold text-brand-dark hover:border-brand-dark hover:text-brand-dark disabled:opacity-40"
+            className="inline-flex items-center justify-center rounded-full border border-gray-200 w-10 h-10 text-brand-dark hover:border-brand-dark hover:text-brand-dark disabled:opacity-40"
+            aria-label="Refresh cart"
           >
-            {loading ? "Refreshing..." : "Refresh"}
+            {loading ? (
+              <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">
+                <title>Loading</title>
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
+              </svg>
+            ) : (
+              <svg
+                className="h-5 w-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <title>Refresh</title>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
+              </svg>
+            )}
           </button>
         </div>
 
@@ -276,37 +309,46 @@ function CartPageContent() {
                         Qty {item.quantity}
                       </div>
                       <div className="flex items-center gap-3">
-                        {item.productLink && (
-                          <a
-                            href={item.productLink}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-sm font-semibold text-brand-dark hover:underline"
-                          >
-                            View item
-                          </a>
-                        )}
                         <button
                           type="button"
                           onClick={() => handleRemoveItem(item.productId)}
                           disabled={removingId === item.productId}
-                          className="inline-flex items-center gap-1 rounded-full border border-red-100 px-3 py-1.5 text-sm font-semibold text-red-600 hover:border-red-300 disabled:opacity-50"
+                          className="inline-flex items-center justify-center rounded-full border border-red-100 w-10 h-10 text-red-600 hover:border-red-300 disabled:opacity-50"
+                          aria-label="Remove item"
                         >
-                          <svg
-                            className="h-4 w-4"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                          >
-                            <title>Remove item</title>
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={1.5}
-                              d="M6 6h12M9 6v12m6-12v12M5 6l1 12a2 2 0 002 2h8a2 2 0 002-2l1-12M9 6V4h6v2"
-                            />
-                          </svg>
-                          {removingId === item.productId ? "Removing..." : "Remove"}
+                          {removingId === item.productId ? (
+                            <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">
+                              <title>Removing</title>
+                              <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                              />
+                              <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                              />
+                            </svg>
+                          ) : (
+                            <svg
+                              className="h-5 w-5"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                            >
+                              <title>Remove item</title>
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={1.5}
+                                d="M6 6h12M9 6v12m6-12v12M5 6l1 12a2 2 0 002 2h8a2 2 0 002-2l1-12M9 6V4h6v2"
+                              />
+                            </svg>
+                          )}
                         </button>
                       </div>
                     </div>

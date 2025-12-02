@@ -1,11 +1,7 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import "./globals.css";
-import {
-  generateBrandCSS,
-  getBrandConfig,
-  getClientBrandConfig,
-} from "@/lib/brand-config";
+import { generateBrandCSS, getBrandConfig, getClientBrandConfig } from "@/lib/brand-config";
 import { BrandProvider } from "@/lib/brand-context";
 
 const brandConfig = getBrandConfig();
@@ -32,9 +28,7 @@ export default function RootLayout({
         <style dangerouslySetInnerHTML={{ __html: generateBrandCSS() }} />
       </head>
       <body className="bg-white">
-        <BrandProvider config={getClientBrandConfig()}>
-          {children}
-        </BrandProvider>
+        <BrandProvider config={getClientBrandConfig()}>{children}</BrandProvider>
         <Script strategy="afterInteractive">
           {`if ("serviceWorker" in navigator) {
             const registerServiceWorker = () => {

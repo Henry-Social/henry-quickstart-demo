@@ -34,7 +34,7 @@ export default function AIChat() {
   // Shuffle and sample up to 10 suggested queries once on mount
   const shuffledQueries = useMemo(
     () => shuffleArray(suggestedQueries).slice(0, 10),
-    [suggestedQueries]
+    [suggestedQueries],
   );
 
   const storageKey = `henry-chat-${userId}`;

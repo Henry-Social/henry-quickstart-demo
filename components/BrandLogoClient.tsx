@@ -10,10 +10,7 @@ interface BrandLogoClientProps {
 }
 
 // Client component - uses context for brand info
-export default function BrandLogoClient({
-  className = "",
-  height = 32,
-}: BrandLogoClientProps) {
+export default function BrandLogoClient({ className = "", height = 32 }: BrandLogoClientProps) {
   const { logoUrl, brandName } = useBrand();
 
   // If no logo URL is configured, fall back to the built-in Henry SVG

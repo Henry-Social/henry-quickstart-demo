@@ -38,7 +38,7 @@ function HomeContent() {
   // Shuffle and sample up to 10 suggested queries once on mount
   const shuffledQueries = useMemo(
     () => shuffleArray(suggestedQueries).slice(0, 10),
-    [suggestedQueries]
+    [suggestedQueries],
   );
   const currentQueryParam = searchParams.get("q") ?? "";
   const loadSentinelRef = useRef<HTMLDivElement | null>(null);
