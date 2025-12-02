@@ -38,3 +38,17 @@ colors:
 
   # Button hover state
   primaryHover: "ef4444"
+
+# Suggested queries - displayed as clickable bubbles on the /ai page
+# If more than 10 are provided, 10 will be randomly sampled each page load.
+suggestedQueries:
+  - "Outdoor camping gear"
+  - "Surf board racks for cars"
+  - "Gifts for my mom"
+  - "Cyber Monday clothing deals"
+  - "Treats for my cat"
+  - "Top DSLR camera brands"
+  - "iPhone 17 Pro"
+  - "Pickle Ball Rackets under $100"
+  - "Cyber Monday TV deals"
+  - "Best gaming laptops"

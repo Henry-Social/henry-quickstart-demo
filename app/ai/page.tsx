@@ -7,6 +7,7 @@ import BrandLogoClient from "@/components/BrandLogoClient";
 import ChatMessage from "@/components/chat/ChatMessage";
 import Header from "@/components/Header";
 import SearchBar from "@/components/SearchBar";
+import { useBrand } from "@/lib/brand-context";
 import { useCartCount } from "@/lib/useCartCount";
 import { usePersistentUserId } from "@/lib/usePersistentUserId";
 
@@ -18,12 +19,29 @@ const placeholders = [
   "Best organic skincare products",
 ];
 
+// Fisher-Yates shuffle
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
 export default function AIChat() {
   const userId = usePersistentUserId();
   const { cartCount } = useCartCount(userId);
+  const { suggestedQueries } = useBrand();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [input, setInput] = useState("");
+
+  // Shuffle and sample up to 10 suggested queries once on mount
+  const shuffledQueries = useMemo(
+    () => shuffleArray(suggestedQueries).slice(0, 10),
+    [suggestedQueries]
+  );
 
   const storageKey = `henry-chat-${userId}`;
 
@@ -84,13 +102,18 @@ export default function AIChat() {
     setInput("");
   };
 
+  const handleSuggestionClick = (query: string) => {
+    if (isLoading) return;
+    sendMessage({ text: query });
+  };
+
   // Hero View - centered input, no messages
   if (!hasMessages) {
     return (
       <main className="min-h-screen bg-white">
         <div className="min-h-screen flex flex-col">
           <Header cartCount={cartCount} showLogo={false} mode="ai" />
-          <div className="flex-1 flex flex-col items-center justify-center px-4 -mt-32">
+          <div className="flex-1 flex flex-col items-center justify-center px-4 -mt-16">
             <BrandLogoClient className="h-16 text-brand-primary mb-4" height={64} />
             <div className="w-full max-w-2xl">
               <SearchBar
@@ -103,6 +126,21 @@ export default function AIChat() {
                 showSubmitButton
                 disabled={isLoading}
               />
+              {shuffledQueries.length > 0 && (
+                <div className="flex flex-wrap justify-center gap-2 mt-6">
+                  {shuffledQueries.map((query) => (
+                    <button
+                      key={query}
+                      type="button"
+                      onClick={() => handleSuggestionClick(query)}
+                      disabled={isLoading}
+                      className="px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {query}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

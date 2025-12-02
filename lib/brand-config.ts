@@ -19,6 +19,7 @@ export interface BrandConfig {
     primaryLight: string;
     primaryHover: string;
   };
+  suggestedQueries?: string[];
 }
 
 let cachedConfig: BrandConfig | null = null;
@@ -45,6 +46,7 @@ export function getClientBrandConfig() {
     brandName: config.brand.name,
     logoUrl: config.assets.logoUrl || null,
     iconUrl: config.assets.iconUrl || null,
+    suggestedQueries: config.suggestedQueries || [],
   };
 }
 

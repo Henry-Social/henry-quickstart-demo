@@ -5,6 +5,7 @@ import { createContext, useContext, type ReactNode } from "react";
 export interface ClientBrandConfig {
   brandName: string;
   logoUrl: string | null;
+  suggestedQueries: string[];
 }
 
 const BrandContext = createContext<ClientBrandConfig | null>(null);
