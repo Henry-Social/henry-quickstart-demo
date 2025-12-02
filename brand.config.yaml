@@ -4,20 +4,20 @@
 
 brand:
   # Brand name displayed throughout the app
-  name: "Henry"
+  name: "Price.com AI"
 
   # Short name for PWA and places with limited space
-  shortName: "Henry"
+  shortName: "Price.com AI"
 
   # App description for metadata
-  description: "Complete buy-now flow with Henry API"
+  description: "Shop smarter with Price.com AI"
 
 # Visual identity - URLs should point to CDN-hosted assets
 # Leave blank/omit to use built-in Henry defaults
 assets:
   # Primary logo (displayed in header, hero sections)
   # Recommended: SVG or PNG, transparent background, 200px+ width
-  logoUrl: ""
+  logoUrl: "https://auth.henrylabs.ai/storage/v1/object/public/client-logos/price-logo-red.webp"
 
   # Square icon for favicon and PWA (minimum 512x512 recommended)
   iconUrl: ""
@@ -28,16 +28,16 @@ assets:
 # Color palette - hex values WITHOUT the # prefix
 colors:
   # Primary brand color - buttons, links, highlights
-  primary: "44c57e"
+  primary: "dc2626"
 
   # Darker shade - hover states, text on light backgrounds
-  primaryDark: "1b8451"
+  primaryDark: "b91c1c"
 
   # Light tint - badges, subtle backgrounds
-  primaryLight: "ebf8f1"
+  primaryLight: "fee2e2"
 
   # Button hover state
-  primaryHover: "3bb36e"
+  primaryHover: "ef4444"
 
 # Placeholder text that cycles in the search input on the /ai page
 placeholders:
