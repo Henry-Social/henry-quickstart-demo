@@ -106,15 +106,15 @@ export default function ChatMessage({ message }: Props) {
   // Assistant messages: render parts in order to preserve sequence
   // (text -> tool results -> text)
   return (
-    <div className="flex justify-start mb-4">
-      <div className="max-w-[95%] space-y-2">
+    <div className="mb-4">
+      <div className="space-y-2">
         {message.parts?.map((part, index) => {
           // Text part
           if (part.type === "text" && part.text) {
             return (
               <div
                 key={index}
-                className="w-fit max-w-[85%] bg-gray-100 px-4 py-3 rounded-2xl rounded-bl-md prose prose-sm prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-headings:my-2 prose-strong:text-gray-800"
+                className="prose prose-sm prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-headings:my-2 prose-strong:text-gray-800 text-gray-700"
               >
                 <ReactMarkdown>{part.text}</ReactMarkdown>
               </div>
@@ -126,16 +126,11 @@ export default function ChatMessage({ message }: Props) {
             // Tool is still running - show loading animation
             if (part.state === "input-streaming" || part.state === "input-available") {
               return (
-                <div
-                  key={index}
-                  className="w-fit bg-gray-100 px-4 py-3 rounded-2xl rounded-bl-md"
-                >
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <span className="inline-flex h-2 w-2 rounded-full bg-brand-primary animate-pulse" />
-                    <span className="inline-flex h-2 w-2 rounded-full bg-brand-primary animate-pulse [animation-delay:150ms]" />
-                    <span className="inline-flex h-2 w-2 rounded-full bg-brand-primary animate-pulse [animation-delay:300ms]" />
-                    <span className="ml-1">Searching for products...</span>
-                  </div>
+                <div key={index} className="flex items-center gap-2 text-sm text-gray-500 py-2">
+                  <span className="inline-flex h-2 w-2 rounded-full bg-brand-primary animate-pulse" />
+                  <span className="inline-flex h-2 w-2 rounded-full bg-brand-primary animate-pulse [animation-delay:150ms]" />
+                  <span className="inline-flex h-2 w-2 rounded-full bg-brand-primary animate-pulse [animation-delay:300ms]" />
+                  <span className="ml-1">Searching for products...</span>
                 </div>
               );
             }
