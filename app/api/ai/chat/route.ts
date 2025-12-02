@@ -1,6 +1,6 @@
 import { anthropic } from "@ai-sdk/anthropic";
 import { convertToModelMessages, stepCountIs, streamText } from "ai";
-import { createHenryMCPClient } from "@/lib/mcp";
+import { getHenryMCPClient } from "@/lib/mcp";
 
 export const maxDuration = 60;
 
@@ -23,7 +23,8 @@ const modelId = process.env.CLAUDE_MODEL || "claude-sonnet-4-5-20250929";
 export async function POST(req: Request) {
   const { messages } = await req.json();
 
-  const mcpClient = await createHenryMCPClient();
+  // Use singleton MCP client - stays alive across requests
+  const mcpClient = await getHenryMCPClient();
   const tools = await mcpClient.tools();
 
   // Convert UIMessage[] to ModelMessage[]
@@ -35,9 +36,6 @@ export async function POST(req: Request) {
     messages: modelMessages,
     tools,
     stopWhen: stepCountIs(5),
-    onFinish: async () => {
-      await mcpClient.close();
-    },
   });
 
   return result.toUIMessageStreamResponse();

@@ -19,6 +19,7 @@
     "@ai-sdk/anthropic": "^2.0.53",
     "@ai-sdk/mcp": "^0.0.11",
     "@ai-sdk/react": "^2.0.105",
+    "@henrylabs/mcp": "^0.14.0",
     "@henrylabs/sdk": "^0.8.0",
     "@modelcontextprotocol/sdk": "^1.23.0",
     "ai": "^5.0.105",

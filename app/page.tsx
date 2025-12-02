@@ -1,12 +1,13 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import BrandLogoClient from "@/components/BrandLogoClient";
 import Header from "@/components/Header";
 import ProductGrid from "@/components/ProductGrid";
 import SearchBar from "@/components/SearchBar";
 import SearchPageShell from "@/components/SearchPageShell";
+import { useBrand } from "@/lib/brand-context";
 import type { Product } from "@/lib/types";
 import { useCartCount } from "@/lib/useCartCount";
 import { usePersistentUserId } from "@/lib/usePersistentUserId";
@@ -14,22 +15,31 @@ import { useProductSearch } from "@/lib/useProductSearch";
 
 export const dynamic = "force-dynamic";
 
-const placeholders = [
-  "Yoga mats with good grip",
-  "Nike shoes",
-  "Summer dresses",
-  "Wireless headphones",
-  "Organic skincare",
-  "Running gear",
-];
+// Fisher-Yates shuffle
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
 
 function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const userId = usePersistentUserId();
   const { cartCount } = useCartCount(userId);
+  const { placeholders, suggestedQueries } = useBrand();
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  const [placeholderVisible, setPlaceholderVisible] = useState(true);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Shuffle and sample up to 10 suggested queries once on mount
+  const shuffledQueries = useMemo(
+    () => shuffleArray(suggestedQueries).slice(0, 10),
+    [suggestedQueries]
+  );
   const currentQueryParam = searchParams.get("q") ?? "";
   const loadSentinelRef = useRef<HTMLDivElement | null>(null);
   const {
@@ -63,12 +73,23 @@ function HomeContent() {
     }
   }, [currentQueryParam, resetSearch, router, runSearch, searchQuery]);
 
+  // Cycle through placeholders every 3 seconds with fade animation
   useEffect(() => {
+    if (placeholders.length <= 1) return;
+
     const interval = setInterval(() => {
-      setPlaceholderIndex((prev) => (prev + 1) % placeholders.length);
+      // Fade out
+      setPlaceholderVisible(false);
+
+      // After fade out completes, change text and fade in
+      setTimeout(() => {
+        setPlaceholderIndex((prev) => (prev + 1) % placeholders.length);
+        setPlaceholderVisible(true);
+      }, 300); // Match the CSS transition duration
     }, 3000);
+
     return () => clearInterval(interval);
-  }, []);
+  }, [placeholders.length]);
 
   useEffect(() => {
     if (!loadSentinelRef.current) {
@@ -114,21 +135,50 @@ function HomeContent() {
     [executedQuery, router],
   );
 
+  const handleSuggestionClick = useCallback(
+    (query: string) => {
+      router.push(`/?q=${encodeURIComponent(query)}`);
+    },
+    [router],
+  );
+
   if (heroView) {
     return (
       <main className="min-h-screen bg-white">
         <div className="min-h-screen flex flex-col">
           <Header cartCount={cartCount} showLogo={false} />
-          <div className="flex-1 flex flex-col items-center justify-center px-4 -mt-32">
+          <div className="flex-1 flex flex-col items-center justify-center px-4 -mt-16">
             <BrandLogoClient className="h-16 text-brand-primary mb-4" height={64} />
             <div className="w-full max-w-2xl">
               <SearchBar
                 value={searchQuery}
                 onChange={setSearchQuery}
                 onSubmit={handleSearchSubmit}
-                placeholder={placeholders[placeholderIndex]}
                 inputRef={searchInputRef}
+                placeholder={placeholders.length === 0 ? "Search for products..." : undefined}
+                animatedPlaceholder={
+                  placeholders.length > 0
+                    ? {
+                        text: placeholders[placeholderIndex],
+                        isVisible: placeholderVisible,
+                      }
+                    : undefined
+                }
               />
+              {shuffledQueries.length > 0 && (
+                <div className="flex flex-wrap justify-center gap-2 mt-6">
+                  {shuffledQueries.map((query) => (
+                    <button
+                      key={query}
+                      type="button"
+                      onClick={() => handleSuggestionClick(query)}
+                      className="px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"
+                    >
+                      {query}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -141,7 +191,7 @@ function HomeContent() {
       searchValue={searchQuery}
       onSearchChange={setSearchQuery}
       onSearchSubmit={handleSearchSubmit}
-      placeholder={placeholders[placeholderIndex]}
+      placeholder={placeholders[placeholderIndex] || "Search for products..."}
       inputRef={searchInputRef}
       cartCount={cartCount}
     >
