@@ -14,16 +14,21 @@ function getMCPBinaryPath(): string {
 }
 
 async function createClient(): Promise<MCPClient> {
-  const apiKey = process.env.HENRY_API_KEY;
+  const apiKey = process.env.HENRY_API_KEY_MCP;
 
   if (!apiKey) {
     throw new Error("Missing HENRY_API_KEY environment variable");
   }
 
-  const environment = process.env.HENRY_MCP_ENV || process.env.HENRY_ENV || "sandbox";
+  const environment =
+    process.env.HENRY_MCP_ENV || process.env.HENRY_ENV || "sandbox";
 
   // Filter out SDK base URL to avoid "Ambiguous URL" error in @henrylabs/mcp
-  const { HENRY_SDK_BASE_URL: _, ...filteredEnv } = process.env;
+  const {
+    HENRY_SDK_BASE_URL: _,
+    HENRY_API_KEY: __,
+    ...filteredEnv
+  } = process.env;
 
   const client = await createMCPClient({
     transport: new StdioMCPTransport({
@@ -33,9 +38,9 @@ async function createClient(): Promise<MCPClient> {
         ...filteredEnv,
         // MCP server uses HENRY_SDK_* naming convention
         HENRY_SDK_API_KEY: apiKey,
-        HENRY_SDK_ENVIRONMENT: environment,
-      },
-    }),
+        HENRY_SDK_ENVIRONMENT: environment
+      }
+    })
   });
 
   return client;
