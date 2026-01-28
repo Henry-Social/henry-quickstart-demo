@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
   try {
     const userId = request.headers.get("x-user-id") || "demo_user_123";
 
-    const result = await henry.cart.createCheckout({ "x-user-id": userId, auth: true });
+    const result = await henry.cart.createCheckout({ "x-user-id": userId, auth: false });
     return NextResponse.json(result, { headers: NO_CACHE_HEADERS });
   } catch (error) {
     console.error("Checkout error:", error);
