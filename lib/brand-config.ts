@@ -1,6 +1,6 @@
 import { readFileSync } from "fs";
-import { parse } from "yaml";
 import { join } from "path";
+import { parse } from "yaml";
 
 export interface BrandConfig {
   brand: {
