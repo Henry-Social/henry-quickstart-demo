@@ -1,6 +1,6 @@
 import Image from "next/image";
-import { getBrandConfig } from "@/lib/brand-config";
 import HenryWordmark from "@/assets/henry-wordmark";
+import { getBrandConfig } from "@/lib/brand-config";
 
 interface BrandLogoProps {
   className?: string;

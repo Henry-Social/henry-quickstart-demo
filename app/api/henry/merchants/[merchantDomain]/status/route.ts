@@ -3,10 +3,10 @@ import { henry } from "@/lib/henry";
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { merchantDomain: string } },
+  { params }: { params: Promise<{ merchantDomain: string }> },
 ) {
   try {
-    const { merchantDomain } = params;
+    const { merchantDomain } = await params;
 
     const result = await henry.merchants.checkStatus(merchantDomain);
     return NextResponse.json(result);

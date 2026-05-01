@@ -9,10 +9,15 @@ const NO_CACHE_HEADERS = {
   Expires: "0",
 };
 
-export async function DELETE(_request: NextRequest, { params }: { params: { productId: string } }) {
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ productId: string }> },
+) {
   try {
     const userId = _request.headers.get("x-user-id") || "demo_user_123";
-    const productId = params.productId ? decodeURIComponent(params.productId) : null;
+    ``;
+    const paramsData = await params;
+    const productId = paramsData.productId ? decodeURIComponent(paramsData.productId) : null;
 
     if (!productId) {
       return NextResponse.json(
@@ -21,7 +26,9 @@ export async function DELETE(_request: NextRequest, { params }: { params: { prod
       );
     }
 
-    const result = await henry.cart.items.remove(productId, { "x-user-id": userId });
+    const result = await henry.cart.items.remove(productId, {
+      "x-user-id": userId,
+    });
     return NextResponse.json(result, { headers: NO_CACHE_HEADERS });
   } catch (error) {
     console.error("Remove cart item error:", error);
